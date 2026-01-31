@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+logs
+node_modules
+vendor
+.idea
+.vscode
+*.log
+*.sql
+*.sqlite
+*.db
+.DS_Store
+coverage
+build
+dist
