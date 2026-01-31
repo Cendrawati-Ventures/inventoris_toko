@@ -1,8 +1,12 @@
 # syntax=docker/dockerfile:1
-FROM dunglas/frankenphp:1.1-php8.2
+FROM php:8.2-fpm
 
-# Install PHP extensions
-RUN install-php-extensions pdo pdo_pgsql
+# Install system dependencies + Nginx
+RUN apt-get update && apt-get install -y \
+	nginx \
+	libpq-dev \
+	&& docker-php-ext-install pdo pdo_pgsql \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
@@ -10,11 +14,14 @@ WORKDIR /app
 # Copy application
 COPY . /app
 
+# Copy Nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Ensure log directory exists
 RUN mkdir -p /app/logs && chmod -R 755 /app/logs
 
-# Copy Caddyfile
-COPY Caddyfile /etc/caddy/Caddyfile
-
 # Expose port (Railway uses PORT)
 EXPOSE 80
+
+# Start Nginx + PHP-FPM
+CMD ["/app/start.sh"]

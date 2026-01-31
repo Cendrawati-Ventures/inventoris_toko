@@ -3,10 +3,13 @@ set -e
 
 PORT=${PORT:-80}
 
-# Update Apache to listen on Railway's PORT
-echo "Starting Apache on PORT=${PORT}"
-sed -i "s/Listen 80/Listen ${PORT}/g" /etc/apache2/ports.conf
-sed -i "s/:80/:${PORT}/g" /etc/apache2/sites-available/000-default.conf
+echo "Starting Nginx + PHP-FPM on PORT=${PORT}"
 
-# Start Apache
-exec apache2-foreground
+# Update Nginx listen port
+sed -i "s/\$PORT/${PORT}/g" /etc/nginx/nginx.conf
+
+# Start PHP-FPM
+php-fpm -D
+
+# Start Nginx
+exec nginx -g 'daemon off;'
