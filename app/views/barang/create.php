@@ -1,0 +1,83 @@
+<?php ob_start(); ?>
+
+<div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8 max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">
+        <i class="fas fa-plus-circle text-blue-600 mr-2"></i>Tambah Barang Baru
+    </h2>
+
+    <form action="/barang/store" method="POST">
+        <div class="mb-6">
+            <label for="kode_barang" class="block text-gray-700 font-bold mb-2 text-sm">Kode Barang *</label>
+            <input type="text" id="kode_barang" name="kode_barang" required
+                   placeholder="Misal: BRG-001"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="mb-6">
+            <label for="nama_barang" class="block text-gray-700 font-bold mb-2 text-sm">Nama Barang *</label>
+            <input type="text" id="nama_barang" name="nama_barang" required
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="mb-6">
+            <label for="kategori" class="block text-gray-700 font-bold mb-2 text-sm">Kategori *</label>
+            <select id="kategori" name="id_kategori" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">-- Pilih Kategori --</option>
+                <?php foreach ($kategori as $kat): ?>
+                    <option value="<?= $kat['id_kategori'] ?>"><?= htmlspecialchars($kat['nama_kategori']) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label for="satuan" class="block text-gray-700 font-bold mb-2 text-sm">Satuan *</label>
+            <select id="satuan" name="satuan" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">-- Pilih Satuan --</option>
+                <option value="pcs">Pcs (Pieces)</option>
+                <option value="unit">Unit</option>
+                <option value="box">Box</option>
+                <option value="pack">Pack</option>
+                <option value="kg">Kg (Kilogram)</option>
+                <option value="gram">Gram</option>
+                <option value="liter">Liter</option>
+                <option value="meter">Meter</option>
+                <option value="lusin">Lusin</option>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label for="harga_beli" class="block text-gray-700 font-bold mb-2 text-sm">Harga Beli</label>
+            <input type="number" id="harga_beli" name="harga_beli" required min="0" step="0.01"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="mb-6">
+            <label for="harga_jual" class="block text-gray-700 font-bold mb-2 text-sm">Harga Jual</label>
+            <input type="number" id="harga_jual" name="harga_jual" required min="0" step="0.01"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="mb-8">
+            <label for="stok" class="block text-gray-700 font-bold mb-2 text-sm">Stok Awal</label>
+            <input type="number" id="stok" name="stok" required min="0" value="0"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        </div>
+
+        <div class="flex gap-4 justify-center">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition font-semibold">
+                <i class="fas fa-save mr-2"></i>Simpan
+            </button>
+            <a href="/barang" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg transition font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+    </form>
+</div>
+
+<?php 
+$content = ob_get_clean();
+$title = 'Tambah Barang - Sistem Inventori';
+include __DIR__ . '/../layout/header.php';
+?>
