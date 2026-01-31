@@ -1,0 +1,53 @@
+# 🔍 DEBUG CHECKLIST - UNTUK DIAGNOSA LOGIN ISSUE
+
+Silakan jawab pertanyaan berikut untuk membantu debug:
+
+## 1. Apa yang terjadi saat login attempt?
+
+- [ ] Blank page / Error 500
+- [ ] Error message tampil (tulis di bawah)
+- [ ] Redirect loop (terus balik ke login)
+- [ ] Success tapi blank dashboard
+- [ ] Loading forever
+
+**Error message (jika ada):**
+```
+
+```
+
+## 2. Di Railway Dashboard, cek Logs (Deployments tab)
+
+Salin 50 baris terakhir dari logs:
+```
+
+```
+
+## 3. Database Check
+
+Login ke Railway PostgreSQL console dan jalankan:
+```sql
+SELECT username, role FROM users;
+SELECT COUNT(*) FROM kategori;
+SELECT COUNT(*) FROM barang;
+```
+
+Share hasil query.
+
+## 4. Coba Test Manual Login
+
+Buka Developer Console (F12) → Network tab → coba login → share screenshot dari:
+- Request URL
+- Response status
+- Response body (jika ada error)
+
+## 5. Double Check
+
+Pastikan:
+- [ ] Sudah redeploy setelah commit terakhir?
+- [ ] Deploy status = "Live" (green)?
+- [ ] Typing username & password dengan benar?
+- [ ] PostgreSQL service di Railway running?
+
+---
+
+**Jawab pertanyaan di atas dan kirim hasilnya, jadi saya bisa debug dengan tepat!**
