@@ -9,6 +9,30 @@ class Database {
     private $conn;
 
     public function __construct() {
+        // Load dari environment (Railway) lalu fallback ke .env atau default
+        $getEnv = function($key, $default = null) {
+            $val = getenv($key);
+            if ($val === false || $val === '') {
+                return $default;
+            }
+            return $val;
+        };
+
+        $envHost = $getEnv('DB_HOST');
+        $envName = $getEnv('DB_NAME');
+        $envUser = $getEnv('DB_USER');
+        $envPass = $getEnv('DB_PASS');
+        $envPort = $getEnv('DB_PORT');
+
+        if ($envHost || $envName || $envUser || $envPass || $envPort) {
+            $this->host = $envHost ?? 'localhost';
+            $this->db_name = $envName ?? 'toko_inventori';
+            $this->username = $envUser ?? 'postgres';
+            $this->password = $envPass ?? 'password';
+            $this->port = $envPort ?? '5432';
+            return;
+        }
+
         // Load dari .env jika ada, atau gunakan default
         $envFile = dirname(__DIR__, 2) . '/.env';
         
