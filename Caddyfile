@@ -1,0 +1,11 @@
+{
+	# Use Railway-provided PORT
+	auto_https off
+}
+
+:{$PORT} {
+	root * /app/public
+	php_server
+	encode gzip
+	file_server
+}
