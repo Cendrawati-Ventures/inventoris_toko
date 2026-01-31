@@ -68,6 +68,10 @@ class Database {
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             $this->conn->exec("SET NAMES 'UTF8'");
+
+            // Seed initial data if needed
+            require_once __DIR__ . '/seed.php';
+            seedIfNeeded($this->conn);
         } catch(PDOException $exception) {
             // Jangan tampilkan detail error di production
             if (isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true') {
