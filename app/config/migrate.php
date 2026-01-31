@@ -13,9 +13,9 @@ function runMigration(PDO $conn): void
         $tableExists = $stmt->fetchColumn();
 
         if (!$tableExists) {
-            // Baca schema file
-            $schemaFile = __DIR__ . '/../database/skema_postgresql.sql';
-            
+            // Baca schema file - dari root project directory
+            $projectRoot = dirname(__DIR__, 2); // Go up from app/config to root
+            $schemaFile = $projectRoot . '/database/skema_postgresql.sql';
             if (file_exists($schemaFile)) {
                 $schema = file_get_contents($schemaFile);
                 
