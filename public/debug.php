@@ -17,7 +17,7 @@ try {
 
     // Connect ke database
     echo "[1] Connecting to database..." . PHP_EOL;
-    require_once __DIR__ . '/app/config/database.php';
+    require_once __DIR__ . '/../app/config/database.php';
     $db = new Database();
     $conn = $db->getConnection();
     echo "✓ Connected" . PHP_EOL . PHP_EOL;
@@ -47,7 +47,7 @@ try {
 
     // Test login
     echo "[4] Testing login..." . PHP_EOL;
-    require_once __DIR__ . '/app/models/User.php';
+    require_once __DIR__ . '/../app/models/User.php';
     $userModel = new User();
     
     $loginTest = $userModel->login('admin', 'admin123');
