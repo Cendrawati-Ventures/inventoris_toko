@@ -8,35 +8,35 @@ class Database {
     private $port;
     private $conn;
 
+    private function getEnvValue($key, $default = null) {
+        $val = getenv($key);
+        if ($val !== false && $val !== '') {
+            return $val;
+        }
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return $_ENV[$key];
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return $_SERVER[$key];
+        }
+        return $default;
+    }
+
     public function __construct() {
         // Load dari environment (Railway) lalu fallback ke .env atau default
-        $getEnv = function($key, $default = null) {
-            $val = getenv($key);
-            if ($val !== false && $val !== '') {
-                return $val;
-            }
-            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
-                return $_ENV[$key];
-            }
-            if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-                return $_SERVER[$key];
-            }
-            return $default;
-        };
-
-        $envHost = $getEnv('DB_HOST');
-        $envName = $getEnv('DB_NAME');
-        $envUser = $getEnv('DB_USER');
-        $envPass = $getEnv('DB_PASS');
-        $envPort = $getEnv('DB_PORT');
+        $envHost = $this->getEnvValue('DB_HOST');
+        $envName = $this->getEnvValue('DB_NAME');
+        $envUser = $this->getEnvValue('DB_USER');
+        $envPass = $this->getEnvValue('DB_PASS');
+        $envPort = $this->getEnvValue('DB_PORT');
 
         // Railway: support DATABASE_URL or PG* variables
-        $databaseUrl = $getEnv('DATABASE_URL') ?: $getEnv('RAILWAY_DATABASE_URL');
-        $pgHost = $getEnv('PGHOST');
-        $pgName = $getEnv('PGDATABASE');
-        $pgUser = $getEnv('PGUSER');
-        $pgPass = $getEnv('PGPASSWORD');
-        $pgPort = $getEnv('PGPORT');
+        $databaseUrl = $this->getEnvValue('DATABASE_URL') ?: $this->getEnvValue('RAILWAY_DATABASE_URL');
+        $pgHost = $this->getEnvValue('PGHOST');
+        $pgName = $this->getEnvValue('PGDATABASE');
+        $pgUser = $this->getEnvValue('PGUSER');
+        $pgPass = $this->getEnvValue('PGPASSWORD');
+        $pgPort = $this->getEnvValue('PGPORT');
 
         if ($databaseUrl) {
             $parts = parse_url($databaseUrl);
@@ -113,7 +113,7 @@ class Database {
             seedIfNeeded($this->conn);
         } catch(PDOException $exception) {
             // Jangan tampilkan detail error di production
-            if ($getEnv('APP_DEBUG') === 'true') {
+            if ($this->getEnvValue('APP_DEBUG') === 'true') {
                 echo "Connection error: " . $exception->getMessage();
             } else {
                 error_log("Database connection error: " . $exception->getMessage());
