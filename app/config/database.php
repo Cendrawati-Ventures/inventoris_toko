@@ -12,10 +12,16 @@ class Database {
         // Load dari environment (Railway) lalu fallback ke .env atau default
         $getEnv = function($key, $default = null) {
             $val = getenv($key);
-            if ($val === false || $val === '') {
-                return $default;
+            if ($val !== false && $val !== '') {
+                return $val;
             }
-            return $val;
+            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+                return $_ENV[$key];
+            }
+            if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+                return $_SERVER[$key];
+            }
+            return $default;
         };
 
         $envHost = $getEnv('DB_HOST');
@@ -38,8 +44,8 @@ class Database {
                 $this->host = $parts['host'] ?? 'localhost';
                 $this->port = isset($parts['port']) ? (string)$parts['port'] : '5432';
                 $this->db_name = isset($parts['path']) ? ltrim($parts['path'], '/') : 'toko_inventori';
-                $this->username = $parts['user'] ?? 'postgres';
-                $this->password = $parts['pass'] ?? 'password';
+                $this->username = isset($parts['user']) ? urldecode($parts['user']) : 'postgres';
+                $this->password = isset($parts['pass']) ? urldecode($parts['pass']) : 'password';
                 return;
             }
         }
@@ -107,7 +113,7 @@ class Database {
             seedIfNeeded($this->conn);
         } catch(PDOException $exception) {
             // Jangan tampilkan detail error di production
-            if (isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true') {
+            if ($getEnv('APP_DEBUG') === 'true') {
                 echo "Connection error: " . $exception->getMessage();
             } else {
                 error_log("Database connection error: " . $exception->getMessage());
