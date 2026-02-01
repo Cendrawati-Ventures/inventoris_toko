@@ -26,6 +26,7 @@ RUN chmod +x /app/start.sh
 
 # Set PHP-FPM to listen on TCP instead of socket for better Docker compatibility
 RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/www.conf && \
+    echo "clear_env = no" >> /usr/local/etc/php-fpm.d/www.conf && \
     echo "listen.backlog = 512" >> /usr/local/etc/php-fpm.d/www.conf && \
     echo "pm.max_children = 20" >> /usr/local/etc/php-fpm.d/www.conf && \
     echo "pm.start_servers = 2" >> /usr/local/etc/php-fpm.d/www.conf && \
