@@ -87,17 +87,21 @@
         </a>
         <?php else: ?>
         <!-- Menu untuk Admin -->
-        <a href="/setting/kategori-satuan" class="bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-tags text-indigo-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Edit Kategori</p>
+        <a href="/penjualan/create" class="bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-cash-register text-purple-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Penjualan</p>
+        </a>
+        <a href="/barang/create" class="bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-plus-circle text-blue-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Tambah Barang</p>
         </a>
         <a href="/pembelian/create" class="bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-shopping-cart text-green-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Input Pembelian</p>
         </a>
-        <a href="/penjualan/create" class="bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-cash-register text-purple-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Input Penjualan</p>
+        <a href="/setting/kategori-satuan" class="bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-tags text-indigo-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Edit Kategori</p>
         </a>
         <?php endif; ?>
     </div>
