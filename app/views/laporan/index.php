@@ -60,13 +60,6 @@
         <i class="fas fa-rocket text-blue-600 mr-2"></i>Menu
     </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'kasir'): ?>
-        <a href="/barang/create" class="bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-plus-circle text-blue-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Tambah Barang</p>
-        </a>
-        <?php endif; ?>
-        
         <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'kasir'): ?>
         <!-- Menu untuk Kasir -->
         <a href="/penjualan/create" class="bg-purple-50 hover:bg-purple-100 border-2 border-purple-200 rounded-lg p-4 text-center transition">
