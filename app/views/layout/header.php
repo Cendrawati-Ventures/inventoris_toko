@@ -82,24 +82,24 @@
                                 </div>
                                 <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-shopping-cart text-blue-600 w-4"></i>
-                                    <span>Pembelian</span>
+                                    <span>Laporan Pembelian</span>
                                 </a>
                                 <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-cash-register text-green-600 w-4"></i>
-                                    <span>Penjualan</span>
+                                    <span>Laporan Penjualan</span>
                                 </a>
                                 <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-boxes text-orange-600 w-4"></i>
-                                    <span>Stok Barang</span>
+                                    <span>Laporan Stok Barang</span>
                                 </a>
                                 <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-chart-pie text-purple-600 w-4"></i>
-                                    <span>Keuntungan</span>
+                                    <span>Laporan Keuntungan</span>
                                 </a>
                                 <div class="border-t border-gray-200"></div>
                                 <a href="/hutang" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-file-invoice-dollar text-red-600 w-4"></i>
-                                    <span>Hutang</span>
+                                    <span>Laporan Hutang</span>
                                 </a>
                             </div>
                         </div>
@@ -214,23 +214,23 @@
                     <?php else: ?>
                         <a href="/laporan/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-shopping-cart text-blue-600 w-5"></i>
-                            <span>Pembelian</span>
+                            <span>Laporan Pembelian</span>
                         </a>
                         <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-cash-register text-green-600 w-5"></i>
-                            <span>Penjualan</span>
+                            <span>Laporan Penjualan</span>
                         </a>
                         <a href="/laporan/stok" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-boxes text-orange-600 w-5"></i>
-                            <span>Stok Barang</span>
+                            <span>Laporan Stok Barang</span>
                         </a>
                         <a href="/laporan/keuntungan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-chart-pie text-purple-600 w-5"></i>
-                            <span>Keuntungan</span>
+                            <span>Laporan Keuntungan</span>
                         </a>
                         <a href="/hutang" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-file-invoice-dollar text-red-600 w-5"></i>
-                            <span>Hutang</span>
+                            <span>Laporan Hutang</span>
                         </a>
                     <?php endif; ?>
                 </div>
