@@ -330,15 +330,18 @@ class LaporanController {
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
+        $output = fopen('php://output', 'w');
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
+        fputcsv($output, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
 
         foreach ($penjualan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv(STDOUT, [
+            fputcsv($output, [
                 $index + 1,
                 $item['username'] ?? '-',
                 $item['kode_barang'] ?? '-',
@@ -352,6 +355,7 @@ class LaporanController {
             ]);
         }
 
+        fclose($output);
         exit;
     }
 
@@ -677,15 +681,18 @@ class LaporanController {
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
+        $output = fopen('php://output', 'w');
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
+        fputcsv($output, ['No', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
 
         foreach ($pembelian as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv(STDOUT, [
+            fputcsv($output, [
                 $index + 1,
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'] ?? '',
@@ -697,6 +704,8 @@ class LaporanController {
                 $item['total_harga'] ?? ($item['subtotal'] ?? 0),
             ]);
         }
+
+        fclose($output);
         exit;
     }
 
@@ -951,15 +960,18 @@ class LaporanController {
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
+        $output = fopen('php://output', 'w');
         echo "\xEF\xBB\xBF";
 
-        fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
+        fputcsv($output, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
 
         foreach ($keuntungan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
-            fputcsv(STDOUT, [
+            fputcsv($output, [
                 $index + 1,
                 $item['username'] ?? '-',
                 $item['kode_barang'] ?? '-',
@@ -975,6 +987,7 @@ class LaporanController {
             ]);
         }
 
+        fclose($output);
         exit;
     }
 
@@ -1302,12 +1315,15 @@ class LaporanController {
         // Generate proper CSV format
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
         
         // UTF-8 BOM
+        $output = fopen('php://output', 'w');
         echo "\xEF\xBB\xBF";
         
         // Header row
-        fputcsv(STDOUT, ['No', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
+        fputcsv($output, ['No', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
         
         // Data rows
         foreach ($stok as $index => $item) {
@@ -1320,7 +1336,7 @@ class LaporanController {
                 $status = 'Rendah';
             }
             
-            fputcsv(STDOUT, [
+            fputcsv($output, [
                 $index + 1,
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'],
@@ -1331,7 +1347,8 @@ class LaporanController {
                 $status
             ]);
         }
-        
+
+        fclose($output);
         exit;
     }
 }
