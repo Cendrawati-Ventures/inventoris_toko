@@ -333,13 +333,6 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        $period = 'Semua Data';
-        if ($start && $end) {
-            $period = $start . ' s/d ' . $end;
-        }
-
-        fputcsv(STDOUT, ['Laporan Penjualan', $period]);
-        fputcsv(STDOUT, []);
         fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
 
         foreach ($penjualan as $index => $item) {
@@ -359,8 +352,6 @@ class LaporanController {
             ]);
         }
 
-        fputcsv(STDOUT, []);
-        fputcsv(STDOUT, ['Total Penjualan', $total]);
         exit;
     }
 
@@ -689,14 +680,7 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        $period = 'Semua Data';
-        if ($start && $end) {
-            $period = $start . ' s/d ' . $end;
-        }
-
-        fputcsv(STDOUT, ['Laporan Pembelian', $period]);
-        fputcsv(STDOUT, []);
-        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Satuan', 'Subtotal']);
+        fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
 
         foreach ($pembelian as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
@@ -710,12 +694,9 @@ class LaporanController {
                 $item['jumlah'] ?? 0,
                 $item['satuan'] ?? '',
                 $item['harga_satuan'] ?? 0,
-                $item['subtotal'] ?? ($item['total_harga'] ?? 0),
+                $item['total_harga'] ?? ($item['subtotal'] ?? 0),
             ]);
         }
-
-        fputcsv(STDOUT, []);
-        fputcsv(STDOUT, ['Total Pembelian', $total]);
         exit;
     }
 
@@ -973,13 +954,6 @@ class LaporanController {
 
         echo "\xEF\xBB\xBF";
 
-        $period = 'Semua Data';
-        if ($start && $end) {
-            $period = $start . ' s/d ' . $end;
-        }
-
-        fputcsv(STDOUT, ['Laporan Keuntungan', $period]);
-        fputcsv(STDOUT, []);
         fputcsv(STDOUT, ['No', 'Tanggal', 'Jam', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
 
         foreach ($keuntungan as $index => $item) {
@@ -1001,8 +975,6 @@ class LaporanController {
             ]);
         }
 
-        fputcsv(STDOUT, []);
-        fputcsv(STDOUT, ['Total Keuntungan', $totalKeuntungan]);
         exit;
     }
 
