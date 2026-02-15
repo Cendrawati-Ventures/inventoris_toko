@@ -336,7 +336,7 @@ class LaporanController {
         fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Jual', 'Total']);
 
         foreach ($penjualan as $index => $item) {
-            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
@@ -683,7 +683,7 @@ class LaporanController {
         fputcsv(STDOUT, ['No', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Satuan', 'Total']);
 
         foreach ($pembelian as $index => $item) {
-            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
@@ -957,7 +957,7 @@ class LaporanController {
         fputcsv(STDOUT, ['No', 'Pengguna', 'Kode Barang', 'Nama Barang', 'Tanggal', 'Jam', 'Jumlah', 'Satuan', 'Harga Beli', 'Harga Jual', 'Keuntungan/Unit', 'Total Keuntungan']);
 
         foreach ($keuntungan as $index => $item) {
-            $tanggal = isset($item['tanggal']) ? date('Y-m-d', strtotime($item['tanggal'])) : '';
+            $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
             $jam = isset($item['tanggal']) ? date('H:i', strtotime($item['tanggal'])) : '';
             fputcsv(STDOUT, [
                 $index + 1,
