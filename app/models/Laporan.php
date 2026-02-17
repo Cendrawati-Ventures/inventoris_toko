@@ -67,6 +67,17 @@ class Laporan {
         return $stmt->fetchAll();
     }
 
+    public function getStokTotals() {
+        $query = "SELECT
+                    COALESCE(SUM(b.harga_beli * b.stok), 0) as total_harga_beli,
+                    COALESCE(SUM(b.harga_jual * b.stok), 0) as total_harga_jual,
+                    COALESCE(SUM(b.stok), 0) as total_stok
+                  FROM barang b";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
     public function getLaporanStokRange($start, $end) {
         $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori WHERE DATE(b.updated_at) BETWEEN :start AND :end ORDER BY b.stok ASC";
         $stmt = $this->conn->prepare($query);

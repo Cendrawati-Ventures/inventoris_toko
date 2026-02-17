@@ -365,6 +365,7 @@ class LaporanController {
         $offset = ($page - 1) * $items_per_page;
         
         $all_stok = $this->model->getLaporanStok();
+        $totals = $this->model->getStokTotals();
         
         // Pagination
         $total_items = count($all_stok);

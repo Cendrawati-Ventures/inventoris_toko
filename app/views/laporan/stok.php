@@ -79,12 +79,8 @@
                 });
                 
                 updateRowNumbers();
-                updateTotals();
             });
         });
-
-        // Set initial totals (in case some rows hidden by default later)
-        updateTotals();
     });
 
     function updateRowNumbers() {
@@ -97,29 +93,6 @@
         });
     }
 
-    function updateTotals() {
-        const rows = document.querySelectorAll('tbody tr:not([style*="display: none"])');
-        let totalBeli = 0, totalJual = 0, totalStok = 0;
-        
-        rows.forEach(row => {
-            totalBeli += parseFloat(row.dataset.beli || 0);
-            totalJual += parseFloat(row.dataset.jual || 0);
-            totalStok += parseInt(row.dataset.stok || 0, 10);
-        });
-        
-        document.querySelector('[data-total="beli"]').textContent = formatRupiah(totalBeli);
-        document.querySelector('[data-total="jual"]').textContent = formatRupiah(totalJual);
-        document.querySelector('[data-total="stok"]').textContent = (totalStok || 0).toLocaleString('id-ID');
-    }
-
-    function formatRupiah(num) {
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(num);
-    }
     </script>
 
     <!-- Kategori Filter -->
@@ -137,29 +110,18 @@
     </div>
     <?php endif; ?>
 
-    <?php
-    $totalBeli = 0;
-    $totalJual = 0;
-    $totalStok = 0;
-    foreach ($stok as $item) {
-        $totalBeli += (float)$item['harga_beli'];
-        $totalJual += (float)$item['harga_jual'];
-        $totalStok += (int)$item['stok'];
-    }
-    ?>
-
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm">
         <div class="border rounded-lg p-3 bg-gray-50">
             <p class="text-gray-600">Total Harga Beli</p>
-            <p class="text-lg font-semibold text-blue-700" data-total="beli"><?= formatRupiah($totalBeli) ?></p>
+            <p class="text-lg font-semibold text-blue-700" data-total="beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
         </div>
         <div class="border rounded-lg p-3 bg-gray-50">
             <p class="text-gray-600">Total Harga Jual</p>
-            <p class="text-lg font-semibold text-green-700" data-total="jual"><?= formatRupiah($totalJual) ?></p>
+            <p class="text-lg font-semibold text-green-700" data-total="jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
         </div>
         <div class="border rounded-lg p-3 bg-gray-50">
             <p class="text-gray-600">Total Stok</p>
-            <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format($totalStok, 0, ',', '.') ?></p>
+            <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
 
