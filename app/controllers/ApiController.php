@@ -8,15 +8,23 @@ class ApiController {
         $this->barang = new Barang();
     }
 
-    // Search barang by name with optional kategori filter
+    // Search barang by name with optional kategori filter and pagination
     public function searchBarang() {
         header('Content-Type: application/json');
         
         $query = $_GET['q'] ?? '';
         $kategori = $_GET['kategori'] ?? null;
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $itemsPerPage = 25;
         
         if (strlen($query) < 1) {
-            echo json_encode(['results' => [], 'total' => 0]);
+            echo json_encode([
+                'results' => [],
+                'total' => 0,
+                'page' => 1,
+                'per_page' => $itemsPerPage,
+                'total_pages' => 0
+            ]);
             return;
         }
 
@@ -26,10 +34,21 @@ class ApiController {
             $kategoriId = (int)$kategori;
         }
 
-        $results = $this->barang->searchBarang($query, $kategoriId);
+        // Get total count first
+        $allResults = $this->barang->searchBarang($query, $kategoriId);
+        $totalResults = count($allResults);
+        $totalPages = (int)ceil($totalResults / $itemsPerPage);
+        
+        // Apply pagination
+        $offset = ($page - 1) * $itemsPerPage;
+        $paginatedResults = array_slice($allResults, $offset, $itemsPerPage);
+        
         echo json_encode([
-            'results' => $results,
-            'total' => count($results)
+            'results' => $paginatedResults,
+            'total' => $totalResults,
+            'page' => $page,
+            'per_page' => $itemsPerPage,
+            'total_pages' => $totalPages
         ]);
     }
 

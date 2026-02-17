@@ -278,6 +278,9 @@ const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
 const userRole = <?= json_encode($_SESSION['role'] ?? 'kasir') ?>;
 let currentQuery = '';
+let currentSearchPage = 1;
+let currentSearchTotal = 0;
+let currentSearchTotalPages = 0;
 
 function filterKategori(katId) {
     currentKategori = String(katId);
@@ -404,6 +407,33 @@ function updateKategoriSummary() {
     summaryEl.classList.remove('hidden');
 }
 
+// Search with pagination support
+async function performSearch(query, page = 1) {
+    if (!query || query.trim().length === 0) {
+        applyFilters();
+        return;
+    }
+
+    try {
+        const kategoriParam = currentKategori && currentKategori !== 'all' ? `&kategori=${currentKategori}` : '';
+        const url = `/api/search-barang?q=${encodeURIComponent(query)}&page=${page}${kategoriParam}`;
+        console.log('Fetching search:', url);
+        const response = await fetch(url);
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Search results:', data);
+        
+        currentSearchPage = data.page || 1;
+        currentSearchTotal = data.total || 0;
+        currentSearchTotalPages = data.total_pages || 0;
+        
+        renderSearchResults(data.results || [], data);
+    } catch (error) {
+        console.error('Search error:', error);
+        alert('Error saat mencari: ' + error.message);
+    }
+}
+
 const searchInput = document.getElementById('searchBarang');
 if (searchInput) {
     console.log('Search input found:', searchInput);
@@ -416,19 +446,7 @@ if (searchInput) {
             return;
         }
         
-        try {
-            const kategoriParam = currentKategori && currentKategori !== 'all' ? `&kategori=${currentKategori}` : '';
-            const url = `/api/search-barang?q=${encodeURIComponent(currentQuery)}${kategoriParam}`;
-            console.log('Fetching:', url);
-            const response = await fetch(url);
-            console.log('Response status:', response.status);
-            const data = await response.json();
-            console.log('Search results:', data);
-            renderSearchResults(data.results || []);
-        } catch (error) {
-            console.error('Search error:', error);
-            alert('Error saat mencari: ' + error.message);
-        }
+        performSearch(currentQuery, 1);
     }, 300));
 } else {
     console.error('Search input element not found! Check if element with id="searchBarang" exists');
@@ -444,7 +462,7 @@ function debounce(func, delay) {
 }
 
 // Render hasil search ke halaman
-function renderSearchResults(results) {
+function renderSearchResults(results, apiResponse = {}) {
     const searchContainer = document.getElementById('search_results_container');
     const mobileResults = document.getElementById('search_results_mobile');
     const tableResults = document.getElementById('search_results_table');
@@ -453,11 +471,15 @@ function renderSearchResults(results) {
     
     if (!searchContainer || !mobileResults || !tableResults) return;
     
+    const currentPage = apiResponse.page || 1;
+    const totalResults = apiResponse.total || 0;
+    const totalPages = apiResponse.total_pages || 0;
+    
     // Update counter
     const visibleEl = document.getElementById('visible_count');
     const totalEl = document.getElementById('total_count');
     if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
-    if (totalEl) totalEl.textContent = results.length.toLocaleString('id-ID');
+    if (totalEl) totalEl.textContent = totalResults.toLocaleString('id-ID');
     
     // Render mobile
     if (results.length === 0) {
@@ -548,6 +570,68 @@ function renderSearchResults(results) {
     const paginationDiv = document.querySelector('.flex.justify-center.items-center.gap-2.mt-6');
     if (paginationDiv) paginationDiv.style.display = 'none';
     
+    // Generate pagination controls for search results if needed
+    if (totalPages > 1) {
+        let paginationHtml = '<div class="flex justify-center items-center gap-2 mt-6" id="search_pagination">';
+        
+        // First page button
+        if (currentPage > 1) {
+            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', 1)" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+                <i class="fas fa-chevron-left mr-1"></i>Pertama
+            </button>`;
+        }
+        
+        // Previous page button
+        if (currentPage > 1) {
+            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${currentPage - 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+                <i class="fas fa-chevron-up mr-1"></i>Sebelumnya
+            </button>`;
+        }
+        
+        // Page numbers
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        if (startPage > 1) {
+            paginationHtml += '<span class="text-gray-500">...</span>';
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            if (i === currentPage) {
+                paginationHtml += `<button class="px-3 py-2 rounded bg-blue-600 text-white font-semibold text-sm">${i}</button>`;
+            } else {
+                paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${i})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">${i}</button>`;
+            }
+        }
+        
+        if (endPage < totalPages) {
+            paginationHtml += '<span class="text-gray-500">...</span>';
+        }
+        
+        // Next page button
+        if (currentPage < totalPages) {
+            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${currentPage + 1})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+                Selanjutnya <i class="fas fa-chevron-down ml-1"></i>
+            </button>`;
+        }
+        
+        // Last page button
+        if (currentPage < totalPages) {
+            paginationHtml += `<button onclick="performSearch('${currentQuery.replace(/'/g, "\\'")}', ${totalPages})" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+                Terakhir <i class="fas fa-chevron-right ml-1"></i>
+            </button>`;
+        }
+        
+        paginationHtml += '</div>';
+        
+        // Insert pagination after search container or as sibling
+        const existingPagination = document.getElementById('search_pagination');
+        if (existingPagination) {
+            existingPagination.remove();
+        }
+        searchContainer.insertAdjacentHTML('afterend', paginationHtml);
+    }
+    
     // Show clear search button
     const searchInfoContainer = document.getElementById('search_info_container');
     if (searchInfoContainer) searchInfoContainer.classList.remove('hidden');
@@ -573,6 +657,13 @@ function clearSearch() {
         searchInput.value = '';
         currentQuery = '';
     }
+    
+    // Remove search pagination if exists
+    const searchPagination = document.getElementById('search_pagination');
+    if (searchPagination) {
+        searchPagination.remove();
+    }
+    
     applyFilters();
 }
 
