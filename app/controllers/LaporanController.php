@@ -1379,10 +1379,19 @@ class LaporanController {
         echo "\xEF\xBB\xBF";
         
         // Header row
-        fputcsv($output, ['No', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
-        
-        // Data rows
-        $kategoriTotals = [];
+        fputcsv($output, ['No', 'Kategori', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
+
+        if (!empty($stok)) {
+            usort($stok, function ($a, $b) {
+                $katA = $a['nama_kategori'] ?? '';
+                $katB = $b['nama_kategori'] ?? '';
+                $cmpKat = strcmp($katA, $katB);
+                if ($cmpKat !== 0) {
+                    return $cmpKat;
+                }
+                return strcmp($a['nama_barang'] ?? '', $b['nama_barang'] ?? '');
+            });
+        }
 
         // Data rows
         foreach ($stok as $index => $item) {
@@ -1399,22 +1408,9 @@ class LaporanController {
                 $status = 'Rendah';
             }
 
-            $katId = $item['id_kategori'] ?? 0;
-            $katName = $item['nama_kategori'] ?? 'Tanpa Kategori';
-            if (!isset($kategoriTotals[$katId])) {
-                $kategoriTotals[$katId] = [
-                    'nama_kategori' => $katName,
-                    'total_harga_beli' => 0,
-                    'total_harga_jual' => 0,
-                    'total_stok' => 0,
-                ];
-            }
-            $kategoriTotals[$katId]['total_harga_beli'] += $hargaBeli * $stokQty;
-            $kategoriTotals[$katId]['total_harga_jual'] += $hargaJual * $stokQty;
-            $kategoriTotals[$katId]['total_stok'] += $stokQty;
-            
             fputcsv($output, [
                 $index + 1,
+                $item['nama_kategori'] ?? 'Tanpa Kategori',
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'],
                 $item['satuan'],
@@ -1423,24 +1419,6 @@ class LaporanController {
                 $stokQty,
                 $status
             ]);
-        }
-
-        if (!empty($kategoriTotals)) {
-            uasort($kategoriTotals, function ($a, $b) {
-                return strcmp($a['nama_kategori'], $b['nama_kategori']);
-            });
-
-            fputcsv($output, []);
-            fputcsv($output, ['Ringkasan Per Kategori']);
-            fputcsv($output, ['Kategori', 'Total Harga Beli', 'Total Harga Jual', 'Total Stok']);
-            foreach ($kategoriTotals as $row) {
-                fputcsv($output, [
-                    $row['nama_kategori'],
-                    $row['total_harga_beli'],
-                    $row['total_harga_jual'],
-                    $row['total_stok'],
-                ]);
-            }
         }
 
         fclose($output);

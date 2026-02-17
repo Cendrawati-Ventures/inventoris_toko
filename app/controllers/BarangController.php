@@ -99,6 +99,28 @@ class BarangController {
 
     public function exportExcel() {
         $barang = $this->model->getAll();
+        if (!empty($barang)) {
+            usort($barang, function ($a, $b) {
+                $katA = $a['nama_kategori'] ?? '';
+                $katB = $b['nama_kategori'] ?? '';
+                $cmpKat = strcmp($katA, $katB);
+                if ($cmpKat !== 0) {
+                    return $cmpKat;
+                }
+                return strcmp($a['nama_barang'] ?? '', $b['nama_barang'] ?? '');
+            });
+        }
+        if (!empty($barang)) {
+            usort($barang, function ($a, $b) {
+                $katA = $a['nama_kategori'] ?? '';
+                $katB = $b['nama_kategori'] ?? '';
+                $cmpKat = strcmp($katA, $katB);
+                if ($cmpKat !== 0) {
+                    return $cmpKat;
+                }
+                return strcmp($a['nama_barang'] ?? '', $b['nama_barang'] ?? '');
+            });
+        }
 
         $filename = 'daftar-barang-' . date('Y-m-d') . '.csv';
 
