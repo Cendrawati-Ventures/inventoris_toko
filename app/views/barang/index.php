@@ -434,6 +434,26 @@ async function performSearch(query, page = 1) {
         const rawBody = await response.text();
 
         if (!response.ok) {
+            console.error('Search request failed:', response.status, rawBody);
+
+            if (currentKategori && currentKategori !== 'all') {
+                currentSearchPage = 1;
+                currentSearchTotal = 0;
+                currentSearchTotalPages = 0;
+
+                renderSearchResults([], {
+                    results: [],
+                    total: 0,
+                    page: 1,
+                    per_page: itemsPerPage,
+                    total_pages: 0
+                });
+
+                const kategoriSummaryEl = document.getElementById('kategori_summary');
+                if (kategoriSummaryEl) kategoriSummaryEl.classList.add('hidden');
+                return;
+            }
+
             const message = rawBody && rawBody.trim().length > 0
                 ? rawBody.trim()
                 : `Server error (${response.status})`;
