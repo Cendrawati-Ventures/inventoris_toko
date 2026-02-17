@@ -167,6 +167,21 @@
     </div>
     <?php endif; ?>
 
+    <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm">
+        <div class="border rounded-lg p-3 bg-gray-50">
+            <p class="text-gray-600">Total Stok</p>
+            <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        </div>
+    </div>
+
+    <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm hidden">
+        <div class="border rounded-lg p-3 bg-purple-50/50">
+            <p class="text-gray-600">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
+        </div>
+    </div>
+    <?php else: ?>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm">
         <div class="border rounded-lg p-3 bg-gray-50">
             <p class="text-gray-600">Total Harga Beli</p>
@@ -196,6 +211,7 @@
             <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
+    <?php endif; ?>
 
     <div class="overflow-x-auto">
         <table class="min-w-full table-fixed">

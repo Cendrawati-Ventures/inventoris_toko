@@ -1,33 +1,7 @@
 <?php ob_start(); ?>
 
 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'kasir'): ?>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <!-- Card Total Barang Terjual Hari Ini -->
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-blue-100 text-sm font-semibold">Total Barang Terjual Hari Ini</p>
-                <p class="text-3xl font-bold mt-2"><?= $stats['barang_terjual_hari_ini'] ?></p>
-            </div>
-            <div class="bg-blue-400 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-shopping-bag text-3xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- Card Total Stok -->
-    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-green-100 text-sm font-semibold">Total Stok</p>
-                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
-            </div>
-            <div class="bg-green-400 bg-opacity-30 rounded-full p-4">
-                <i class="fas fa-cubes text-3xl"></i>
-            </div>
-        </div>
-    </div>
-
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <!-- Card Penjualan Hari Ini -->
     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
         <div class="flex items-center justify-between">
@@ -50,6 +24,19 @@
             </div>
             <div class="bg-orange-400 bg-opacity-30 rounded-full p-4">
                 <i class="fas fa-shopping-cart text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Total Stok -->
+    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-semibold">Total Stok</p>
+                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
+            </div>
+            <div class="bg-green-400 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-cubes text-3xl"></i>
             </div>
         </div>
     </div>

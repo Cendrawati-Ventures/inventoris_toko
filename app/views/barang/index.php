@@ -34,6 +34,21 @@
     </div>
     <?php endif; ?>
 
+    <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
+    <div class="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div class="border-2 border-purple-300 rounded-lg p-3 sm:p-4 bg-purple-50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok</p>
+            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        </div>
+    </div>
+
+    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
+        <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
+        </div>
+    </div>
+    <?php else: ?>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div class="border-2 border-blue-300 rounded-lg p-3 sm:p-4 bg-blue-50 text-center">
             <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli</p>
@@ -63,6 +78,7 @@
             <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
+    <?php endif; ?>
 
     <div class="text-sm text-gray-600 mb-4">
         Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
