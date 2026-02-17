@@ -102,6 +102,10 @@
                 updateKategoriSummary(filter);
             });
         });
+
+        if (currentKategori !== 'all') {
+            updateKategoriSummary(currentKategori);
+        }
     });
 
     function updateRowNumbers() {
