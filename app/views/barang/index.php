@@ -217,13 +217,22 @@
 </div>
 
 <script>
-const kategoriNames = <?= json_encode(array_column($kategori ?? [], 'nama_kategori', 'id_kategori')) ?>;
-const totalsByKategori = <?= json_encode(array_reduce($totals_by_kategori ?? [], function ($carry, $row) {
-    $carry[$row['id_kategori']] = [
-        'total_harga_beli' => (float)$row['total_harga_beli'],
-        'total_harga_jual' => (float)$row['total_harga_jual'],
-        'total_stok' => (int)$row['total_stok'],
-    ];
+const kategoriNames = <?= json_encode((object)array_reduce($kategori ?? [], function ($carry, $row) {
+    $key = (string)($row['id_kategori'] ?? '');
+    if ($key !== '') {
+        $carry[$key] = $row['nama_kategori'] ?? '-';
+    }
+    return $carry;
+}, [])) ?>;
+const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategori ?? [], function ($carry, $row) {
+    $key = (string)($row['id_kategori'] ?? '');
+    if ($key !== '') {
+        $carry[$key] = [
+            'total_harga_beli' => (float)$row['total_harga_beli'],
+            'total_harga_jual' => (float)$row['total_harga_jual'],
+            'total_stok' => (int)$row['total_stok'],
+        ];
+    }
     return $carry;
 }, [])) ?>;
 
