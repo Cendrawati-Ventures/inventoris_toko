@@ -30,7 +30,7 @@ class Barang {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   $where
-                  ORDER BY b.created_at DESC, b.id_barang DESC";
+                  ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
         if (!empty($kategoriId)) {
             $stmt->bindParam(':id_kategori', $kategoriId, PDO::PARAM_INT);
@@ -55,7 +55,7 @@ class Barang {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   $where
-                  ORDER BY b.created_at DESC, b.id_barang DESC
+                  ORDER BY b.nama_barang ASC
                   LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($query);
         if (!empty($kategoriId)) {
