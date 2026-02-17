@@ -390,11 +390,19 @@ class LaporanController {
         $start = $_GET['start'] ?? '';
         $end = $_GET['end'] ?? '';
         $format = $_GET['format'] ?? 'pdf';
+        $kategori_param = $_GET['kategori'] ?? 'all';
+        $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
 
         if ($start !== '' && $end !== '') {
             $stok = $this->model->getLaporanStokRange($start, $end);
         } else {
             $stok = $this->model->getLaporanStok();
+        }
+
+        if (!empty($selected_kategori)) {
+            $stok = array_values(array_filter($stok, function ($item) use ($selected_kategori) {
+                return (int)($item['id_kategori'] ?? 0) === $selected_kategori;
+            }));
         }
 
         if ($format === 'pdf') {

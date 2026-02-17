@@ -21,11 +21,20 @@ class Barang {
         return 'BRG-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
     }
 
-    public function getAll() {
+    public function getAll($kategoriId = null) {
+        $where = '';
+        if (!empty($kategoriId)) {
+            $where = 'WHERE b.id_kategori = :id_kategori';
+        }
+
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  $where
                   ORDER BY b.created_at DESC, b.id_barang DESC";
         $stmt = $this->conn->prepare($query);
+        if (!empty($kategoriId)) {
+            $stmt->bindParam(':id_kategori', $kategoriId, PDO::PARAM_INT);
+        }
         $stmt->execute();
         $results = $stmt->fetchAll();
         

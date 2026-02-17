@@ -98,7 +98,9 @@ class BarangController {
     }
 
     public function exportExcel() {
-        $barang = $this->model->getAll();
+        $kategori_param = $_GET['kategori'] ?? 'all';
+        $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
+        $barang = $this->model->getAll($selected_kategori);
         if (!empty($barang)) {
             usort($barang, function ($a, $b) {
                 $katA = $a['nama_kategori'] ?? '';

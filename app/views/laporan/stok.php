@@ -71,6 +71,7 @@
         let url = '/laporan/stok/export?format=pdf';
         if (start) url += '&start=' + start;
         if (end) url += '&end=' + end;
+        if (currentKategori !== 'all') url += '&kategori=' + encodeURIComponent(currentKategori);
         window.location.href = url;
     }
 
@@ -80,6 +81,7 @@
         let url = '/laporan/stok/export?format=excel';
         if (start) url += '&start=' + start;
         if (end) url += '&end=' + end;
+        if (currentKategori !== 'all') url += '&kategori=' + encodeURIComponent(currentKategori);
         window.location.href = url;
     }
 
