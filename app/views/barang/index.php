@@ -6,13 +6,19 @@
             <i class="fas fa-box text-blue-600 mr-2"></i>Daftar Barang
         </h2>
         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div class="w-full sm:w-72">
+            <div class="w-full flex gap-2">
                 <input
                     id="searchBarang"
                     type="text"
                     placeholder="Cari nama/kode/kategori/satuan..."
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    class="flex-1 sm:w-72 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <button 
+                    id="searchBtn"
+                    onclick="triggerSearch()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition text-sm font-medium">
+                    <i class="fas fa-search mr-1"></i>Cari
+                </button>
             </div>
             <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 sm:py-2 rounded transition">
                 <i class="fas fa-file-excel mr-2"></i>Download Excel
@@ -434,31 +440,34 @@ async function performSearch(query, page = 1) {
     }
 }
 
+// Trigger search function
+function triggerSearch() {
+    const searchInput = document.getElementById('searchBarang');
+    if (!searchInput) return;
+    
+    currentQuery = searchInput.value || '';
+    console.log('Searching for:', currentQuery);
+    
+    if (currentQuery.trim().length === 0) {
+        loadAllBarang(1);
+        return;
+    }
+    
+    performSearch(currentQuery, 1);
+}
+
 const searchInput = document.getElementById('searchBarang');
 if (searchInput) {
     console.log('Search input found:', searchInput);
-    searchInput.addEventListener('input', debounce(async (e) => {
-        currentQuery = e.target.value || '';
-        console.log('Search query:', currentQuery);
-        
-        if (currentQuery.trim().length === 0) {
-            applyFilters();
-            return;
+    
+    // Support Enter key to search
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            triggerSearch();
         }
-        
-        performSearch(currentQuery, 1);
-    }, 300));
+    });
 } else {
     console.error('Search input element not found! Check if element with id="searchBarang" exists');
-}
-
-// Debounce utility untuk mengurangi API calls
-function debounce(func, delay) {
-    let timeoutId;
-    return function(...args) {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
 }
 
 // Render hasil search ke halaman
