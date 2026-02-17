@@ -337,10 +337,17 @@ class LaporanController {
 
     public function stok() {
         $page = max(1, (int)($_GET['page'] ?? 1));
+        $kategori_param = $_GET['kategori'] ?? 'all';
+        $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
         $items_per_page = 10;
         $offset = ($page - 1) * $items_per_page;
         
         $all_stok = $this->model->getLaporanStok();
+        if (!empty($selected_kategori)) {
+            $all_stok = array_values(array_filter($all_stok, function ($item) use ($selected_kategori) {
+                return (int)($item['id_kategori'] ?? 0) === $selected_kategori;
+            }));
+        }
         $totals = $this->model->getStokTotals();
         $totals_by_kategori = $this->model->getStokTotalsByKategori();
         

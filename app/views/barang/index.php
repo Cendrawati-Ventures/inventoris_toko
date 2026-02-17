@@ -25,11 +25,11 @@
 
     <?php if (!empty($kategori)): ?>
     <div class="flex flex-wrap items-center gap-2 mb-4">
-        <button class="px-3 py-2 rounded border text-xs sm:text-sm bg-blue-600 text-white" data-kat="all" onclick="filterKategori('all')">Semua</button>
+        <a href="/barang" class="px-3 py-2 rounded border text-xs sm:text-sm <?= empty($selected_kategori) ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>" data-kat="all">Semua</a>
         <?php foreach ($kategori as $kat): ?>
-            <button class="px-3 py-2 rounded border text-xs sm:text-sm bg-gray-100 hover:bg-gray-200" data-kat="<?= $kat['id_kategori'] ?>" onclick="filterKategori('<?= $kat['id_kategori'] ?>')">
+            <a href="/barang?kategori=<?= $kat['id_kategori'] ?>" class="px-3 py-2 rounded border text-xs sm:text-sm <?= (!empty($selected_kategori) && (int)$selected_kategori === (int)$kat['id_kategori']) ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200' ?>" data-kat="<?= $kat['id_kategori'] ?>">
                 <?= htmlspecialchars($kat['nama_kategori']) ?>
-            </button>
+            </a>
         <?php endforeach; ?>
     </div>
     <?php endif; ?>
@@ -172,10 +172,10 @@
     <?php if ($total_pages > 1): ?>
     <div class="flex justify-center items-center gap-2 mt-6">
         <?php if ($current_page > 1): ?>
-            <a href="/barang?page=1" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            <a href="/barang?page=1<?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Pertama
             </a>
-            <a href="/barang?page=<?= $current_page - 1 ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            <a href="/barang?page=<?= $current_page - 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Sebelumnya
             </a>
         <?php endif; ?>
@@ -191,7 +191,7 @@
             <?php if ($i == $current_page): ?>
                 <span class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold"><?= $i ?></span>
             <?php else: ?>
-                <a href="/barang?page=<?= $i ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+                <a href="/barang?page=<?= $i ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                     <?= $i ?>
                 </a>
             <?php endif; ?>
@@ -202,10 +202,10 @@
         <?php endif; ?>
 
         <?php if ($current_page < $total_pages): ?>
-            <a href="/barang?page=<?= $current_page + 1 ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            <a href="/barang?page=<?= $current_page + 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Berikutnya<i class="fas fa-chevron-right ml-1"></i>
             </a>
-            <a href="/barang?page=<?= $total_pages ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
+            <a href="/barang?page=<?= $total_pages ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Terakhir<i class="fas fa-chevron-right ml-1"></i>
             </a>
         <?php endif; ?>
@@ -238,20 +238,13 @@ const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategor
 
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
-let currentKategori = 'all';
+let currentKategori = <?= json_encode($selected_kategori ?? 'all') ?>;
 let currentQuery = '';
 
 function filterKategori(katId) {
     currentKategori = katId;
     applyFilters();
 
-    document.querySelectorAll('[data-kat]').forEach(btn => {
-        const active = btn.getAttribute('data-kat') === katId;
-        btn.classList.toggle('bg-blue-600', active);
-        btn.classList.toggle('text-white', active);
-        btn.classList.toggle('bg-gray-100', !active);
-        btn.classList.toggle('text-gray-800', !active);
-    });
 }
 
 function applyFilters() {

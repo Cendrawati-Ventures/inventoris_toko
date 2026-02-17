@@ -37,12 +37,21 @@ class Barang {
         return $results;
     }
 
-    public function getAllWithPagination($offset, $limit) {
+    public function getAllWithPagination($offset, $limit, $kategoriId = null) {
+        $where = '';
+        if (!empty($kategoriId)) {
+            $where = 'WHERE b.id_kategori = :id_kategori';
+        }
+
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  $where
                   ORDER BY b.created_at DESC, b.id_barang DESC
                   LIMIT :limit OFFSET :offset";
         $stmt = $this->conn->prepare($query);
+        if (!empty($kategoriId)) {
+            $stmt->bindParam(':id_kategori', $kategoriId, PDO::PARAM_INT);
+        }
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -55,9 +64,17 @@ class Barang {
         return $results;
     }
 
-    public function countAll() {
-        $query = "SELECT COUNT(*) as total FROM " . $this->table;
+    public function countAll($kategoriId = null) {
+        $where = '';
+        if (!empty($kategoriId)) {
+            $where = 'WHERE id_kategori = :id_kategori';
+        }
+
+        $query = "SELECT COUNT(*) as total FROM " . $this->table . " $where";
         $stmt = $this->conn->prepare($query);
+        if (!empty($kategoriId)) {
+            $stmt->bindParam(':id_kategori', $kategoriId, PDO::PARAM_INT);
+        }
         $stmt->execute();
         $row = $stmt->fetch();
         return (int)($row['total'] ?? 0);

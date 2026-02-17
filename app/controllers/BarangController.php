@@ -12,13 +12,15 @@ class BarangController {
 
     public function index() {
         $page = max(1, (int)($_GET['page'] ?? 1));
+        $kategori_param = $_GET['kategori'] ?? 'all';
+        $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
         $items_per_page = 25;
         $offset = ($page - 1) * $items_per_page;
 
-        $total_items = $this->model->countAll();
+        $total_items = $this->model->countAll($selected_kategori);
         $total_pages = (int)ceil($total_items / $items_per_page);
         $current_page = $page;
-        $barang = $this->model->getAllWithPagination($offset, $items_per_page);
+        $barang = $this->model->getAllWithPagination($offset, $items_per_page, $selected_kategori);
         $kategori = $this->model->getAllKategori();
         $totals = $this->model->getTotals();
         $totals_by_kategori = $this->model->getTotalsByKategori();

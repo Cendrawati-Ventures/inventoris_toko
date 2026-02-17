@@ -150,11 +150,11 @@
     <div class="mb-6 pb-4 border-b">
         <p class="text-sm font-semibold text-gray-700 mb-3">Filter Kategori:</p>
         <div class="flex flex-wrap gap-2">
-            <button class="px-4 py-2 rounded-lg font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 filter-btn active" data-filter="all">Semua</button>
+            <a href="/laporan/stok" class="px-4 py-2 rounded-lg font-semibold text-sm <?= empty($selected_kategori) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="all">Semua</a>
             <?php foreach ($kategori as $kat): ?>
-            <button class="px-4 py-2 rounded-lg font-semibold text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 filter-btn" data-filter="<?= $kat['id_kategori'] ?>">
+            <a href="/laporan/stok?kategori=<?= $kat['id_kategori'] ?>" class="px-4 py-2 rounded-lg font-semibold text-sm <?= (!empty($selected_kategori) && (int)$selected_kategori === (int)$kat['id_kategori']) ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> filter-btn" data-filter="<?= $kat['id_kategori'] ?>">
                 <?= htmlspecialchars($kat['nama_kategori']) ?>
-            </button>
+            </a>
             <?php endforeach; ?>
         </div>
     </div>
@@ -247,11 +247,11 @@
     <?php if ($total_pages > 1): ?>
     <div class="flex justify-center items-center gap-2 mt-6">
         <?php if ($current_page > 1): ?>
-            <a href="/laporan/stok?page=1" 
+            <a href="/laporan/stok?page=1<?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Pertama
             </a>
-            <a href="/laporan/stok?page=<?= $current_page - 1 ?>" 
+            <a href="/laporan/stok?page=<?= $current_page - 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 <i class="fas fa-chevron-left mr-1"></i>Sebelumnya
             </a>
@@ -270,7 +270,7 @@
             <?php if ($i == $current_page): ?>
                 <span class="px-3 py-2 rounded bg-blue-600 text-white text-sm font-semibold"><?= $i ?></span>
             <?php else: ?>
-                <a href="/laporan/stok?page=<?= $i ?>" 
+                <a href="/laporan/stok?page=<?= $i ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
                    class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                     <?= $i ?>
                 </a>
@@ -282,11 +282,11 @@
         <?php endif; ?>
 
         <?php if ($current_page < $total_pages): ?>
-            <a href="/laporan/stok?page=<?= $current_page + 1 ?>" 
+            <a href="/laporan/stok?page=<?= $current_page + 1 ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Berikutnya<i class="fas fa-chevron-right ml-1"></i>
             </a>
-            <a href="/laporan/stok?page=<?= $total_pages ?>" 
+            <a href="/laporan/stok?page=<?= $total_pages ?><?= !empty($selected_kategori) ? '&kategori=' . (int)$selected_kategori : '' ?>" 
                class="px-3 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition text-sm font-semibold">
                 Terakhir<i class="fas fa-chevron-right ml-1"></i>
             </a>
