@@ -104,10 +104,12 @@
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                         <div>
                             <div class="text-gray-500 text-xs">Harga Beli</div>
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_beli']) ?></div>
                         </div>
+                        <?php endif; ?>
                         <div>
                             <div class="text-gray-500 text-xs">Harga Jual</div>
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></div>
@@ -136,7 +138,9 @@
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>
+                    <?php endif; ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
@@ -159,7 +163,9 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium"><?= htmlspecialchars($item['satuan']) ?></td>
+                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($item['harga_beli']) ?></td>
+                            <?php endif; ?>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></td>
                             <td class="px-6 py-4 text-center">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-xs font-bold">
