@@ -39,6 +39,16 @@
     </form>
 
     <script>
+    const kategoriNames = <?= json_encode(array_column($kategori ?? [], 'nama_kategori', 'id_kategori')) ?>;
+    const totalsByKategori = <?= json_encode(array_reduce($totals_by_kategori ?? [], function ($carry, $row) {
+        $carry[$row['id_kategori']] = [
+            'total_harga_beli' => (float)$row['total_harga_beli'],
+            'total_harga_jual' => (float)$row['total_harga_jual'],
+            'total_stok' => (int)$row['total_stok'],
+        ];
+        return $carry;
+    }, [])) ?>;
+
     function filterStok() {
         // Reset filter jika diperlukan, atau implementasi filter tanggal
         // Untuk sekarang filter hanya menampilkan ulang halaman
@@ -79,6 +89,7 @@
                 });
                 
                 updateRowNumbers();
+                updateKategoriSummary(filter);
             });
         });
     });
@@ -91,6 +102,36 @@
                 noCell.textContent = index + 1;
             }
         });
+    }
+
+    function formatRupiah(num) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(num || 0);
+    }
+
+    function updateKategoriSummary(katId) {
+        const summaryEl = document.getElementById('kategori_summary');
+        const nameEl = document.getElementById('kategori_name');
+        const beliEl = document.getElementById('kategori_beli');
+        const jualEl = document.getElementById('kategori_jual');
+        const stokEl = document.getElementById('kategori_stok');
+        if (!summaryEl || !nameEl || !beliEl || !jualEl || !stokEl) return;
+
+        if (!katId || katId === 'all') {
+            summaryEl.classList.add('hidden');
+            return;
+        }
+
+        const data = totalsByKategori[katId] || { total_harga_beli: 0, total_harga_jual: 0, total_stok: 0 };
+        nameEl.textContent = kategoriNames[katId] || '-';
+        beliEl.textContent = formatRupiah(data.total_harga_beli || 0);
+        jualEl.textContent = formatRupiah(data.total_harga_jual || 0);
+        stokEl.textContent = (data.total_stok || 0).toLocaleString('id-ID');
+        summaryEl.classList.remove('hidden');
     }
 
     </script>
@@ -122,6 +163,21 @@
         <div class="border rounded-lg p-3 bg-gray-50">
             <p class="text-gray-600">Total Stok</p>
             <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        </div>
+    </div>
+
+    <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm hidden">
+        <div class="border rounded-lg p-3 bg-blue-50/50">
+            <p class="text-gray-600">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-lg font-semibold text-blue-700" id="kategori_beli">Rp 0</p>
+        </div>
+        <div class="border rounded-lg p-3 bg-green-50/50">
+            <p class="text-gray-600">Total Harga Jual (Kategori)</p>
+            <p class="text-lg font-semibold text-green-700" id="kategori_jual">Rp 0</p>
+        </div>
+        <div class="border rounded-lg p-3 bg-purple-50/50">
+            <p class="text-gray-600">Total Stok (Kategori)</p>
+            <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
 

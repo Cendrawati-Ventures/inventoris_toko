@@ -366,6 +366,7 @@ class LaporanController {
         
         $all_stok = $this->model->getLaporanStok();
         $totals = $this->model->getStokTotals();
+        $totals_by_kategori = $this->model->getStokTotalsByKategori();
         
         // Pagination
         $total_items = count($all_stok);
@@ -999,11 +1000,78 @@ class LaporanController {
         $totalBeli = 0;
         $totalJual = 0;
         $totalStok = 0;
+        $kategoriTotals = [];
         foreach ($stok as $item) {
-            $totalBeli += (float)$item['harga_beli'];
-            $totalJual += (float)$item['harga_jual'];
-            $totalStok += (int)$item['stok'];
+            $hargaBeli = (float)($item['harga_beli'] ?? 0);
+            $hargaJual = (float)($item['harga_jual'] ?? 0);
+            $stokQty = (int)($item['stok'] ?? 0);
+            $totalBeli += $hargaBeli * $stokQty;
+            $totalJual += $hargaJual * $stokQty;
+            $totalStok += $stokQty;
+
+            $katId = $item['id_kategori'] ?? 0;
+            $katName = $item['nama_kategori'] ?? 'Tanpa Kategori';
+            if (!isset($kategoriTotals[$katId])) {
+                $kategoriTotals[$katId] = [
+                    'nama_kategori' => $katName,
+                    'total_harga_beli' => 0,
+                    'total_harga_jual' => 0,
+                    'total_stok' => 0,
+                ];
+            }
+            $kategoriTotals[$katId]['total_harga_beli'] += $hargaBeli * $stokQty;
+            $kategoriTotals[$katId]['total_harga_jual'] += $hargaJual * $stokQty;
+            $kategoriTotals[$katId]['total_stok'] += $stokQty;
         }
+
+        if (!empty($kategoriTotals)) {
+            uasort($kategoriTotals, function ($a, $b) {
+                return strcmp($a['nama_kategori'], $b['nama_kategori']);
+            });
+        }
+
+        $kategoriSummaryHtml = '';
+        if (!empty($kategoriTotals)) {
+            $kategoriSummaryHtml .= '<div class="section-title">Ringkasan Per Kategori</div>';
+            $kategoriSummaryHtml .= '<table class="summary-table">'
+                . '<thead><tr>'
+                . '<th>Kategori</th>'
+                . '<th class="text-right">Total Harga Beli</th>'
+                . '<th class="text-right">Total Harga Jual</th>'
+                . '<th class="text-center">Total Stok</th>'
+                . '</tr></thead><tbody>';
+            foreach ($kategoriTotals as $row) {
+                $kategoriSummaryHtml .= '<tr>'
+                    . '<td>' . htmlspecialchars($row['nama_kategori']) . '</td>'
+                    . '<td class="text-right">Rp ' . number_format($row['total_harga_beli'], 0, ',', '.') . '</td>'
+                    . '<td class="text-right">Rp ' . number_format($row['total_harga_jual'], 0, ',', '.') . '</td>'
+                    . '<td class="text-center">' . number_format($row['total_stok'], 0, ',', '.') . '</td>'
+                    . '</tr>';
+            }
+            $kategoriSummaryHtml .= '</tbody></table>';
+        }
+                    margin: 10px 0 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #1e40af;
+                }
+
+                .summary-table thead {
+                    background-color: #e0e7ff;
+                    color: #1e40af;
+                }
+
+                .summary-table th {
+                    border-bottom: 1px solid #c7d2fe;
+                }
+
+                .summary-table td {
+                    font-size: 12px;
+                }
+
+            ' . $kategoriSummaryHtml . '
+
+            <table>
         
         // Generate HTML for PDF
         $html = '<!DOCTYPE html>
@@ -1327,7 +1395,14 @@ class LaporanController {
         fputcsv($output, ['No', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
         
         // Data rows
+        $kategoriTotals = [];
+
+        // Data rows
         foreach ($stok as $index => $item) {
+            $hargaBeli = (float)($item['harga_beli'] ?? 0);
+            $hargaJual = (float)($item['harga_jual'] ?? 0);
+            $stokQty = (int)($item['stok'] ?? 0);
+
             $status = 'Aman';
             if ($item['stok'] == 0) {
                 $status = 'Habis';
@@ -1336,17 +1411,49 @@ class LaporanController {
             } elseif ($item['stok'] <= 10) {
                 $status = 'Rendah';
             }
+
+            $katId = $item['id_kategori'] ?? 0;
+            $katName = $item['nama_kategori'] ?? 'Tanpa Kategori';
+            if (!isset($kategoriTotals[$katId])) {
+                $kategoriTotals[$katId] = [
+                    'nama_kategori' => $katName,
+                    'total_harga_beli' => 0,
+                    'total_harga_jual' => 0,
+                    'total_stok' => 0,
+                ];
+            }
+            $kategoriTotals[$katId]['total_harga_beli'] += $hargaBeli * $stokQty;
+            $kategoriTotals[$katId]['total_harga_jual'] += $hargaJual * $stokQty;
+            $kategoriTotals[$katId]['total_stok'] += $stokQty;
             
             fputcsv($output, [
                 $index + 1,
                 $item['kode_barang'] ?? '-',
                 $item['nama_barang'],
                 $item['satuan'],
-                $item['harga_beli'],
-                $item['harga_jual'],
-                $item['stok'],
+                $hargaBeli,
+                $hargaJual,
+                $stokQty,
                 $status
             ]);
+        }
+
+        if (!empty($kategoriTotals)) {
+            uasort($kategoriTotals, function ($a, $b) {
+                return strcmp($a['nama_kategori'], $b['nama_kategori']);
+            });
+
+            fputcsv($output, []);
+            fputcsv($output, ['Ringkasan Per Kategori']);
+            fputcsv($output, ['Kategori', 'Total Harga Beli', 'Total Harga Jual', 'Total Stok']);
+            foreach ($kategoriTotals as $row) {
+                fputcsv($output, [
+                    $row['nama_kategori'],
+                    $row['total_harga_beli'],
+                    $row['total_harga_jual'],
+                    $row['total_stok'],
+                ]);
+            }
         }
 
         fclose($output);

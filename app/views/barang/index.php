@@ -49,6 +49,21 @@
         </div>
     </div>
 
+    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
+        <div class="border border-blue-200 rounded-lg p-3 sm:p-4 bg-blue-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-base sm:text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
+        </div>
+        <div class="border border-green-200 rounded-lg p-3 sm:p-4 bg-green-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori)</p>
+            <p class="text-base sm:text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
+        </div>
+        <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori)</p>
+            <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
+        </div>
+    </div>
+
     <div class="text-sm text-gray-600 mb-4">
         Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
     </div>
@@ -202,6 +217,16 @@
 </div>
 
 <script>
+const kategoriNames = <?= json_encode(array_column($kategori ?? [], 'nama_kategori', 'id_kategori')) ?>;
+const totalsByKategori = <?= json_encode(array_reduce($totals_by_kategori ?? [], function ($carry, $row) {
+    $carry[$row['id_kategori']] = [
+        'total_harga_beli' => (float)$row['total_harga_beli'],
+        'total_harga_jual' => (float)$row['total_harga_jual'],
+        'total_stok' => (int)$row['total_stok'],
+    ];
+    return $carry;
+}, [])) ?>;
+
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = 'all';
@@ -239,6 +264,7 @@ function applyFilters() {
 
     updateRowNumbers();
     updateVisibleCount();
+    updateKategoriSummary();
 }
 
 function updateRowNumbers() {
@@ -258,6 +284,51 @@ function updateVisibleCount() {
     const totalEl = document.getElementById('total_count');
     if (visibleEl) visibleEl.textContent = visibleRows.toLocaleString('id-ID');
     if (totalEl) totalEl.textContent = totalRows.toLocaleString('id-ID');
+}
+
+function formatRupiah(num) {
+    return 'Rp ' + (num || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
+}
+
+function updateKategoriSummary() {
+    const summaryEl = document.getElementById('kategori_summary');
+    const nameEl = document.getElementById('kategori_name');
+    const beliEl = document.getElementById('kategori_beli');
+    const jualEl = document.getElementById('kategori_jual');
+    const stokEl = document.getElementById('kategori_stok');
+    if (!summaryEl || !nameEl || !beliEl || !jualEl || !stokEl) return;
+
+    if (currentKategori === 'all') {
+        summaryEl.classList.add('hidden');
+        return;
+    }
+
+    let totalBeli = 0;
+    let totalJual = 0;
+    let totalStok = 0;
+
+    if (currentQuery) {
+        const rows = Array.from(document.querySelectorAll('tbody tr[data-item="barang-row"]')).filter(row => row.style.display !== 'none');
+        rows.forEach(row => {
+            const hargaBeli = parseFloat(row.getAttribute('data-beli')) || 0;
+            const hargaJual = parseFloat(row.getAttribute('data-jual')) || 0;
+            const stok = parseFloat(row.getAttribute('data-stok')) || 0;
+            totalBeli += hargaBeli * stok;
+            totalJual += hargaJual * stok;
+            totalStok += stok;
+        });
+    } else if (totalsByKategori[currentKategori]) {
+        const data = totalsByKategori[currentKategori];
+        totalBeli = data.total_harga_beli || 0;
+        totalJual = data.total_harga_jual || 0;
+        totalStok = data.total_stok || 0;
+    }
+
+    nameEl.textContent = kategoriNames[currentKategori] || '-';
+    beliEl.textContent = formatRupiah(totalBeli);
+    jualEl.textContent = formatRupiah(totalJual);
+    stokEl.textContent = (totalStok || 0).toLocaleString('id-ID');
+    summaryEl.classList.remove('hidden');
 }
 
 const searchInput = document.getElementById('searchBarang');

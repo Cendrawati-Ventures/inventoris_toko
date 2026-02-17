@@ -21,6 +21,7 @@ class BarangController {
         $barang = $this->model->getAllWithPagination($offset, $items_per_page);
         $kategori = $this->model->getAllKategori();
         $totals = $this->model->getTotals();
+        $totals_by_kategori = $this->model->getTotalsByKategori();
         require_once __DIR__ . '/../views/barang/index.php';
     }
 

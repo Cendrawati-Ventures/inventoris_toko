@@ -74,6 +74,22 @@ class Barang {
         return $stmt->fetch();
     }
 
+    public function getTotalsByKategori() {
+        $query = "SELECT
+                    k.id_kategori,
+                    k.nama_kategori,
+                    COALESCE(SUM(b.harga_beli * b.stok), 0) as total_harga_beli,
+                    COALESCE(SUM(b.harga_jual * b.stok), 0) as total_harga_jual,
+                    COALESCE(SUM(b.stok), 0) as total_stok
+                  FROM " . $this->table . " b
+                  LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  GROUP BY k.id_kategori, k.nama_kategori
+                  ORDER BY k.nama_kategori ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function getById($id) {
         $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
