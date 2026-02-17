@@ -52,9 +52,17 @@
         </div>
     </div>
 
-    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
+    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
+        <div class="border border-blue-200 rounded-lg p-3 sm:p-4 bg-blue-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-base sm:text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
+        </div>
+        <div class="border border-green-200 rounded-lg p-3 sm:p-4 bg-green-50/50 text-center">
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori: <span id="kategori_name2">-</span>)</p>
+            <p class="text-base sm:text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
+        </div>
         <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name3">-</span>)</p>
             <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
@@ -671,6 +679,24 @@ function clearSearch() {
         currentQuery = '';
     }
     
+    // Hide kategori summary
+    const kategoriSummary = document.getElementById('kategori_summary');
+    if (kategoriSummary) {
+        kategoriSummary.classList.add('hidden');
+    }
+    
+    // Reset kategori filter to all
+    currentKategori = 'all';
+    document.querySelectorAll('[id^="kat-"]').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+        btn.classList.add('bg-gray-100', 'hover:bg-gray-200');
+    });
+    const allBtn = document.getElementById('kat-all');
+    if (allBtn) {
+        allBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+        allBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+    }
+    
     // Load all barang again
     loadAllBarang(1);
 }
@@ -702,6 +728,11 @@ async function loadAllBarang(page = 1) {
     }
 }
 
+// Format rupiah helper function
+function formatRupiah(num) {
+    return 'Rp ' + (num || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
 // Filter barang by kategori
 async function filterByKategori(kategoriId) {
     // Update currentKategori variable
@@ -731,6 +762,38 @@ async function filterByKategori(kategoriId) {
         console.log('Kategori filtered:', data);
         
         renderSearchResults(data.results || [], data);
+        
+        // Show kategori summary if not 'all'
+        const kategoriSummary = document.getElementById('kategori_summary');
+        if (kategoriId !== 'all' && kategoriSummary) {
+            // Calculate totals from results
+            const results = data.results || [];
+            let totalHargaBeli = 0;
+            let totalHargaJual = 0;
+            let totalStok = 0;
+            let kategoriName = '-';
+            
+            results.forEach(barang => {
+                totalHargaBeli += (parseFloat(barang.harga_beli) || 0) * (parseInt(barang.stok) || 0);
+                totalHargaJual += (parseFloat(barang.harga_jual) || 0) * (parseInt(barang.stok) || 0);
+                totalStok += parseInt(barang.stok) || 0;
+                if (barang.nama_kategori && kategoriName === '-') {
+                    kategoriName = barang.nama_kategori;
+                }
+            });
+            
+            // Update kategori summary display
+            document.getElementById('kategori_name').textContent = kategoriName;
+            document.getElementById('kategori_name2').textContent = kategoriName;
+            document.getElementById('kategori_name3').textContent = kategoriName;
+            document.getElementById('kategori_beli').textContent = formatRupiah(totalHargaBeli);
+            document.getElementById('kategori_jual').textContent = formatRupiah(totalHargaJual);
+            document.getElementById('kategori_stok').textContent = totalStok.toLocaleString('id-ID');
+            
+            kategoriSummary.classList.remove('hidden');
+        } else if (kategoriId === 'all' && kategoriSummary) {
+            kategoriSummary.classList.add('hidden');
+        }
     } catch (error) {
         console.error('Error filtering barang:', error);
     }
