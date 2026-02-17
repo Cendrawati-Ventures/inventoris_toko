@@ -238,11 +238,11 @@ const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategor
 
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
-let currentKategori = <?= json_encode($selected_kategori ?? 'all') ?>;
+let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
 let currentQuery = '';
 
 function filterKategori(katId) {
-    currentKategori = katId;
+    currentKategori = String(katId);
     applyFilters();
 
 }
@@ -251,14 +251,14 @@ function applyFilters() {
     const query = (currentQuery || '').trim().toLowerCase();
 
     document.querySelectorAll('[data-item="barang-row"]').forEach(row => {
-        const matchKat = currentKategori === 'all' || row.getAttribute('data-kategori') === currentKategori;
+        const matchKat = currentKategori === 'all' || String(row.getAttribute('data-kategori')) === currentKategori;
         const searchData = (row.getAttribute('data-search') || '').toLowerCase();
         const matchSearch = !query || searchData.includes(query);
         row.style.display = (matchKat && matchSearch) ? '' : 'none';
     });
 
     document.querySelectorAll('[data-item="barang-card"]').forEach(card => {
-        const matchKat = currentKategori === 'all' || card.getAttribute('data-kategori') === currentKategori;
+        const matchKat = currentKategori === 'all' || String(card.getAttribute('data-kategori')) === currentKategori;
         const searchData = (card.getAttribute('data-search') || '').toLowerCase();
         const matchSearch = !query || searchData.includes(query);
         card.style.display = (matchKat && matchSearch) ? '' : 'none';

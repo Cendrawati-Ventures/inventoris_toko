@@ -57,6 +57,7 @@
         }
         return $carry;
     }, [])) ?>;
+    const currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
 
     function filterStok() {
         // Reset filter jika diperlukan, atau implementasi filter tanggal
@@ -93,8 +94,8 @@
                 
                 const filter = this.dataset.filter;
                 document.querySelectorAll('tbody tr').forEach(row => {
-                    const kategoriId = row.dataset.kategoriId;
-                    row.style.display = (filter === 'all' || kategoriId === filter) ? '' : 'none';
+                        const kategoriId = String(row.dataset.kategoriId || '');
+                        row.style.display = (filter === 'all' || kategoriId === String(filter)) ? '' : 'none';
                 });
                 
                 updateRowNumbers();
