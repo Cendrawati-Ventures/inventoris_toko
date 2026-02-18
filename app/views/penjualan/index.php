@@ -158,12 +158,10 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm">
-                                <div class="space-y-1">
-                                    <p class="text-gray-800 font-medium leading-snug truncate max-w-xs" title="<?= htmlspecialchars($item['barang_list'] ?? '-') ?>"><?= htmlspecialchars($item['barang_list'] ?? '-') ?></p>
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
-                                        <i class="fas fa-box"></i><?= (int)($item['jumlah_item'] ?? 0) ?> item
-                                    </span>
-                                </div>
+                                <span class="inline-flex items-center justify-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-700">
+                                    <i class="fas fa-box"></i>
+                                    <span><?= number_format((int)($item['jumlah_item'] ?? 0), 0, ',', '.') ?> item</span>
+                                </span>
                             </td>
                             <td class="px-6 py-4 text-right align-middle">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-600">
