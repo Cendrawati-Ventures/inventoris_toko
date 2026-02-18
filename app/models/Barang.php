@@ -193,7 +193,8 @@ class Barang {
                       satuan = :satuan, 
                       harga_beli = :harga_beli, 
                       harga_jual = :harga_jual, 
-                      stok = :stok 
+                      stok = :stok,
+                      updated_at = NOW()
                   WHERE id_barang = :id";
         
         $stmt = $this->conn->prepare($query);
@@ -210,7 +211,7 @@ class Barang {
     }
 
     public function updateSatuanBarang($id, $satuan) {
-        $query = "UPDATE " . $this->table . " SET satuan = :satuan WHERE id_barang = :id";
+        $query = "UPDATE " . $this->table . " SET satuan = :satuan, updated_at = NOW() WHERE id_barang = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':satuan', $satuan);
@@ -226,7 +227,8 @@ class Barang {
 
     public function updateStok($id, $jumlah) {
         $query = "UPDATE " . $this->table . " 
-                  SET stok = stok + :jumlah 
+                  SET stok = stok + :jumlah,
+                      updated_at = NOW() 
                   WHERE id_barang = :id";
         
         $stmt = $this->conn->prepare($query);

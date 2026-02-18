@@ -108,7 +108,7 @@
             <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
         <?php else: ?>
             <?php foreach ($barang as $index => $item): ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '')))) ?>">
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
@@ -132,6 +132,10 @@
                             <div class="text-gray-500 text-xs">Harga Jual</div>
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></div>
                         </div>
+                    </div>
+                    <div class="flex items-center text-xs text-gray-500 mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Update Terakhir: <?= !empty($item['updated_at']) ? formatTanggalWaktu($item['updated_at']) : '-' ?></span>
                     </div>
                     <div class="flex gap-2">
                         <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
@@ -161,17 +165,18 @@
                     <?php endif; ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Update Terakhir</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
                 <?php if (empty($barang)): ?>
                     <tr>
-                        <td colspan="9" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang</td>
+                        <td colspan="<?= (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? 10 : 9 ?>" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($barang as $index => $item): ?>
-                        <tr class="hover:bg-blue-50 transition duration-200" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '')))) ?>">
+                        <tr class="hover:bg-blue-50 transition duration-200" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-6 py-4 font-medium text-gray-800"><?= htmlspecialchars($item['nama_barang']) ?></td>
@@ -189,6 +194,12 @@
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-xs font-bold">
                                     <?= $item['stok'] ?>
                                 </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-clock text-blue-500"></i>
+                                    <span><?= !empty($item['updated_at']) ? formatTanggalWaktu($item['updated_at']) : '-' ?></span>
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex justify-center gap-3">
@@ -368,6 +379,25 @@ function updateVisibleCount() {
 function formatRupiah(num) {
     const value = Number(num) || 0;
     return 'Rp ' + value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+}
+
+function formatDateTimeDisplay(value) {
+    if (!value) return '-';
+    let normalized = value;
+    if (typeof normalized === 'string' && normalized.includes(' ')) {
+        normalized = normalized.replace(' ', 'T');
+    }
+    const parsed = new Date(normalized);
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(parsed);
 }
 
 function updateKategoriSummary() {
@@ -579,6 +609,10 @@ function renderSearchResults(results, apiResponse = {}) {
                             <div class="font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</div>
                         </div>
                     </div>
+                    <div class="flex items-center text-xs text-gray-500 mb-3">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Update Terakhir: ${formatDateTimeDisplay(item.updated_at)}</span>
+                    </div>
                     <div class="flex gap-2">
                         <a href="/barang/edit/${item.id_barang}" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
                             <i class="fas fa-edit mr-1"></i>Edit
@@ -607,6 +641,7 @@ function renderSearchResults(results, apiResponse = {}) {
                         ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
                         <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-36">Update Terakhir</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
                     </tr>
                 </thead>
@@ -621,6 +656,12 @@ function renderSearchResults(results, apiResponse = {}) {
                             ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
                             <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
                             <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">${item.stok}</span></td>
+                            <td class="px-6 py-4 text-sm text-gray-600">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-clock text-blue-500"></i>
+                                    <span>${formatDateTimeDisplay(item.updated_at)}</span>
+                                </div>
+                            </td>
                             <td class="px-6 py-4 text-center"><div class="flex justify-center gap-3"><a href="/barang/edit/${item.id_barang}" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition"><i class="fas fa-edit text-sm"></i></a><a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition"><i class="fas fa-trash text-sm"></i></a></div></td>
                         </tr>
                     `).join('')}
