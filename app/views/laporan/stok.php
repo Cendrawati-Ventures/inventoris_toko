@@ -219,42 +219,46 @@
         <table class="min-w-full table-fixed">
             <thead class="bg-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-12">No</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-64">Nama Barang</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-12">No</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Kode Barang</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-64">Nama Barang</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-20">Satuan</th>
                     <?php if ($user_role === 'admin'): ?>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Beli</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-28">Harga Jual</th>
                     <?php endif; ?>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-16">Stok</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-24">Status</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">Update Terakhir</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-24">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($stok)): ?>
                     <tr>
-                        <td colspan="8" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang</td>
+                        <td colspan="<?= $user_role === 'admin' ? 9 : 7 ?>" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($stok as $index => $item): ?>
                         <tr class="hover:bg-gray-50" data-kategori-id="<?= $item['id_kategori'] ?>" data-beli="<?= (float)$item['harga_beli'] ?>" data-jual="<?= (float)$item['harga_jual'] ?>" data-stok="<?= (int)$item['stok'] ?>">
-                            <td class="px-4 py-3"><?= (($current_page - 1) * ($items_per_page ?? 25)) + $index + 1 ?></td>
-                            <td class="px-4 py-3 font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-4 py-3 font-medium truncate max-w-xs" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
+                            <td class="px-4 py-3 text-center text-gray-700 font-semibold"><?= (($current_page - 1) * ($items_per_page ?? 25)) + $index + 1 ?></td>
+                            <td class="px-4 py-3 text-center font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
+                            <td class="px-4 py-3 text-center font-medium truncate max-w-xs" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
                             <td class="px-4 py-3 text-center text-gray-700 font-semibold">
                                 <?= htmlspecialchars($item['satuan'] ?? '-') ?>
                             </td>
                             <?php if ($user_role === 'admin'): ?>
-                            <td class="px-4 py-3"><?= formatRupiah($item['harga_beli']) ?></td>
-                            <td class="px-4 py-3"><?= formatRupiah($item['harga_jual']) ?></td>
+                            <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_beli']) ?></td>
+                            <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_jual']) ?></td>
                             <?php endif; ?>
                             <td class="px-4 py-3 text-center">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-sm font-semibold">
                                     <?= $item['stok'] ?>
                                 </span>
                             </td>
-                            <td class="px-4 py-3">
+                            <td class="px-4 py-3 text-center text-sm text-gray-600">
+                                <?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?>
+                            </td>
+                            <td class="px-4 py-3 text-center">
                                 <?php if ($item['stok'] == 0): ?>
                                     <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">Habis</span>
                                 <?php elseif ($item['stok'] <= 5): ?>

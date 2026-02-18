@@ -1,96 +1,178 @@
 <?php ob_start(); ?>
 
-<div class="bg-white rounded-lg shadow-md p-3 sm:p-6">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
-        <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
-            <i class="fas fa-box text-blue-600 mr-2"></i>Daftar Barang
+<style>
+.filter-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.9rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #d1d5db;
+    background-color: #ffffff;
+    color: #374151;
+    transition: all 0.2s ease-in-out;
+}
+
+.filter-pill:hover {
+    background-color: #f3f4f6;
+}
+
+.filter-pill-active {
+    border-color: #2563eb;
+    background-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 10px 25px -15px rgba(37, 99, 235, 0.9);
+}
+
+.filter-pill-active:hover {
+    background-color: #1d4ed8;
+}
+</style>
+
+<div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-5 sm:space-y-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
+                <i class="fas fa-box"></i>
+            </span>
+            <span>Daftar Barang</span>
         </h2>
+        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-green-500 bg-white px-4 py-2.5 text-sm font-semibold text-green-600 transition hover:bg-green-50">
+                <i class="fas fa-file-excel"></i>
+                <span>Download Excel</span>
+            </a>
+            <a href="/barang/create" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                <i class="fas fa-plus"></i>
+                <span>Tambah Barang</span>
+            </a>
+        </div>
     </div>
 
     <!-- Search Bar -->
-    <div class="flex gap-2 mb-4 sm:mb-6">
-        <input
-            id="searchBarang"
-            type="text"
-            placeholder="Cari nama/kode/kategori/satuan..."
-            class="flex-1 border border-gray-300 rounded px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button 
-            id="searchBtn"
-            onclick="triggerSearch()"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded transition text-sm font-medium whitespace-nowrap">
-            <i class="fas fa-search mr-2"></i>Cari
-        </button>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mb-4 sm:mb-6">
-        <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="flex-1 sm:flex-none text-center bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded transition text-sm font-medium">
-            <i class="fas fa-file-excel mr-2"></i>Download Excel
-        </a>
-        <a href="/barang/create" class="flex-1 sm:flex-none text-center bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded transition text-sm font-medium">
-            <i class="fas fa-plus mr-2"></i>Tambah Barang
-        </a>
+    <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+        <div class="flex flex-col md:flex-row md:items-center gap-3">
+            <div class="relative flex-1">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input
+                    id="searchBarang"
+                    type="text"
+                    placeholder="Cari nama, kode, kategori, atau satuan barang..."
+                    class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2.5 text-sm text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                />
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <button 
+                    id="searchBtn"
+                    onclick="triggerSearch()"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    <i class="fas fa-search"></i>
+                    <span>Cari</span>
+                </button>
+                <button
+                    onclick="clearSearch()"
+                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100"
+                >
+                    <i class="fas fa-undo"></i>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <?php if (!empty($kategori)): ?>
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-        <button onclick="filterByKategori('all')" class="px-3 py-2 rounded border text-xs sm:text-sm bg-blue-600 text-white hover:bg-blue-700 cursor-pointer transition" id="kat-all">Semua</button>
-        <?php foreach ($kategori as $kat): ?>
-            <button onclick="filterByKategori('<?= $kat['id_kategori'] ?>')" class="px-3 py-2 rounded border text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 cursor-pointer transition" id="kat-<?= $kat['id_kategori'] ?>">
-                <?= htmlspecialchars($kat['nama_kategori']) ?>
-            </button>
-        <?php endforeach; ?>
+    <div class="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Filter Kategori</p>
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="filterByKategori('all')" data-kategori-button="true" data-kategori-id="all" class="filter-pill filter-pill-active" id="kat-all">Semua</button>
+            <?php foreach ($kategori as $kat): ?>
+                <button onclick="filterByKategori('<?= $kat['id_kategori'] ?>')" data-kategori-button="true" data-kategori-id="<?= $kat['id_kategori'] ?>" class="filter-pill" id="kat-<?= $kat['id_kategori'] ?>">
+                    <?= htmlspecialchars($kat['nama_kategori']) ?>
+                </button>
+            <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 
     <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
-    <div class="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <div class="border-2 border-purple-300 rounded-lg p-3 sm:p-4 bg-purple-50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok</p>
-            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+    <div class="grid grid-cols-1 gap-3 sm:gap-4">
+        <div class="flex items-center justify-between rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-white p-4 sm:p-5">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
+                <p class="text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+            </div>
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+                <i class="fas fa-layer-group"></i>
+            </span>
         </div>
     </div>
     <?php else: ?>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        <div class="border-2 border-blue-300 rounded-lg p-3 sm:p-4 bg-blue-50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli</p>
-            <p class="text-lg sm:text-2xl font-bold text-blue-700" id="sum_beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Harga Beli</p>
+                    <p class="text-2xl font-bold text-blue-700" id="sum_beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-money-bill-wave"></i>
+                </span>
+            </div>
         </div>
-        <div class="border-2 border-green-300 rounded-lg p-3 sm:p-4 bg-green-50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual</p>
-            <p class="text-lg sm:text-2xl font-bold text-green-700" id="sum_jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
+        <div class="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-green-500">Total Harga Jual</p>
+                    <p class="text-2xl font-bold text-green-700" id="sum_jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-tags"></i>
+                </span>
+            </div>
         </div>
-        <div class="border-2 border-purple-300 rounded-lg p-3 sm:p-4 bg-purple-50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok</p>
-            <p class="text-lg sm:text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
+                    <p class="text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+                </div>
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-boxes"></i>
+                </span>
+            </div>
         </div>
     </div>
     <?php endif; ?>
 
-    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6 hidden">
-        <div class="border border-blue-200 rounded-lg p-3 sm:p-4 bg-blue-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
+    <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 hidden">
+        <div class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Harga Beli</p>
+            <p class="text-sm text-gray-500">Kategori: <span id="kategori_name" class="font-semibold text-gray-700">-</span></p>
+            <p class="mt-2 text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
         </div>
-        <div class="border border-green-200 rounded-lg p-3 sm:p-4 bg-green-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Harga Jual (Kategori: <span id="kategori_name2">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
+        <div class="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-green-500">Total Harga Jual</p>
+            <p class="text-sm text-gray-500">Kategori: <span id="kategori_name2" class="font-semibold text-gray-700">-</span></p>
+            <p class="mt-2 text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
         </div>
-        <div class="border border-purple-200 rounded-lg p-3 sm:p-4 bg-purple-50/50 text-center">
-            <p class="text-gray-600 text-xs sm:text-sm font-medium mb-1 sm:mb-2">Total Stok (Kategori: <span id="kategori_name3">-</span>)</p>
-            <p class="text-base sm:text-xl font-bold text-purple-700" id="kategori_stok">0</p>
+        <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
+            <p class="text-sm text-gray-500">Kategori: <span id="kategori_name3" class="font-semibold text-gray-700">-</span></p>
+            <p class="mt-2 text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
 
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div class="text-sm text-gray-600">
             Menampilkan <span id="visible_count">0</span> dari <span id="total_count">0</span> barang (halaman ini)
         </div>
-        <div id="search_info_container" class="hidden">
-            <button onclick="clearSearch()" class="text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 px-2 py-1 rounded transition">
-                <i class="fas fa-times mr-1"></i>Clear Search
-            </button>
+        <div id="search_info_container" class="hidden text-sm text-blue-600 font-medium">
+            <span class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1">
+                <i class="fas fa-info-circle"></i>
+                <span>Hasil pencarian untuk: <strong id="search_term_display"></strong></span>
+            </span>
         </div>
     </div>
 
@@ -108,16 +190,16 @@
             <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
         <?php else: ?>
             <?php foreach ($barang as $index => $item): ?>
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
                             <h3 class="font-bold text-gray-800 mb-1"><?= htmlspecialchars($item['nama_barang']) ?></h3>
-                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
                                 <?= htmlspecialchars($item['nama_kategori']) ?>
                             </span>
                         </div>
-                        <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-xs font-bold">
+                        <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
                             <?= $item['stok'] ?> <?= htmlspecialchars($item['satuan']) ?>
                         </span>
                     </div>
@@ -133,15 +215,17 @@
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></div>
                         </div>
                     </div>
-                    <div class="flex items-center text-xs text-gray-500 mb-3">
-                        <i class="fas fa-clock mr-2"></i>
-                        <span>Update Terakhir: <?= !empty($item['updated_at']) ? formatTanggalWaktu($item['updated_at']) : '-' ?></span>
+                    <div class="flex items-center justify-center text-center text-xs text-gray-500 mb-3">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1">
+                            <i class="fas fa-clock text-blue-500"></i>
+                            <span><?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?></span>
+                        </span>
                     </div>
                     <div class="flex gap-2">
-                        <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                        <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
-                        <button onclick="confirmDelete(<?= $item['id_barang'] ?>)" class="flex-1 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                        <button onclick="confirmDelete(<?= $item['id_barang'] ?>)" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
                     </div>
@@ -152,12 +236,12 @@
 
     <!-- Desktop Table View -->
     <div class="hidden md:block overflow-x-auto" data-view="desktop-container">
-        <table class="w-full border border-gray-300 rounded-lg">
-            <thead class="bg-blue-100 border-b-2 border-blue-300">
+        <table class="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <thead class="bg-blue-50 border-b border-blue-200">
                 <tr>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-24" style="width: 6rem;">Nama Barang</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
                     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
@@ -165,23 +249,25 @@
                     <?php endif; ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Update Terakhir</th>
+                    <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-40">Update Terakhir</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-100">
                 <?php if (empty($barang)): ?>
                     <tr>
                         <td colspan="<?= (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? 10 : 9 ?>" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($barang as $index => $item): ?>
-                        <tr class="hover:bg-blue-50 transition duration-200" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                        <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-6 py-4 font-medium text-gray-800"><?= htmlspecialchars($item['nama_barang']) ?></td>
+                            <td class="px-6 py-4 font-medium text-gray-800 w-24 whitespace-nowrap overflow-hidden text-ellipsis" style="max-width: 6rem;">
+                                <?= htmlspecialchars($item['nama_barang']) ?>
+                            </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                <span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
                                     <?= htmlspecialchars($item['nama_kategori']) ?>
                                 </span>
                             </td>
@@ -191,24 +277,24 @@
                             <?php endif; ?>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></td>
                             <td class="px-6 py-4 text-center">
-                                <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-xs font-bold">
+                                <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
                                     <?= $item['stok'] ?>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">
-                                <div class="flex items-center gap-2">
+                            <td class="px-6 py-4 text-sm text-gray-600 text-center">
+                                <div class="inline-flex items-center gap-2">
                                     <i class="fas fa-clock text-blue-500"></i>
-                                    <span><?= !empty($item['updated_at']) ? formatTanggalWaktu($item['updated_at']) : '-' ?></span>
+                                    <span><?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?></span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <div class="flex justify-center gap-3">
-                                    <a href="/barang/edit/<?= $item['id_barang'] ?>" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition">
+                                <div class="flex justify-center gap-2">
+                                    <a href="/barang/edit/<?= $item['id_barang'] ?>" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
                                     <a href="/barang/delete/<?= $item['id_barang'] ?>" 
                                        onclick="return confirm('Yakin ingin menghapus barang ini?')" 
-                                       class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition">
+                                       class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
                                         <i class="fas fa-trash text-sm"></i>
                                     </a>
                                 </div>
@@ -296,6 +382,18 @@ let currentSearchPage = 1;
 let currentSearchTotal = 0;
 let currentSearchTotalPages = 0;
 
+function setActiveKategoriButton(katId) {
+    const normalizedId = String(katId);
+    document.querySelectorAll('[data-kategori-button="true"]').forEach(btn => {
+        const btnId = String(btn.getAttribute('data-kategori-id'));
+        if (btnId === normalizedId) {
+            btn.classList.add('filter-pill-active');
+        } else {
+            btn.classList.remove('filter-pill-active');
+        }
+    });
+}
+
 function filterKategori(katId) {
     currentKategori = String(katId);
     applyFilters();
@@ -348,11 +446,18 @@ function applyFilters() {
     
     // Show/hide search info
     const searchInfoContainer = document.getElementById('search_info_container');
+    const searchTermDisplay = document.getElementById('search_term_display');
     if (searchInfoContainer) {
         if (query.length > 0) {
             searchInfoContainer.classList.remove('hidden');
+            if (searchTermDisplay) {
+                searchTermDisplay.textContent = currentQuery;
+            }
         } else {
             searchInfoContainer.classList.add('hidden');
+            if (searchTermDisplay) {
+                searchTermDisplay.textContent = '';
+            }
         }
     }
 }
@@ -381,7 +486,7 @@ function formatRupiah(num) {
     return 'Rp ' + value.toLocaleString('id-ID', { maximumFractionDigits: 0 });
 }
 
-function formatDateTimeDisplay(value) {
+function formatDateDisplay(value) {
     if (!value) return '-';
     let normalized = value;
     if (typeof normalized === 'string' && normalized.includes(' ')) {
@@ -393,10 +498,8 @@ function formatDateTimeDisplay(value) {
     }
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: 'long',
+        year: 'numeric'
     }).format(parsed);
 }
 
@@ -572,6 +675,22 @@ function renderSearchResults(results, apiResponse = {}) {
     if (visibleEl) visibleEl.textContent = results.length.toLocaleString('id-ID');
     if (totalEl) totalEl.textContent = totalResults.toLocaleString('id-ID');
 
+    const searchInfoContainer = document.getElementById('search_info_container');
+    const searchTermDisplay = document.getElementById('search_term_display');
+    if (searchInfoContainer) {
+        if ((currentQuery || '').trim().length > 0) {
+            searchInfoContainer.classList.remove('hidden');
+            if (searchTermDisplay) {
+                searchTermDisplay.textContent = currentQuery;
+            }
+        } else {
+            searchInfoContainer.classList.add('hidden');
+            if (searchTermDisplay) {
+                searchTermDisplay.textContent = '';
+            }
+        }
+    }
+
     const kategoriLabel = currentKategori && currentKategori !== 'all'
         ? htmlSpecialChars(kategoriNames[currentKategori] || '-')
         : null;
@@ -584,16 +703,16 @@ function renderSearchResults(results, apiResponse = {}) {
         mobileResults.innerHTML = `<div class="text-center py-8 text-gray-400 italic">${noResultsText}</div>`;
     } else {
         mobileResults.innerHTML = results.map((item, index) => `
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1">${htmlSpecialChars(item.kode_barang || '-')}</div>
                             <h3 class="font-bold text-gray-800 mb-1">${htmlSpecialChars(item.nama_barang)}</h3>
-                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
                                 ${htmlSpecialChars(item.nama_kategori || '-')}
                             </span>
                         </div>
-                        <span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">
+                        <span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
                             ${item.stok} ${htmlSpecialChars(item.satuan || 'pcs')}
                         </span>
                     </div>
@@ -609,15 +728,17 @@ function renderSearchResults(results, apiResponse = {}) {
                             <div class="font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</div>
                         </div>
                     </div>
-                    <div class="flex items-center text-xs text-gray-500 mb-3">
-                        <i class="fas fa-clock mr-2"></i>
-                        <span>Update Terakhir: ${formatDateTimeDisplay(item.updated_at)}</span>
+                        <div class="flex items-center justify-center text-center text-xs text-gray-500 mb-3">
+                            <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1">
+                            <i class="fas fa-clock text-blue-500"></i>
+                            <span>${formatDateDisplay(item.updated_at)}</span>
+                        </span>
                     </div>
                     <div class="flex gap-2">
-                        <a href="/barang/edit/${item.id_barang}" class="flex-1 text-center bg-yellow-100 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                        <a href="/barang/edit/${item.id_barang}" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
-                        <button onclick="confirmDelete(${item.id_barang})" class="flex-1 bg-red-100 text-red-700 hover:bg-red-600 hover:text-white py-2 rounded transition text-sm font-medium">
+                        <button onclick="confirmDelete(${item.id_barang})" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
                     </div>
@@ -630,39 +751,48 @@ function renderSearchResults(results, apiResponse = {}) {
         tableResults.innerHTML = `<div class="text-center py-8 text-gray-400 italic">${noResultsText}</div>`;
     } else {
         tableResults.innerHTML = `
-            <table class="w-full border border-gray-300 rounded-lg">
-                <thead class="bg-blue-100 border-b-2 border-blue-300">
+            <table class="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <thead class="bg-blue-50 border-b border-blue-200">
                     <tr>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
                         <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-40">Nama Barang</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-24" style="width: 6rem;">Nama Barang</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
                         ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
                         <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-36">Update Terakhir</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-36">Update Terakhir</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-100">
                     ${results.map((item, index) => `
-                        <tr class="hover:bg-blue-50 transition duration-200">
+                        <tr class="transition duration-200 hover:bg-blue-50/70">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600">${htmlSpecialChars(item.kode_barang || '-')}</td>
-                            <td class="px-6 py-4 font-medium text-gray-800">${htmlSpecialChars(item.nama_barang)}</td>
-                            <td class="px-6 py-4 text-center"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
+                            <td class="px-6 py-4 font-medium text-gray-800 w-24 whitespace-nowrap overflow-hidden text-ellipsis" style="max-width: 6rem;">${htmlSpecialChars(item.nama_barang)}</td>
+                            <td class="px-6 py-4 text-center"><span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
                             ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
                             <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
-                            <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">${item.stok}</span></td>
-                            <td class="px-6 py-4 text-sm text-gray-600">
-                                <div class="flex items-center gap-2">
+                            <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">${item.stok}</span></td>
+                            <td class="px-6 py-4 text-sm text-gray-600 text-center">
+                                <div class="inline-flex items-center gap-2">
                                     <i class="fas fa-clock text-blue-500"></i>
-                                    <span>${formatDateTimeDisplay(item.updated_at)}</span>
+                                    <span>${formatDateDisplay(item.updated_at)}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-center"><div class="flex justify-center gap-3"><a href="/barang/edit/${item.id_barang}" class="inline-flex items-center justify-center w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded transition"><i class="fas fa-edit text-sm"></i></a><a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded transition"><i class="fas fa-trash text-sm"></i></a></div></td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex justify-center gap-2">
+                                    <a href="/barang/edit/${item.id_barang}" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </a>
+                                    <a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -741,9 +871,7 @@ function renderSearchResults(results, apiResponse = {}) {
         searchContainer.insertAdjacentHTML('afterend', paginationHtml);
     }
     
-    // Show clear search button
-    const searchInfoContainer = document.getElementById('search_info_container');
-    if (searchInfoContainer) searchInfoContainer.classList.remove('hidden');
+    // Search info badge already handled earlier
 }
 
 // Helper untuk escape HTML
@@ -775,15 +903,12 @@ function clearSearch() {
     
     // Reset kategori filter to all
     currentKategori = 'all';
-    document.querySelectorAll('[id^="kat-"]').forEach(btn => {
-        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-        btn.classList.add('bg-gray-100', 'hover:bg-gray-200');
-    });
-    const allBtn = document.getElementById('kat-all');
-    if (allBtn) {
-        allBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200');
-        allBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-    }
+    setActiveKategoriButton('all');
+
+    const searchInfoContainer = document.getElementById('search_info_container');
+    const searchTermDisplay = document.getElementById('search_term_display');
+    if (searchInfoContainer) searchInfoContainer.classList.add('hidden');
+    if (searchTermDisplay) searchTermDisplay.textContent = '';
     
     // Load all barang again
     loadAllBarang(1);
@@ -791,6 +916,7 @@ function clearSearch() {
 
 // Init summary & counts dan load all barang di search results
 applyFilters();
+setActiveKategoriButton(currentKategori);
 
 // Load semua barang (page 1) di search results container on initial load
 document.addEventListener('DOMContentLoaded', function() {
@@ -822,18 +948,7 @@ async function filterByKategori(kategoriId) {
     currentKategori = String(kategoriId);
     currentQuery = ''; // Clear search query
     
-    // Update button styling
-    document.querySelectorAll('[id^="kat-"]').forEach(btn => {
-        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-        btn.classList.add('bg-gray-100', 'hover:bg-gray-200');
-    });
-    
-    // Highlight selected kategori
-    const selectedBtn = document.getElementById(`kat-${kategoriId}`);
-    if (selectedBtn) {
-        selectedBtn.classList.remove('bg-gray-100', 'hover:bg-gray-200');
-        selectedBtn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-    }
+    setActiveKategoriButton(kategoriId);
     
     // Load barang
     try {

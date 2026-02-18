@@ -50,7 +50,7 @@ class LaporanController {
         $start = $_GET['start'] ?? date('Y-m-01');
         $end = $_GET['end'] ?? date('Y-m-t');
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $items_per_page = 10;
+        $items_per_page = 25;
         $offset = ($page - 1) * $items_per_page;
 
         $all_penjualan = $this->model->getLaporanPenjualan($start, $end);
@@ -1155,7 +1155,7 @@ class LaporanController {
         
         table th {
             padding: 15px;
-            text-align: left;
+            text-align: center;
             font-weight: 600;
             font-size: 13px;
             text-transform: uppercase;
@@ -1167,6 +1167,7 @@ class LaporanController {
             padding: 12px 15px;
             border-bottom: 1px solid #e5e7eb;
             font-size: 12px;
+            text-align: center;
         }
         
         table tbody tr:hover {
@@ -1189,29 +1190,13 @@ class LaporanController {
             width: 5%;
         }
         
-        .kode-column {
-            width: 12%;
-        }
-        
-        .nama-column {
-            width: 28%;
-        }
-        
-        .satuan-column {
-            width: 10%;
-        }
-        
-        .harga-column {
-            width: 15%;
-        }
-        
-        .stok-column {
-            width: 8%;
-        }
-        
-        .status-column {
-            width: 12%;
-        }
+        .kode-column { width: 12%; text-align: center; }
+        .nama-column { width: 28%; text-align: center; }
+        .satuan-column { width: 10%; text-align: center; }
+        .harga-column { width: 15%; text-align: center; }
+        .stok-column { width: 8%; text-align: center; }
+        .update-column { width: 12%; text-align: center; }
+        .status-column { width: 12%; text-align: center; }
         
         .badge {
             display: inline-block;
@@ -1313,13 +1298,14 @@ class LaporanController {
             <thead>
                 <tr>
                     <th class="no-column text-center">No</th>
-                    <th class="kode-column text-left">Kode Barang</th>
+                    <th class="kode-column">Kode Barang</th>
                     <th class="nama-column">Nama Barang</th>
-                    <th class="satuan-column text-center">Satuan</th>
-                    <th class="harga-column text-right">Harga Beli</th>
-                    <th class="harga-column text-right">Harga Jual</th>
-                    <th class="stok-column text-center">Stok</th>
-                    <th class="status-column text-center">Status</th>
+                    <th class="satuan-column">Satuan</th>
+                    <th class="harga-column">Harga Beli</th>
+                    <th class="harga-column">Harga Jual</th>
+                    <th class="stok-column">Stok</th>
+                    <th class="update-column">Update Terakhir</th>
+                    <th class="status-column">Status</th>
                 </tr>
             </thead>
             <tbody>';
@@ -1341,16 +1327,18 @@ class LaporanController {
             
             $hargaBeli = number_format((float)$item['harga_beli'], 0, ',', '.');
             $hargaJual = number_format((float)$item['harga_jual'], 0, ',', '.');
+            $updateDate = !empty($item['updated_at']) ? date('d M Y', strtotime($item['updated_at'])) : '-';
             
             $html .= '<tr>
-                <td class="no-column text-center">' . str_pad($index + 1, 2, '0', STR_PAD_LEFT) . '</td>
-                <td class="kode-column text-left font-mono">' . htmlspecialchars($item['kode_barang'] ?? '-') . '</td>
+                <td class="no-column">' . str_pad($index + 1, 2, '0', STR_PAD_LEFT) . '</td>
+                <td class="kode-column font-mono">' . htmlspecialchars($item['kode_barang'] ?? '-') . '</td>
                 <td class="nama-column"><strong>' . htmlspecialchars($item['nama_barang']) . '</strong></td>
-                <td class="satuan-column text-center">' . htmlspecialchars($item['satuan'] ?? '-') . '</td>
-                <td class="harga-column text-right">Rp ' . $hargaBeli . '</td>
-                <td class="harga-column text-right">Rp ' . $hargaJual . '</td>
-                <td class="stok-column text-center"><strong>' . $item['stok'] . '</strong></td>
-                <td class="status-column text-center"><span class="badge ' . $statusBadge . '">' . $status . '</span></td>
+                <td class="satuan-column">' . htmlspecialchars($item['satuan'] ?? '-') . '</td>
+                <td class="harga-column">Rp ' . $hargaBeli . '</td>
+                <td class="harga-column">Rp ' . $hargaJual . '</td>
+                <td class="stok-column"><strong>' . $item['stok'] . '</strong></td>
+                <td class="update-column">' . $updateDate . '</td>
+                <td class="status-column"><span class="badge ' . $statusBadge . '">' . $status . '</span></td>
             </tr>';
         }
         
@@ -1387,7 +1375,7 @@ class LaporanController {
         echo "\xEF\xBB\xBF";
         
         // Header row
-        fputcsv($output, ['No', 'Kategori', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Status']);
+        fputcsv($output, ['No', 'Kategori', 'Kode', 'Nama Barang', 'Satuan', 'Harga Beli', 'Harga Jual', 'Stok', 'Tanggal Update', 'Status']);
 
         if (!empty($stok)) {
             usort($stok, function ($a, $b) {
@@ -1416,6 +1404,8 @@ class LaporanController {
                 $status = 'Rendah';
             }
 
+            $updateDate = !empty($item['updated_at']) ? date('d-m-Y', strtotime($item['updated_at'])) : '-';
+
             fputcsv($output, [
                 $index + 1,
                 $item['nama_kategori'] ?? 'Tanpa Kategori',
@@ -1425,6 +1415,7 @@ class LaporanController {
                 $hargaBeli,
                 $hargaJual,
                 $stokQty,
+                $updateDate,
                 $status
             ]);
         }
