@@ -109,7 +109,7 @@
                             <td class="px-4 py-3 font-medium"><?= htmlspecialchars($item['nama_barang']) ?></td>
                             <td class="px-4 py-3"><?= date('d/m/Y', strtotime($item['tanggal'])) ?></td>
                             <td class="px-4 py-3 text-gray-600"><?= date('H:i', strtotime($item['tanggal'])) ?></td>
-                            <td class="px-4 py-3 text-center font-semibold"><?= $item['jumlah'] ?></td>
+                            <td class="px-4 py-3 text-left font-semibold"><?= $item['jumlah'] ?></td>
                             <td class="px-4 py-3 text-center text-gray-600"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
                             <td class="px-4 py-3 text-right"><?= formatRupiah($item['harga_satuan']) ?></td>
                             <td class="px-4 py-3 text-right font-semibold text-blue-600"><?= formatRupiah($item['total_harga']) ?></td>
