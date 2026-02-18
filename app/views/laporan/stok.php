@@ -171,7 +171,7 @@
 
     <?php if ($user_role !== 'admin'): ?>
     <div class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm">
-        <div class="border rounded-lg p-3 bg-gray-50">
+        <div class="border rounded-lg p-3 bg-gray-50 text-center">
             <p class="text-gray-600">Total Stok</p>
             <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
@@ -185,11 +185,11 @@
     </div>
     <?php else: ?>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm">
-        <div class="border rounded-lg p-3 bg-gray-50">
+        <div class="border rounded-lg p-3 bg-gray-50 text-center">
             <p class="text-gray-600">Total Harga Beli</p>
             <p class="text-lg font-semibold text-blue-700" data-total="beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
         </div>
-        <div class="border rounded-lg p-3 bg-gray-50">
+        <div class="border rounded-lg p-3 bg-gray-50 text-center">
             <p class="text-gray-600">Total Harga Jual</p>
             <p class="text-lg font-semibold text-green-700" data-total="jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
         </div>
