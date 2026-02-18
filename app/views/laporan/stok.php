@@ -171,46 +171,70 @@
 
     <?php if ($user_role !== 'admin'): ?>
     <div class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm">
-        <div class="border rounded-lg p-3 bg-gray-50 text-center">
-            <p class="text-gray-600">Total Stok</p>
-            <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        <div class="border rounded-lg p-5 bg-gray-50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
+                <i class="fas fa-boxes"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Stok</p>
+            <p class="text-xl font-bold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
 
     <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-1 gap-3 mb-6 text-sm hidden">
-        <div class="border rounded-lg p-3 bg-purple-50/50 text-center">
-            <p class="text-gray-600">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
-            <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
+        <div class="border rounded-lg p-5 bg-purple-50/50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Stok (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
     <?php else: ?>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm">
-        <div class="border rounded-lg p-3 bg-gray-50 text-center">
-            <p class="text-gray-600">Total Harga Beli</p>
-            <p class="text-lg font-semibold text-blue-700" data-total="beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
+        <div class="border rounded-lg p-5 bg-gray-50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
+                <i class="fas fa-money-bill-wave"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Harga Beli</p>
+            <p class="text-xl font-bold text-blue-700" data-total="beli"><?= formatRupiah($totals['total_harga_beli'] ?? 0) ?></p>
         </div>
-        <div class="border rounded-lg p-3 bg-gray-50 text-center">
-            <p class="text-gray-600">Total Harga Jual</p>
-            <p class="text-lg font-semibold text-green-700" data-total="jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
+        <div class="border rounded-lg p-5 bg-gray-50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 mb-3">
+                <i class="fas fa-tags"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Harga Jual</p>
+            <p class="text-xl font-bold text-green-700" data-total="jual"><?= formatRupiah($totals['total_harga_jual'] ?? 0) ?></p>
         </div>
-        <div class="border rounded-lg p-3 bg-gray-50">
-            <p class="text-gray-600">Total Stok</p>
-            <p class="text-lg font-semibold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
+        <div class="border rounded-lg p-5 bg-gray-50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
+                <i class="fas fa-boxes"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Stok</p>
+            <p class="text-xl font-bold text-purple-700" data-total="stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
 
     <div id="kategori_summary" class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 text-sm hidden">
-        <div class="border rounded-lg p-3 bg-blue-50/50 text-center">
-            <p class="text-gray-600">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
-            <p class="text-lg font-semibold text-blue-700" id="kategori_beli">Rp 0</p>
+        <div class="border rounded-lg p-5 bg-blue-50/50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
+                <i class="fas fa-money-bill-wave"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Harga Beli (Kategori: <span id="kategori_name">-</span>)</p>
+            <p class="text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
         </div>
-        <div class="border rounded-lg p-3 bg-green-50/50 text-center">
-            <p class="text-gray-600">Total Harga Jual (Kategori)</p>
-            <p class="text-lg font-semibold text-green-700" id="kategori_jual">Rp 0</p>
+        <div class="border rounded-lg p-5 bg-green-50/50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 mb-3">
+                <i class="fas fa-tags"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Harga Jual (Kategori)</p>
+            <p class="text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
         </div>
-        <div class="border rounded-lg p-3 bg-purple-50/50 text-center">
-            <p class="text-gray-600">Total Stok (Kategori)</p>
-            <p class="text-lg font-semibold text-purple-700" id="kategori_stok">0</p>
+        <div class="border rounded-lg p-5 bg-purple-50/50 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
+                <i class="fas fa-layer-group"></i>
+            </span>
+            <p class="text-gray-600 font-semibold">Total Stok (Kategori)</p>
+            <p class="text-xl font-bold text-purple-700" id="kategori_stok">0</p>
         </div>
     </div>
     <?php endif; ?>
@@ -251,7 +275,7 @@
                             <td class="px-4 py-3 text-center"><?= formatRupiah($item['harga_jual']) ?></td>
                             <?php endif; ?>
                             <td class="px-4 py-3 text-center">
-                                <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> px-3 py-1 rounded-full text-sm font-semibold">
+                                <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold">
                                     <?= $item['stok'] ?>
                                 </span>
                             </td>

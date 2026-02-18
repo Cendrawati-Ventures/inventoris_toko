@@ -98,14 +98,12 @@
 
     <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
     <div class="grid grid-cols-1 gap-3 sm:gap-4">
-        <div class="flex items-center justify-between rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-white p-4 sm:p-5">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
-                <p class="text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
-            </div>
-            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
+        <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5 text-center">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
                 <i class="fas fa-layer-group"></i>
             </span>
+            <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
+            <p class="text-2xl font-bold text-purple-700" id="sum_stok"><?= number_format((int)($totals['total_stok'] ?? 0), 0, ',', '.') ?></p>
         </div>
     </div>
     <?php else: ?>
@@ -135,17 +133,26 @@
     <?php endif; ?>
 
     <div id="kategori_summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 hidden">
-        <div class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5">
+        <div class="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
+                <i class="fas fa-money-bill-wave"></i>
+            </span>
             <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Harga Beli</p>
             <p class="text-sm text-gray-500">Kategori: <span id="kategori_name" class="font-semibold text-gray-700">-</span></p>
             <p class="mt-2 text-xl font-bold text-blue-700" id="kategori_beli">Rp 0</p>
         </div>
-        <div class="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5">
+        <div class="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-4 sm:p-5 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600 mb-3">
+                <i class="fas fa-tags"></i>
+            </span>
             <p class="text-xs font-semibold uppercase tracking-wide text-green-500">Total Harga Jual</p>
             <p class="text-sm text-gray-500">Kategori: <span id="kategori_name2" class="font-semibold text-gray-700">-</span></p>
             <p class="mt-2 text-xl font-bold text-green-700" id="kategori_jual">Rp 0</p>
         </div>
-        <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5">
+        <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5 text-center">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
+                <i class="fas fa-layer-group"></i>
+            </span>
             <p class="text-xs font-semibold uppercase tracking-wide text-purple-500">Total Stok</p>
             <p class="text-sm text-gray-500">Kategori: <span id="kategori_name3" class="font-semibold text-gray-700">-</span></p>
             <p class="mt-2 text-xl font-bold text-purple-700" id="kategori_stok">0</p>
