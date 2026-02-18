@@ -241,7 +241,7 @@
                 <tr>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
-                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-24" style="width: 6rem;">Nama Barang</th>
+                    <th class="px-6 py-4 text-left text-sm font-bold text-gray-800" style="min-width: 12rem;">Nama Barang</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
                     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
@@ -262,8 +262,8 @@
                     <?php foreach ($barang as $index => $item): ?>
                         <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
-                            <td class="px-6 py-4 font-mono text-sm text-gray-600"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-6 py-4 font-medium text-gray-800 w-24 whitespace-nowrap overflow-hidden text-ellipsis" style="max-width: 6rem;">
+                            <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
+                            <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">
                                 <?= htmlspecialchars($item['nama_barang']) ?>
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -273,9 +273,9 @@
                             </td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium"><?= htmlspecialchars($item['satuan']) ?></td>
                             <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
-                            <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($item['harga_beli']) ?></td>
+                            <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
                             <?php endif; ?>
-                            <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></td>
+                            <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
                             <td class="px-6 py-4 text-center">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
                                     <?= $item['stok'] ?>
@@ -756,7 +756,7 @@ function renderSearchResults(results, apiResponse = {}) {
                     <tr>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-12">No</th>
                         <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-24" style="width: 6rem;">Nama Barang</th>
+                        <th class="px-6 py-4 text-left text-sm font-bold text-gray-800" style="min-width: 12rem;">Nama Barang</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
                         ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
@@ -770,12 +770,12 @@ function renderSearchResults(results, apiResponse = {}) {
                     ${results.map((item, index) => `
                         <tr class="transition duration-200 hover:bg-blue-50/70">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
-                            <td class="px-6 py-4 font-mono text-sm text-gray-600">${htmlSpecialChars(item.kode_barang || '-')}</td>
-                            <td class="px-6 py-4 font-medium text-gray-800 w-24 whitespace-nowrap overflow-hidden text-ellipsis" style="max-width: 6rem;">${htmlSpecialChars(item.nama_barang)}</td>
+                            <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap">${htmlSpecialChars(item.kode_barang || '-')}</td>
+                            <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">${htmlSpecialChars(item.nama_barang)}</td>
                             <td class="px-6 py-4 text-center"><span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
-                            ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</td>` : ''}
-                            <td class="px-6 py-4 text-right font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</td>
+                            ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_beli)}</td>` : ''}
+                            <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_jual)}</td>
                             <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">${item.stok}</span></td>
                             <td class="px-6 py-4 text-sm text-gray-600 text-center">
                                 <div class="inline-flex items-center gap-2">

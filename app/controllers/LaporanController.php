@@ -339,7 +339,7 @@ class LaporanController {
         $page = max(1, (int)($_GET['page'] ?? 1));
         $kategori_param = $_GET['kategori'] ?? 'all';
         $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
-        $items_per_page = 10;
+        $items_per_page = 25;
         $offset = ($page - 1) * $items_per_page;
         
         $all_stok = $this->model->getLaporanStok();
