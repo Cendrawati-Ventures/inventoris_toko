@@ -152,7 +152,7 @@
                                         <i class="fas fa-user"></i>
                                     </span>
                                     <div>
-                                        <p class="font-semibold text-gray-800"><?= htmlspecialchars(!empty($item['nama_pembeli']) ? $item['nama_pembeli'] : 'Tidak diisi') ?></p>
+                                        <p class="font-semibold text-gray-800"><?= htmlspecialchars($item['nama_pembeli'] ?? '') ?></p>
                                     </div>
                                 </div>
                             </td>

@@ -83,16 +83,16 @@
         <table class="min-w-full table-auto">
             <thead class="bg-gray-200">
                 <tr>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">No</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Pengguna</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kode Barang</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nama Barang</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Jam</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">No</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Pengguna</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Kode Barang</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Nama Barang</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Tanggal</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Jam</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Jumlah</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Satuan</th>
-                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Harga Jual</th>
-                    <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Total</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Harga Jual</th>
+                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Total</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
