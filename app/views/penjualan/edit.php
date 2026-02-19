@@ -33,24 +33,35 @@
         </div>
 
         <!-- Ringkasan Transaksi -->
+        <?php 
+            $totalItemsAwal = 0;
+            $totalHargaAwal = 0;
+            foreach ($details as $item) {
+                $totalItemsAwal += (float)($item['jumlah'] ?? 0);
+                $totalHargaAwal += ((float)($item['jumlah'] ?? 0) * (float)($item['harga_satuan'] ?? 0)) - (float)($item['diskon'] ?? 0);
+            }
+        ?>
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
             <div class="grid grid-cols-3 gap-4 text-center">
                 <div>
                     <p class="text-gray-600 text-sm">Total Item</p>
-                    <p class="text-2xl font-bold text-blue-600" id="total_items">0</p>
+                    <p class="text-2xl font-bold text-blue-600" id="total_items"><?= $totalItemsAwal ?></p>
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm">Subtotal</p>
-                    <p class="text-2xl font-bold text-blue-600" id="subtotal_display">Rp 0</p>
+                    <p class="text-2xl font-bold text-blue-600" id="subtotal_display">Rp <?= number_format($totalHargaAwal, 0, ',', '.') ?></p>
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm">Total Harga</p>
-                    <p class="text-2xl font-bold text-green-600" id="total_display">Rp 0</p>
+                    <p class="text-2xl font-bold text-green-600" id="total_display">Rp <?= number_format($totalHargaAwal, 0, ',', '.') ?></p>
                 </div>
             </div>
         </div>
 
         <!-- Uang & Kembalian -->
+        <?php 
+            $kembalianAwal = (float)($penjualan['uang_diberikan'] ?? 0) - $totalHargaAwal;
+        ?>
         <div id="payment_section" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
                 <label for="uang_diberikan" class="block text-gray-700 font-semibold mb-2">Uang Diberikan Konsumen *</label>
@@ -60,8 +71,8 @@
             </div>
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Kembalian</label>
-                <div class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-lg font-bold" id="kembalian_display">
-                    Rp 0
+                <div class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-lg font-bold" id="kembalian_display" style="color: <?= $kembalianAwal < 0 ? '#dc2626' : '#059669' ?>">
+                    Rp <?= number_format($kembalianAwal, 0, ',', '.') ?>
                 </div>
             </div>
         </div>

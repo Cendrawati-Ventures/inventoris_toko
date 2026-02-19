@@ -28,15 +28,23 @@
         </div>
 
         <!-- Ringkasan Transaksi -->
+        <?php 
+            $totalItemsAwal = 0;
+            $totalHargaAwal = 0;
+            foreach ($details as $item) {
+                $totalItemsAwal += (float)($item['jumlah'] ?? 0);
+                $totalHargaAwal += ((float)($item['jumlah'] ?? 0) * (float)($item['harga_satuan'] ?? 0));
+            }
+        ?>
         <div class="bg-gray-50 rounded-lg p-4 mb-6">
             <div class="grid grid-cols-2 gap-4 text-center">
                 <div>
                     <p class="text-gray-600 text-sm">Total Item</p>
-                    <p class="text-2xl font-bold text-blue-600" id="total_items">0</p>
+                    <p class="text-2xl font-bold text-blue-600" id="total_items"><?= $totalItemsAwal ?></p>
                 </div>
                 <div>
                     <p class="text-gray-600 text-sm">Total Pembelian</p>
-                    <p class="text-2xl font-bold text-green-600" id="total_display">Rp 0</p>
+                    <p class="text-2xl font-bold text-green-600" id="total_display">Rp <?= number_format($totalHargaAwal, 0, ',', '.') ?></p>
                 </div>
             </div>
         </div>
