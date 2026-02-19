@@ -162,7 +162,7 @@
                                     <span><?= number_format((int)($item['jumlah_item'] ?? 0), 0, ',', '.') ?> item</span>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right align-middle">
+                            <td class="px-6 py-4 text-right align-middle whitespace-nowrap">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-600">
                                     <i class="fas fa-coins"></i>
                                     <span class="not-italic">
@@ -170,7 +170,7 @@
                                     </span>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right">
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full px-3 py-1 text-sm font-semibold <?= $item['kembalian'] >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' ?>">
                                     <i class="fas <?= $item['kembalian'] >= 0 ? 'fa-arrow-circle-up' : 'fa-arrow-circle-down' ?>"></i>
                                     <span class="not-italic">
