@@ -37,16 +37,29 @@ class PenjualanController {
         }
 
         $page = max(1, (int)($_GET['page'] ?? 1));
-        $items_per_page = 10;
+        $items_per_page = 25;
         $offset = ($page - 1) * $items_per_page;
         
         if (!empty($tanggal_awal) && !empty($tanggal_akhir)) {
-            $total_penjualan = count($this->model->getByDateRange($tanggal_awal, $tanggal_akhir));
+            $penjualanSummary = $this->model->getByDateRange($tanggal_awal, $tanggal_akhir);
             $penjualan = $this->model->getByDateRangeWithPagination($tanggal_awal, $tanggal_akhir, $offset, $items_per_page);
         } else {
-            $total_penjualan = count($this->model->getAll());
+            $penjualanSummary = $this->model->getAll();
             $penjualan = $this->model->getAllWithPagination($offset, $items_per_page);
         }
+        
+        $total_penjualan = count($penjualanSummary);
+        $summary_total_penjualan = 0;
+        $summary_total_item = 0;
+        $summary_hutang_belum = 0;
+        foreach ($penjualanSummary as $summaryRow) {
+            $summary_total_penjualan += (float)($summaryRow['total_harga'] ?? 0);
+            $summary_total_item += (int)($summaryRow['jumlah_item'] ?? 0);
+            if (($summaryRow['hutang_status'] ?? '') === 'belum_bayar') {
+                $summary_hutang_belum++;
+            }
+        }
+        $summary_total_transaksi = $total_penjualan;
         
         $total_pages = ceil($total_penjualan / $items_per_page);
         $current_page = $page;

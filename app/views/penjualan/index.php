@@ -1,16 +1,10 @@
 <?php ob_start(); ?>
 
 <?php 
-    $grandTotal = 0;
-    $totalItemTerjual = 0;
-    $hutangBelumBayar = 0;
-    foreach ($penjualan as $p) {
-        $grandTotal += (float)($p['total_harga'] ?? 0);
-        $totalItemTerjual += (int)($p['jumlah_item'] ?? 0);
-        if (($p['hutang_status'] ?? '') === 'belum_bayar') {
-            $hutangBelumBayar++;
-        }
-    }
+    $grandTotal = $summary_total_penjualan ?? 0;
+    $totalItemTerjual = $summary_total_item ?? 0;
+    $hutangBelumBayar = $summary_hutang_belum ?? 0;
+    $totalTransaksi = $summary_total_transaksi ?? ($total_penjualan ?? 0);
     $totalTransaksiHalaman = count($penjualan);
 
     $paginationQuery = '';
@@ -86,15 +80,15 @@
                 </span>
                 <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Penjualan</p>
                 <p class="text-2xl font-bold text-blue-700"><?= formatRupiah($grandTotal) ?></p>
-                <p class="text-xs text-gray-500 mt-1">Akumulasi pada halaman ini</p>
+                <p class="text-xs text-gray-500 mt-1">Akumulasi periode terpilih</p>
             </div>
             <div class="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 text-center shadow-sm">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-3">
                     <i class="fas fa-receipt"></i>
                 </span>
                 <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Jumlah Transaksi</p>
-                <p class="text-2xl font-bold text-indigo-700"><?= number_format($totalTransaksiHalaman, 0, ',', '.') ?></p>
-                <p class="text-xs text-gray-500 mt-1">Total data keseluruhan: <?= number_format($total_penjualan ?? 0, 0, ',', '.') ?></p>
+                <p class="text-2xl font-bold text-indigo-700"><?= number_format($totalTransaksi, 0, ',', '.') ?></p>
+                <p class="text-xs text-gray-500 mt-1">Ditampilkan di halaman ini: <?= number_format($totalTransaksiHalaman, 0, ',', '.') ?> transaksi</p>
             </div>
             <div class="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-5 text-center shadow-sm">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-600 mb-3">
@@ -102,7 +96,7 @@
                 </span>
                 <p class="text-xs font-semibold uppercase tracking-wide text-green-500">Item Terjual</p>
                 <p class="text-2xl font-bold text-green-700"><?= number_format($totalItemTerjual, 0, ',', '.') ?></p>
-                <p class="text-xs text-gray-500 mt-1">Ringkasan pada halaman ini</p>
+                <p class="text-xs text-gray-500 mt-1">Ringkasan periode terpilih</p>
             </div>
             <div class="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5 text-center shadow-sm">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600 mb-3">
