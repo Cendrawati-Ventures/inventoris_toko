@@ -12,6 +12,8 @@ function runMigration(PDO $conn): void
             $tableExists = ($result !== false);
             
             if ($tableExists) {
+                // Pastikan constraint role sudah mendukung role terbaru.
+                syncUsersRoleConstraint($conn);
                 error_log("✓ Migration: users table already exists, skipping creation");
                 return;
             }
@@ -87,10 +89,43 @@ function runMigration(PDO $conn): void
         if (!empty($errors)) {
             error_log("⚠ Migration had some warnings: " . implode("; ", array_slice($errors, 0, 3)));
         }
+
+        // Pastikan constraint role users konsisten setelah migration awal.
+        syncUsersRoleConstraint($conn);
         
     } catch (Exception $e) {
         error_log("✗ Migration FATAL ERROR: " . $e->getMessage());
         error_log($e->getTraceAsString());
+    }
+}
+
+function syncUsersRoleConstraint(PDO $conn): void
+{
+    try {
+        $conn->exec(<<<'SQL'
+DO $$
+DECLARE
+    constraint_name TEXT;
+BEGIN
+    FOR constraint_name IN
+        SELECT c.conname
+        FROM pg_constraint c
+        JOIN pg_class t ON t.oid = c.conrelid
+        WHERE t.relname = 'users'
+          AND c.contype = 'c'
+          AND pg_get_constraintdef(c.oid) ILIKE '%role%'
+    LOOP
+        EXECUTE format('ALTER TABLE users DROP CONSTRAINT %I', constraint_name);
+    END LOOP;
+
+    ALTER TABLE users
+    ADD CONSTRAINT users_role_check
+    CHECK (role IN ('admin', 'kasir', 'inspeksi'));
+END $$;
+SQL);
+        error_log("✓ Migration: users.role constraint synced (admin, kasir, inspeksi)");
+    } catch (Exception $e) {
+        error_log("⚠ Migration: Failed to sync users.role constraint: " . $e->getMessage());
     }
 }
 ?>
