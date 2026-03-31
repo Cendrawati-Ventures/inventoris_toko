@@ -3,7 +3,7 @@
 <?php 
 $totalUser = count($users);
 $totalAdmin = array_reduce($users, fn($c, $u) => $c + ($u['role'] === 'admin' ? 1 : 0), 0);
-$totalKasir = $totalUser - $totalAdmin;
+$totalRegularUser = $totalUser - $totalAdmin;
 ?>
 
 <div class="container mx-auto px-4 py-6 space-y-6">
@@ -21,8 +21,8 @@ $totalKasir = $totalUser - $totalAdmin;
                 <p class="text-lg font-bold"><?= $totalAdmin ?></p>
             </div>
             <div class="bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-green-800">
-                <p class="text-xs uppercase">Kasir</p>
-                <p class="text-lg font-bold"><?= $totalKasir ?></p>
+                <p class="text-xs uppercase">User</p>
+                <p class="text-lg font-bold"><?= $totalRegularUser ?></p>
             </div>
             <a href="/users/create" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow">
                 + Tambah User
@@ -43,6 +43,7 @@ $totalKasir = $totalUser - $totalAdmin;
                     <option value="">Semua Role</option>
                     <option value="admin">Admin</option>
                     <option value="kasir">Kasir</option>
+                    <option value="inspeksi">Inspeksi</option>
                 </select>
             </div>
         </div>
@@ -68,7 +69,7 @@ $totalKasir = $totalUser - $totalAdmin;
                                 <td class="px-6 py-3 font-medium text-gray-900"><?= htmlspecialchars($u['username']) ?></td>
                                 <td class="px-6 py-3 text-gray-700"><?= htmlspecialchars($u['nama']) ?></td>
                                 <td class="px-6 py-3">
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $u['role'] === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' ?>">
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold <?= $u['role'] === 'admin' ? 'bg-blue-100 text-blue-800' : ($u['role'] === 'inspeksi' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800') ?>">
                                         <?= ucfirst($u['role']) ?>
                                     </span>
                                 </td>

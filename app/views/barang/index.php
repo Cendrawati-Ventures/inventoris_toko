@@ -1,4 +1,12 @@
 <?php ob_start(); ?>
+<?php
+$role = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+if ($role === 'kasir') {
+    $role = 'user';
+}
+$isAdmin = ($role === 'admin');
+$canEditStok = ($role === 'admin' || $role === 'user');
+?>
 
 <style>
 .filter-pill {
@@ -31,23 +39,25 @@
 }
 </style>
 
-<div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 space-y-5 sm:space-y-6">
+<div class="app-card p-4 sm:p-6 space-y-5 sm:space-y-6 app-reveal">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 text-teal-700">
                 <i class="fas fa-box"></i>
             </span>
             <span>Daftar Barang</span>
         </h2>
         <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <?php if ($isAdmin): ?>
             <a href="/barang/export<?= !empty($selected_kategori) ? '?kategori=' . (int)$selected_kategori : '' ?>" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg border border-green-500 bg-white px-4 py-2.5 text-sm font-semibold text-green-600 transition hover:bg-green-50">
                 <i class="fas fa-file-excel"></i>
                 <span>Download Excel</span>
             </a>
-            <a href="/barang/create" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+            <a href="/barang/create" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold transition">
                 <i class="fas fa-plus"></i>
                 <span>Tambah Barang</span>
             </a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -67,7 +77,7 @@
                 <button 
                     id="searchBtn"
                     onclick="triggerSearch()"
-                    class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+                    class="inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-5 py-2.5 text-sm font-semibold transition">
                     <i class="fas fa-search"></i>
                     <span>Cari</span>
                 </button>
@@ -96,7 +106,7 @@
     </div>
     <?php endif; ?>
 
-    <?php if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin'): ?>
+    <?php if (!$isAdmin): ?>
     <div class="grid grid-cols-1 gap-3 sm:gap-4">
         <div class="rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-white p-4 sm:p-5 text-center">
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 mb-3">
@@ -184,7 +194,11 @@
             <div class="text-center py-8 text-gray-400 italic">Tidak ada data barang</div>
         <?php else: ?>
             <?php foreach ($barang as $index => $item): ?>
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                <?php
+                    $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
+                    $updatedByLabel = $updatedByName !== '' ? 'admin' : '-';
+                ?>
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
@@ -198,16 +212,20 @@
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                         <div>
                             <div class="text-gray-500 text-xs">Harga Beli</div>
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_beli']) ?></div>
                         </div>
-                        <?php endif; ?>
                         <div>
                             <div class="text-gray-500 text-xs">Harga Jual</div>
                             <div class="font-semibold text-gray-800"><?= formatRupiah($item['harga_jual']) ?></div>
                         </div>
+                    </div>
+                    <div class="mb-3 text-xs">
+                        <span class="font-semibold text-slate-600">Expired:</span>
+                        <span class="<?= !empty($item['tanggal_expired']) && strtotime($item['tanggal_expired']) < strtotime(date('Y-m-d')) ? 'text-red-700 font-semibold' : 'text-slate-700' ?>">
+                            <?= !empty($item['tanggal_expired']) ? date('d/m/Y', strtotime($item['tanggal_expired'])) : '-' ?>
+                        </span>
                     </div>
                     <div class="flex items-center justify-center text-center text-xs text-gray-500 mb-3">
                         <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1">
@@ -215,14 +233,21 @@
                             <span><?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?></span>
                         </span>
                     </div>
+                    <div class="text-center text-[11px] text-teal-700 mb-3">
+                        <i class="fas fa-user-shield mr-1"></i><?= htmlspecialchars($updatedByLabel) ?>
+                    </div>
+                    <?php if ($canEditStok): ?>
                     <div class="flex gap-2">
                         <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
+                        <?php if ($isAdmin): ?>
                         <button onclick="confirmDelete(<?= $item['id_barang'] ?>)" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
+                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -238,23 +263,28 @@
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800" style="min-width: 12rem;">Nama Barang</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
-                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>
-                    <?php endif; ?>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                    <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-32">Expired</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-40">Update Terakhir</th>
+                    <?php if ($canEditStok): ?>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
+                    <?php endif; ?>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 <?php if (empty($barang)): ?>
                     <tr>
-                        <td colspan="<?= (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') ? 10 : 9 ?>" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang</td>
+                        <td colspan="<?= $isAdmin ? 11 : ($canEditStok ? 10 : 9) ?>" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data barang</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($barang as $index => $item): ?>
-                        <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                        <?php
+                            $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
+                            $updatedByLabel = $updatedByName !== '' ? 'admin' : '-';
+                        ?>
+                        <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">
@@ -266,33 +296,47 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium"><?= htmlspecialchars($item['satuan']) ?></td>
-                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
-                            <?php endif; ?>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
                             <td class="px-6 py-4 text-center">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
                                     <?= $item['stok'] ?>
                                 </span>
                             </td>
+                            <td class="px-6 py-4 text-center text-sm whitespace-nowrap">
+                                <?php if (!empty($item['tanggal_expired'])): ?>
+                                    <span class="<?= strtotime($item['tanggal_expired']) < strtotime(date('Y-m-d')) ? 'text-red-700 font-semibold' : 'text-gray-700' ?>">
+                                        <?= date('d/m/Y', strtotime($item['tanggal_expired'])) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-gray-400">-</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="px-6 py-4 text-sm text-gray-600 text-center">
                                 <div class="inline-flex items-center gap-2">
                                     <i class="fas fa-clock text-blue-500"></i>
                                     <span><?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?></span>
                                 </div>
+                                <div class="mt-1 text-[11px] text-teal-700">
+                                    <i class="fas fa-user-shield mr-1"></i><?= htmlspecialchars($updatedByLabel) ?>
+                                </div>
                             </td>
+                            <?php if ($canEditStok): ?>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex justify-center gap-2">
                                     <a href="/barang/edit/<?= $item['id_barang'] ?>" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
+                                    <?php if ($isAdmin): ?>
                                     <a href="/barang/delete/<?= $item['id_barang'] ?>" 
                                        onclick="return confirm('Yakin ingin menghapus barang ini?')" 
                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
                                         <i class="fas fa-trash text-sm"></i>
                                     </a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -370,7 +414,8 @@ const totalsByKategori = <?= json_encode((object)array_reduce($totals_by_kategor
 const currentPage = <?= (int)$current_page ?>;
 const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
-const userRole = <?= json_encode($_SESSION['role'] ?? 'kasir') ?>;
+const userRole = <?= json_encode($role) ?>;
+const canEditStok = userRole === 'admin' || userRole === 'user';
 let currentQuery = '';
 let currentSearchPage = 1;
 let currentSearchTotal = 0;
@@ -495,6 +540,21 @@ function formatDateDisplay(value) {
         month: 'long',
         year: 'numeric'
     }).format(parsed);
+}
+
+function formatDateSimple(value) {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}/${month}/${year}`;
+}
+
+function getUpdaterLabel(item) {
+    const name = (item && item.stok_updated_by_nama ? String(item.stok_updated_by_nama).trim() : '');
+    return name ? 'admin' : '-';
 }
 
 function updateKategoriSummary() {
@@ -711,31 +771,42 @@ function renderSearchResults(results, apiResponse = {}) {
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
-                        ${userRole === 'admin' ? `
                         <div>
                             <div class="text-gray-500 text-xs">Harga Beli</div>
                             <div class="font-semibold text-gray-800">${formatRupiah(item.harga_beli)}</div>
                         </div>
-                        ` : ''}
                         <div>
                             <div class="text-gray-500 text-xs">Harga Jual</div>
                             <div class="font-semibold text-gray-800">${formatRupiah(item.harga_jual)}</div>
                         </div>
                     </div>
-                        <div class="flex items-center justify-center text-center text-xs text-gray-500 mb-3">
+                    <div class="mb-3 text-xs">
+                        <span class="font-semibold text-slate-600">Expired:</span>
+                        <span class="${item.tanggal_expired && new Date(item.tanggal_expired) < new Date(new Date().toDateString()) ? 'text-red-700 font-semibold' : 'text-slate-700'}">
+                            ${item.tanggal_expired ? formatDateSimple(item.tanggal_expired) : '-'}
+                        </span>
+                    </div>
+                        <div class="flex items-center justify-center text-center text-xs text-gray-500 mb-1">
                             <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2.5 py-1">
                             <i class="fas fa-clock text-blue-500"></i>
                             <span>${formatDateDisplay(item.updated_at)}</span>
                         </span>
                     </div>
+                    <div class="text-center text-[11px] text-teal-700 mb-3">
+                        <i class="fas fa-user-shield mr-1"></i>${htmlSpecialChars(getUpdaterLabel(item))}
+                    </div>
+                    ${canEditStok ? `
                     <div class="flex gap-2">
                         <a href="/barang/edit/${item.id_barang}" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
+                        ${userRole === 'admin' ? `
                         <button onclick="confirmDelete(${item.id_barang})" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
+                        ` : ''}
                     </div>
+                    ` : ''}
                 </div>
             `).join('');
     }
@@ -753,11 +824,12 @@ function renderSearchResults(results, apiResponse = {}) {
                         <th class="px-6 py-4 text-left text-sm font-bold text-gray-800" style="min-width: 12rem;">Nama Barang</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
-                        ${userRole === 'admin' ? `<th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>` : ''}
+                        <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>
                         <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
+                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Expired</th>
                         <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-36">Update Terakhir</th>
-                        <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
+                        ${canEditStok ? `<th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>` : ''}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -768,25 +840,33 @@ function renderSearchResults(results, apiResponse = {}) {
                             <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">${htmlSpecialChars(item.nama_barang)}</td>
                             <td class="px-6 py-4 text-center"><span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
                             <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
-                            ${userRole === 'admin' ? `<td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_beli)}</td>` : ''}
+                            <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_beli)}</td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_jual)}</td>
                             <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">${item.stok}</span></td>
+                            <td class="px-6 py-4 text-center text-sm ${item.tanggal_expired && new Date(item.tanggal_expired) < new Date(new Date().toDateString()) ? 'text-red-700 font-semibold' : 'text-gray-700'}">${item.tanggal_expired ? formatDateSimple(item.tanggal_expired) : '-'}</td>
                             <td class="px-6 py-4 text-sm text-gray-600 text-center">
                                 <div class="inline-flex items-center gap-2">
                                     <i class="fas fa-clock text-blue-500"></i>
                                     <span>${formatDateDisplay(item.updated_at)}</span>
                                 </div>
+                                <div class="mt-1 text-[11px] text-teal-700">
+                                    <i class="fas fa-user-shield mr-1"></i>${htmlSpecialChars(getUpdaterLabel(item))}
+                                </div>
                             </td>
+                            ${canEditStok ? `
                             <td class="px-6 py-4 text-center">
                                 <div class="flex justify-center gap-2">
                                     <a href="/barang/edit/${item.id_barang}" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
+                                    ${userRole === 'admin' ? `
                                     <a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
                                         <i class="fas fa-trash text-sm"></i>
                                     </a>
+                                    ` : ''}
                                 </div>
                             </td>
+                            ` : ''}
                         </tr>
                     `).join('')}
                 </tbody>

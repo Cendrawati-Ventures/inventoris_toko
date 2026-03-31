@@ -64,6 +64,7 @@
                     required
                 >
                     <option value="kasir">Kasir</option>
+                    <option value="inspeksi">Inspeksi</option>
                     <option value="admin">Admin</option>
                 </select>
             </div>

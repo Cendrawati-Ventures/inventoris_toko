@@ -22,10 +22,122 @@
                 min-width: 44px;
             }
         }
+
+        /* Global interactive treatment for action controls */
+        .app-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 0.75rem;
+            color: #ffffff;
+            background: linear-gradient(135deg, #0f766e 0%, #0d9488 55%, #14b8a6 100%);
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.26);
+            transition: transform 150ms ease, box-shadow 220ms ease, filter 180ms ease;
+        }
+
+        .app-btn-primary:hover {
+            filter: brightness(1.05);
+            box-shadow: 0 12px 26px rgba(13, 148, 136, 0.34);
+        }
+
+        .app-btn-primary:active {
+            transform: translateY(1px) scale(0.99);
+        }
+
+        .app-btn-primary:focus-visible {
+            outline: 3px solid rgba(20, 184, 166, 0.35);
+            outline-offset: 2px;
+        }
+
+        .app-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border-radius: 0.75rem;
+            color: #334155;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            transition: transform 150ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+        }
+
+        .app-btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        .app-btn-secondary:active {
+            transform: translateY(1px) scale(0.99);
+        }
+
+        .app-btn-secondary:focus-visible {
+            outline: 3px solid rgba(148, 163, 184, 0.35);
+            outline-offset: 2px;
+        }
+
+        .app-action-btn {
+            position: relative;
+            overflow: hidden;
+            transition: transform 150ms ease, box-shadow 220ms ease, filter 180ms ease, background-color 180ms ease;
+        }
+
+        .app-action-btn::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -120%;
+            width: 70%;
+            height: 100%;
+            background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+            transition: left 360ms ease;
+            pointer-events: none;
+        }
+
+        .app-action-btn:hover::after {
+            left: 130%;
+        }
+
+        .app-action-btn:hover {
+            filter: saturate(1.04);
+        }
+
+        .app-action-btn:active {
+            transform: translateY(1px) scale(0.99);
+        }
+
+        .app-action-btn:focus-visible {
+            outline: 3px solid rgba(20, 184, 166, 0.35);
+            outline-offset: 2px;
+        }
+
+        .app-action-btn.is-loading {
+            cursor: not-allowed !important;
+            pointer-events: none;
+            opacity: 0.88;
+        }
+
+        .app-action-btn.is-loading::after {
+            display: none;
+        }
     </style>
 </head>
-<body class="bg-gray-100 h-full flex flex-col">
-    <nav class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-2xl sticky top-0 z-50">
+<body class="h-full flex flex-col">
+    <?php
+    $currentRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+    if ($currentRole === 'kasir') {
+        $currentRole = 'user';
+    }
+    if ($currentRole === 'admin') {
+        $displayRole = 'Admin';
+    } elseif ($currentRole === 'inspeksi') {
+        $displayRole = 'Inspeksi';
+    } else {
+        $displayRole = 'User';
+    }
+    ?>
+    <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-3">
                 <!-- Logo & Brand -->
@@ -35,7 +147,7 @@
                     </div>
                     <div>
                         <h1 class="text-base sm:text-xl font-bold">UD. Bersaudara</h1>
-                        <p class="text-xs text-blue-100 hidden sm:block">Sistem Inventori</p>
+                        <p class="text-xs text-teal-100 hidden sm:block">Sistem Inventori</p>
                     </div>
                 </a>
                 
@@ -63,7 +175,7 @@
                         <span>Penjualan</span>
                     </a>
                     
-                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'kasir'): ?>
+                    <?php if ($currentRole === 'user'): ?>
                         <a href="/laporan/penjualan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                             <i class="fas fa-chart-line"></i>
                             <span>Laporan</span>
@@ -71,7 +183,7 @@
                     <?php else: ?>
                         <!-- Dropdown Laporan -->
                         <div class="relative" onclick="toggleDropdown(event, this)">
-                            <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                            <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
                                 <i class="fas fa-chart-line"></i>
                                 <span>Laporan</span>
                                 <i class="fas fa-caret-down text-xs"></i>
@@ -105,10 +217,10 @@
                         </div>
                     <?php endif; ?>
                     
-                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
+                    <?php if ($currentRole === 'admin'): ?>
                         <!-- Dropdown Pengaturan -->
                         <div class="relative" onclick="toggleDropdown(event, this)">
-                            <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+                            <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
                                 <i class="fas fa-cog"></i>
                                 <span>Pengaturan</span>
                                 <i class="fas fa-caret-down text-xs"></i>
@@ -131,11 +243,6 @@
                                 </a>
                             </div>
                         </div>
-                    <?php else: ?>
-                        <a href="/setting/kategori-satuan" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
-                            <i class="fas fa-tags"></i>
-                            <span>Kategori</span>
-                        </a>
                     <?php endif; ?>
                 </div>
                 
@@ -148,7 +255,7 @@
                             </div>
                             <div class="text-left hidden md:block">
                                 <p class="text-sm font-semibold"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
-                                <p class="text-xs text-blue-100"><?php echo ucfirst($_SESSION['role'] ?? 'user'); ?></p>
+                                <p class="text-xs text-teal-100"><?php echo $displayRole; ?></p>
                             </div>
                         </div>
                         <i class="fas fa-caret-down text-xs"></i>
@@ -158,7 +265,7 @@
                             <p class="font-semibold text-gray-800"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 <i class="fas fa-circle text-green-500 text-[6px] mr-1"></i>
-                                <?php echo ucfirst($_SESSION['role'] ?? 'user'); ?>
+                                <?php echo $displayRole; ?>
                             </p>
                         </div>
                         <a href="/logout" class="flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 transition">
@@ -175,7 +282,7 @@
         
         <!-- Mobile Menu Sidebar -->
         <div id="mobileMenu" class="mobile-menu closed fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-white text-gray-800 shadow-2xl z-50 lg:hidden overflow-y-auto">
-            <div class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white p-4 flex justify-between items-center">
+            <div class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white p-4 flex justify-between items-center">
                 <div>
                     <h2 class="font-bold text-lg">Menu</h2>
                     <p class="text-xs text-blue-100"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
@@ -206,7 +313,7 @@
                 <!-- Laporan Section -->
                 <div class="border-t border-gray-200 pt-2 mt-2">
                     <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Laporan</p>
-                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'kasir'): ?>
+                    <?php if ($currentRole === 'user'): ?>
                         <a href="/laporan/penjualan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-chart-line text-green-600 w-5"></i>
                             <span>Laporan Penjualan</span>
@@ -236,7 +343,7 @@
                 </div>
                 
                 <!-- Settings Section -->
-                <?php if (isset($_SESSION['role']) && $_SESSION['role'] == 'admin'): ?>
+                <?php if ($currentRole === 'admin'): ?>
                     <div class="border-t border-gray-200 pt-2 mt-2">
                         <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Pengaturan</p>
                         <a href="/user" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
@@ -252,11 +359,6 @@
                             <span>Format Nota</span>
                         </a>
                     </div>
-                <?php else: ?>
-                    <a href="/setting/kategori-satuan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
-                        <i class="fas fa-tags text-green-600 w-5"></i>
-                        <span>Kategori & Satuan</span>
-                    </a>
                 <?php endif; ?>
                 
                 <!-- Logout -->
@@ -272,14 +374,14 @@
 
     <main class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-grow">
         <?php if (isset($_SESSION['success'])): ?>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <div class="app-alert app-alert-success relative mb-4 app-reveal" role="alert">
                 <span class="block sm:inline"><?= $_SESSION['success'] ?></span>
             </div>
             <?php unset($_SESSION['success']); ?>
         <?php endif; ?>
 
         <?php if (isset($_SESSION['error'])): ?>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <div class="app-alert app-alert-error relative mb-4 app-reveal" role="alert">
                 <span class="block sm:inline"><?= $_SESSION['error'] ?></span>
             </div>
             <?php unset($_SESSION['error']); ?>
@@ -288,7 +390,7 @@
         <?= $content ?? '' ?>
     </main>
 
-    <footer class="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white mt-8 sm:mt-12 shadow-2xl">
+    <footer class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white mt-8 sm:mt-12 shadow-2xl">
         <div class="container mx-auto px-4 py-6 sm:py-8">
             <div class="border-t border-white border-opacity-20 pt-4 sm:pt-6">
                 <p class="text-center text-xs sm:text-sm font-medium">
@@ -302,6 +404,67 @@
     </footer>
 
     <script>
+        function applyInteractiveEnhancements() {
+            const selectors = [
+                'button',
+                'input[type="submit"]',
+                'input[type="button"]',
+                'a.nav-item',
+                'a.app-btn-primary',
+                'a.app-btn-secondary',
+                'button.app-btn-primary',
+                'button.app-btn-secondary',
+                '.dropdown-menu-content a',
+                '#mobileMenu a',
+                'a.inline-flex[class*="rounded"]',
+                'a[class*="bg-"][class*="rounded"]'
+            ];
+
+            document.querySelectorAll(selectors.join(',')).forEach((el) => {
+                if (!el.classList.contains('app-action-btn')) {
+                    el.classList.add('app-action-btn');
+                }
+            });
+        }
+
+        function enhancePostForms() {
+            document.querySelectorAll('form:not([data-skip-auto-submit-enhance="true"])').forEach((form) => {
+                if (form.dataset.appSubmitEnhanced === 'true') {
+                    return;
+                }
+                if ((form.method || '').toUpperCase() !== 'POST') {
+                    return;
+                }
+
+                form.dataset.appSubmitEnhanced = 'true';
+                form.addEventListener('submit', (event) => {
+                    const submitter = event.submitter || form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (!submitter || submitter.dataset.noLoading === 'true' || submitter.disabled) {
+                        return;
+                    }
+
+                    submitter.classList.add('is-loading', 'cursor-not-allowed', 'opacity-90');
+                    submitter.disabled = true;
+                    submitter.setAttribute('aria-busy', 'true');
+
+                    const loadingText = submitter.getAttribute('data-loading-text') || 'Memproses...';
+
+                    if (submitter.tagName === 'BUTTON') {
+                        if (!submitter.dataset.originalHtml) {
+                            submitter.dataset.originalHtml = submitter.innerHTML;
+                        }
+                        submitter.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>' + loadingText + '</span>';
+                        submitter.classList.add('inline-flex', 'items-center', 'justify-center', 'gap-2');
+                    } else if (submitter.tagName === 'INPUT') {
+                        if (!submitter.dataset.originalValue) {
+                            submitter.dataset.originalValue = submitter.value;
+                        }
+                        submitter.value = loadingText;
+                    }
+                }, { once: true });
+            });
+        }
+
         // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
@@ -352,6 +515,20 @@
         }
 
         document.addEventListener('click', () => closeAllDropdowns());
+
+        // Stagger reveal for major cards/sections
+        document.querySelectorAll('.app-reveal').forEach((el, idx) => {
+            el.style.animationDelay = `${Math.min(idx * 60, 420)}ms`;
+        });
+
+        applyInteractiveEnhancements();
+        enhancePostForms();
+
+        const interactiveObserver = new MutationObserver(() => {
+            applyInteractiveEnhancements();
+            enhancePostForms();
+        });
+        interactiveObserver.observe(document.body, { childList: true, subtree: true });
     </script>
 </body>
 </html>

@@ -59,11 +59,18 @@
                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
         </div>
 
+        <div class="mb-8">
+            <label for="tanggal_expired" class="block text-gray-700 font-bold mb-2 text-sm">Tanggal Expired</label>
+            <input type="date" id="tanggal_expired" name="tanggal_expired"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <p class="text-xs text-gray-500 mt-1">Kosongkan jika barang tidak memiliki tanggal kedaluwarsa.</p>
+        </div>
+
         <div class="flex gap-4 justify-center">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition font-semibold">
+            <button type="submit" class="app-btn-primary px-8 py-3 font-semibold" data-loading-text="Menyimpan...">
                 <i class="fas fa-save mr-2"></i>Simpan
             </button>
-            <a href="/barang" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg transition font-semibold">
+            <a href="/barang" class="app-btn-secondary px-8 py-3 font-semibold">
                 <i class="fas fa-arrow-left mr-2"></i>Kembali
             </a>
         </div>

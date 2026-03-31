@@ -63,7 +63,8 @@ class PembelianController {
                 'items' => $items,
                 'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
-                'keterangan' => $_POST['keterangan'] ?? ''
+                'keterangan' => $_POST['keterangan'] ?? '',
+                'id_user' => $_SESSION['user_id'] ?? null
             ];
 
             $result = $this->model->create($data);
@@ -126,7 +127,8 @@ class PembelianController {
                 'items' => $items,
                 'uang_diberikan' => 0,
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
-                'keterangan' => ''
+                'keterangan' => '',
+                'id_user' => $_SESSION['user_id'] ?? null
             ];
 
             $result = $this->model->update($id, $data);
@@ -142,7 +144,7 @@ class PembelianController {
     }
 
     public function delete($id) {
-        $result = $this->model->delete($id);
+        $result = $this->model->delete($id, $_SESSION['user_id'] ?? null);
         
         if ($result['success']) {
             $_SESSION['success'] = $result['message'];
@@ -152,4 +154,3 @@ class PembelianController {
         redirect('/pembelian');
     }
 }
-

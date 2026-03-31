@@ -1,5 +1,10 @@
 <?php ob_start(); ?>
-<?php $user_role = $_SESSION['role'] ?? 'kasir'; ?>
+<?php
+$user_role = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+if ($user_role === 'kasir') {
+    $user_role = 'user';
+}
+?>
 
 <div class="bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">

@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS barang (
     harga_beli NUMERIC(12,2) NOT NULL,
     harga_jual NUMERIC(12,2) NOT NULL,
     stok INT DEFAULT 0,
+    stok_updated_by INT REFERENCES users(id_user) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

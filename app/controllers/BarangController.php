@@ -53,7 +53,8 @@ class BarangController {
                 'satuan' => $_POST['satuan'] ?? 'pcs',
                 'harga_beli' => $_POST['harga_beli'],
                 'harga_jual' => $_POST['harga_jual'],
-                'stok' => $_POST['stok']
+                'stok' => $_POST['stok'],
+                'stok_updated_by' => $_SESSION['user_id'] ?? null
             ];
 
             if ($this->model->create($data)) {
@@ -97,7 +98,8 @@ class BarangController {
                 'satuan' => $_POST['satuan'] ?? 'pcs',
                 'harga_beli' => $_POST['harga_beli'],
                 'harga_jual' => $_POST['harga_jual'],
-                'stok' => $_POST['stok']
+                'stok' => $_POST['stok'],
+                'stok_updated_by' => $_SESSION['user_id'] ?? null
             ];
 
             if ($this->model->update($id, $data)) {

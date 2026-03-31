@@ -152,18 +152,31 @@ class Penjualan {
             // Validate all items and check stock
             $total = 0;
             foreach ($data['items'] as $item) {
+                $jumlah = (int)($item['jumlah'] ?? 0);
+                $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
+                $diskon = (float)($item['diskon'] ?? 0);
+
+                if ($jumlah <= 0 || $hargaSatuan < 0 || $diskon < 0) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
+                }
+
                 $queryCheck = "SELECT stok FROM barang WHERE id_barang = :id_barang";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
                 $barang = $stmtCheck->fetch();
 
-                if (!$barang || $barang['stok'] < $item['jumlah']) {
+                if (!$barang || (int)$barang['stok'] < $jumlah) {
                     $this->conn->rollBack();
                     return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang'];
                 }
 
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = ($hargaSatuan * $jumlah) - $diskon;
+                if ($subtotal < 0) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Subtotal item tidak boleh negatif'];
+                }
                 $total += $subtotal;
             }
 
@@ -215,7 +228,10 @@ class Penjualan {
 
             // Insert detail items
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $jumlah = abs((int)$item['jumlah']);
+                $hargaSatuan = (float)$item['harga_satuan'];
+                $diskon = (float)$item['diskon'];
+                $subtotal = ($hargaSatuan * $jumlah) - $diskon;
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
                                (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal)
@@ -224,17 +240,23 @@ class Penjualan {
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id_penjualan);
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
-                $stmtDetail->bindParam(':jumlah', $item['jumlah']);
-                $stmtDetail->bindParam(':harga_satuan', $item['harga_satuan']);
-                $stmtDetail->bindParam(':diskon', $item['diskon']);
+                $stmtDetail->bindParam(':jumlah', $jumlah);
+                $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
+                $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
                 $stmtDetail->execute();
 
                 // Update stok barang (kurangi)
-                $queryStok = "UPDATE barang SET stok = stok - :jumlah WHERE id_barang = :id_barang";
+                $queryStok = "UPDATE barang
+                              SET stok = stok - :jumlah,
+                                  stok_updated_by = :updated_by,
+                                  updated_at = NOW()
+                              WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $item['jumlah']);
+                $stmtStok->bindParam(':jumlah', $jumlah);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtStok->execute();
             }
 
@@ -259,28 +281,51 @@ class Penjualan {
 
             // Restore old stock
             foreach ($oldDetails as $oldItem) {
-                $queryRestore = "UPDATE barang SET stok = stok + :jumlah WHERE id_barang = :id_barang";
+                $restoreQty = abs((int)$oldItem['jumlah']);
+                if ($restoreQty <= 0) {
+                    continue;
+                }
+                $queryRestore = "UPDATE barang
+                                 SET stok = stok + :jumlah,
+                                     stok_updated_by = :updated_by,
+                                     updated_at = NOW()
+                                 WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
-                $stmtRestore->bindParam(':jumlah', $oldItem['jumlah']);
+                $stmtRestore->bindParam(':jumlah', $restoreQty);
                 $stmtRestore->bindParam(':id_barang', $oldItem['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtRestore->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtRestore->execute();
             }
 
             // Validate new items and check stock
             $total = 0;
             foreach ($data['items'] as $item) {
+                $jumlah = (int)($item['jumlah'] ?? 0);
+                $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
+                $diskon = (float)($item['diskon'] ?? 0);
+
+                if ($jumlah <= 0 || $hargaSatuan < 0 || $diskon < 0) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
+                }
+
                 $queryCheck = "SELECT stok FROM barang WHERE id_barang = :id_barang";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
                 $barang = $stmtCheck->fetch();
 
-                if (!$barang || $barang['stok'] < $item['jumlah']) {
+                if (!$barang || (int)$barang['stok'] < $jumlah) {
                     $this->conn->rollBack();
                     return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang'];
                 }
 
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $subtotal = ($hargaSatuan * $jumlah) - $diskon;
+                if ($subtotal < 0) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Subtotal item tidak boleh negatif'];
+                }
                 $total += $subtotal;
             }
 
@@ -325,7 +370,10 @@ class Penjualan {
 
             // Insert new details
             foreach ($data['items'] as $item) {
-                $subtotal = ($item['harga_satuan'] * $item['jumlah']) - $item['diskon'];
+                $jumlah = abs((int)$item['jumlah']);
+                $hargaSatuan = (float)$item['harga_satuan'];
+                $diskon = (float)$item['diskon'];
+                $subtotal = ($hargaSatuan * $jumlah) - $diskon;
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
                                (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal)
@@ -334,17 +382,23 @@ class Penjualan {
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id);
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
-                $stmtDetail->bindParam(':jumlah', $item['jumlah']);
-                $stmtDetail->bindParam(':harga_satuan', $item['harga_satuan']);
-                $stmtDetail->bindParam(':diskon', $item['diskon']);
+                $stmtDetail->bindParam(':jumlah', $jumlah);
+                $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
+                $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
                 $stmtDetail->execute();
 
                 // Update stok barang (kurangi)
-                $queryStok = "UPDATE barang SET stok = stok - :jumlah WHERE id_barang = :id_barang";
+                $queryStok = "UPDATE barang
+                              SET stok = stok - :jumlah,
+                                  stok_updated_by = :updated_by,
+                                  updated_at = NOW()
+                              WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $item['jumlah']);
+                $stmtStok->bindParam(':jumlah', $jumlah);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtStok->execute();
             }
 
@@ -397,7 +451,7 @@ class Penjualan {
         }
     }
 
-    public function delete($id) {
+    public function delete($id, $updatedBy = null) {
         try {
             $this->conn->beginTransaction();
 
@@ -410,10 +464,20 @@ class Penjualan {
 
             // Restore all stock
             foreach ($details as $detail) {
-                $queryRestore = "UPDATE barang SET stok = stok + :jumlah WHERE id_barang = :id_barang";
+                $restoreQty = abs((int)$detail['jumlah']);
+                if ($restoreQty <= 0) {
+                    continue;
+                }
+                $queryRestore = "UPDATE barang
+                                 SET stok = stok + :jumlah,
+                                     stok_updated_by = :updated_by,
+                                     updated_at = NOW()
+                                 WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
-                $stmtRestore->bindParam(':jumlah', $detail['jumlah']);
+                $stmtRestore->bindParam(':jumlah', $restoreQty);
                 $stmtRestore->bindParam(':id_barang', $detail['id_barang']);
+                $updatedByValue = $updatedBy !== null && $updatedBy !== '' ? (int)$updatedBy : null;
+                $stmtRestore->bindValue(':updated_by', $updatedByValue, $updatedByValue === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtRestore->execute();
             }
 
@@ -466,4 +530,3 @@ class Penjualan {
         return $result['total'] ?? 0;
     }
 }
-

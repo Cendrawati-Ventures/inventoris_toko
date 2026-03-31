@@ -49,7 +49,8 @@
                     name="role"
                     required
                 >
-                    <option value="kasir" <?php echo $user['role'] == 'kasir' ? 'selected' : ''; ?>>Kasir</option>
+                    <option value="kasir" <?php echo ($user['role'] == 'user' || $user['role'] == 'kasir') ? 'selected' : ''; ?>>Kasir</option>
+                    <option value="inspeksi" <?php echo $user['role'] == 'inspeksi' ? 'selected' : ''; ?>>Inspeksi</option>
                     <option value="admin" <?php echo $user['role'] == 'admin' ? 'selected' : ''; ?>>Admin</option>
                 </select>
             </div>
