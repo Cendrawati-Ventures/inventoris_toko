@@ -7,6 +7,14 @@
 
     <form action="/penjualan/store" method="POST" id="formPenjualan" onsubmit="return validateForm()">
 
+        <!-- Tanggal Penjualan -->
+        <div class="mb-6">
+            <label for="tanggal_penjualan" class="block text-gray-700 font-semibold mb-2">Tanggal Penjualan *</label>
+            <input type="date" id="tanggal_penjualan" name="tanggal" value="<?= date('Y-m-d') ?>"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            <p class="text-xs text-gray-500 mt-1">Atur manual tanggal transaksi agar sesuai pencatatan.</p>
+        </div>
+
         <!-- Panel Cari & Pilihan Barang -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <!-- Panel Daftar Barang Tersedia -->
@@ -299,6 +307,12 @@ function hitungKembalian() {
 }
 
 function validateForm() {
+    const tanggalPenjualan = document.getElementById('tanggal_penjualan');
+    if (!tanggalPenjualan.value) {
+        alert('Tanggal penjualan wajib diisi!');
+        return false;
+    }
+
     const items = document.querySelectorAll('[data-item-index]');
     if (items.length === 0) {
         alert('Tambahkan minimal satu item!');
@@ -365,6 +379,18 @@ function toggleHutangFields() {
     }
 }
 
+function getTanggalNota() {
+    const input = document.getElementById('tanggal_penjualan');
+    const now = new Date();
+    let tanggalStr = ('0' + now.getDate()).slice(-2) + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + now.getFullYear();
+    if (input && input.value && input.value.includes('-')) {
+        const [y, m, d] = input.value.split('-');
+        tanggalStr = d + '/' + m + '/' + y;
+    }
+    const waktuStr = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    return { tanggal: tanggalStr, waktu: waktuStr };
+}
+
 function printNota() {
     const items = document.querySelectorAll('[data-item-index]');
     if (items.length === 0) {
@@ -378,7 +404,7 @@ function printNota() {
     const escapeHtml = (text) => text ? String(text).replace(/[&<>"']/g, (c) => escapeMap[c] || c) : '';
     const formatRupiah = (value) => 'Rp ' + Math.floor(value).toLocaleString('id-ID');
 
-    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Nota</title><style>body{font-family:"' + fontNota + '", monospace;width:' + width + 'mm;margin:0;padding:10mm}.header{text-align:center;margin-bottom:8mm}.header h2{margin:0;font-size:14px}.header p{margin:3px 0;font-size:10px;color:#444}.header .muted{color:#777;font-size:9px}.header .custom{margin-top:4px;color:#333;font-size:9px;line-height:1.3}hr{margin:5px 0;border:none;border-top:1px solid #000}.info{font-size:10px;margin-bottom:6mm;line-height:1.4}table{width:100%;font-size:9px;border-collapse:collapse;margin-bottom:8mm}table thead tr{border-bottom:1px solid #000}table th{text-align:left;padding:3px 0;font-weight:bold}table td{padding:3px 0}table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),table th:nth-child(4),table td:nth-child(4){text-align:right}table tbody tr{border-bottom:1px dotted #ccc}table .muted{color:#555;font-size:8px}.summary{font-size:10px;margin-bottom:6mm;line-height:1.6}.summary-row{display:flex;justify-content:space-between}.total-row{border-top:1px solid #000;padding-top:3px;font-weight:bold}.footer{text-align:center;font-size:9px;color:#444;margin-top:8mm;line-height:1.4}@media print{body{margin:0;padding:5mm}}</style></head><body>';
+    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Print Nota</title><style>@page{margin:1mm}body{font-family:"' + fontNota + '", monospace;width:' + width + 'mm;margin:0 auto;padding:2mm;font-size:13px}.header{text-align:center;margin-bottom:6mm}.header h2{margin:0;font-size:18px}.header p{margin:2px 0;font-size:12px;color:#444}.header .muted{color:#777;font-size:11px}.header .custom{margin-top:4px;color:#333;font-size:11px;line-height:1.3}hr{margin:4px 0;border:none;border-top:1px solid #000}.info{font-size:13px;margin-bottom:5mm;line-height:1.5}table{width:100%;font-size:13px;border-collapse:collapse;margin-bottom:6mm}table thead tr{border-bottom:1px solid #000}table th{text-align:left;padding:3px 0;font-weight:bold}table td{padding:3px 0}table th:nth-child(2),table td:nth-child(2),table th:nth-child(3),table td:nth-child(3),table th:nth-child(4),table td:nth-child(4){text-align:right}table tbody tr{border-bottom:1px dotted #ccc}table .muted{color:#555;font-size:11px}.summary{font-size:13px;margin-bottom:5mm;line-height:1.5}.summary-row{display:flex;justify-content:space-between}.total-row{border-top:1px solid #000;padding-top:3px;font-weight:bold}.footer{text-align:center;font-size:12px;color:#444;margin-top:6mm;line-height:1.4}@media print{body{margin:0 auto;padding:2mm}}</style></head><body>';
     html += '<div class="header"><h2>' + escapeHtml(cfg.nama_toko || 'UD. BERSAUDARA') + '</h2>';
     const alamat = escapeHtml(cfg.alamat_toko || '');
     const telp = escapeHtml(cfg.nomor_telepon || '');
@@ -395,9 +421,7 @@ function printNota() {
         html += '</div>';
     }
     html += '<hr></div>';
-    const now = new Date();
-    const tanggal = ('0' + now.getDate()).slice(-2) + '/' + ('0' + (now.getMonth() + 1)).slice(-2) + '/' + now.getFullYear();
-    const waktu = ('0' + now.getHours()).slice(-2) + ':' + ('0' + now.getMinutes()).slice(-2);
+    const { tanggal, waktu } = getTanggalNota();
     html += '<div class="info"><div><strong>Tanggal:</strong> ' + tanggal;
     if ((cfg.tampilkan_jam ?? 1) == 1) {
         html += ' ' + waktu;
