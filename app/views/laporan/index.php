@@ -48,6 +48,47 @@ $isInspeksi = ($currentRole === 'inspeksi');
         </div>
     </div>
 </div>
+<?php elseif ($isInspeksi): ?>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 app-reveal">
+    <!-- Card Total Harga Beli -->
+    <div class="bg-gradient-to-br from-teal-700 to-teal-600 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-teal-100 text-sm font-semibold">Total Harga Beli</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_beli']) ?></p>
+            </div>
+            <div class="bg-teal-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-receipt text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Total Harga Jual -->
+    <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-green-100 text-sm font-semibold">Total Harga Jual</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['total_harga_jual']) ?></p>
+            </div>
+            <div class="bg-green-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-tags text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Total Stok -->
+    <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-purple-100 text-sm font-semibold">Total Stok</p>
+                <p class="text-3xl font-bold mt-2"><?= $stats['total_stok'] ?></p>
+            </div>
+            <div class="bg-purple-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-cubes text-3xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
 <?php else: ?>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 app-reveal">
     <!-- Card Total Harga Beli -->
@@ -109,7 +150,7 @@ $isInspeksi = ($currentRole === 'inspeksi');
     <h2 class="text-2xl font-bold text-gray-800 mb-4">
         <i class="fas fa-rocket text-teal-600 mr-2"></i>Menu
     </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="<?= $isInspeksi ? 'grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl mx-auto' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4' ?>">
         <?php if ($isInspeksi): ?>
         <a href="/barang" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>

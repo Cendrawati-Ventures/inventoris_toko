@@ -195,8 +195,9 @@ $canEditStok = ($role === 'admin' || $role === 'user');
         <?php else: ?>
             <?php foreach ($barang as $index => $item): ?>
                 <?php
+                    $updatedByUsername = trim((string)($item['stok_updated_by_username'] ?? ''));
                     $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
-                    $updatedByLabel = $updatedByName !== '' ? 'admin' : '-';
+                    $updatedByLabel = $updatedByUsername !== '' ? $updatedByUsername : ($updatedByName !== '' ? $updatedByName : '-');
                 ?>
                 <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                     <div class="flex justify-between items-start mb-3">
@@ -281,8 +282,9 @@ $canEditStok = ($role === 'admin' || $role === 'user');
                 <?php else: ?>
                     <?php foreach ($barang as $index => $item): ?>
                         <?php
+                            $updatedByUsername = trim((string)($item['stok_updated_by_username'] ?? ''));
                             $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
-                            $updatedByLabel = $updatedByName !== '' ? 'admin' : '-';
+                            $updatedByLabel = $updatedByUsername !== '' ? $updatedByUsername : ($updatedByName !== '' ? $updatedByName : '-');
                         ?>
                         <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
@@ -553,8 +555,9 @@ function formatDateSimple(value) {
 }
 
 function getUpdaterLabel(item) {
+    const username = (item && item.stok_updated_by_username ? String(item.stok_updated_by_username).trim() : '');
     const name = (item && item.stok_updated_by_nama ? String(item.stok_updated_by_nama).trim() : '');
-    return name ? 'admin' : '-';
+    return username || name || '-';
 }
 
 function updateKategoriSummary() {

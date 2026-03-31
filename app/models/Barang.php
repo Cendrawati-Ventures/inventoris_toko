@@ -62,7 +62,7 @@ class Barang {
             $where = 'WHERE b.id_kategori = :id_kategori';
         }
 
-        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+        $query = "SELECT b.*, k.nama_kategori, u.username AS stok_updated_by_username, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
                   FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   LEFT JOIN users u ON b.stok_updated_by = u.id_user
@@ -89,7 +89,7 @@ class Barang {
             $where = 'WHERE b.id_kategori = :id_kategori';
         }
 
-        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+        $query = "SELECT b.*, k.nama_kategori, u.username AS stok_updated_by_username, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
                   FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   LEFT JOIN users u ON b.stok_updated_by = u.id_user
@@ -156,7 +156,7 @@ class Barang {
     }
 
     public function getById($id) {
-        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+        $query = "SELECT b.*, k.nama_kategori, u.username AS stok_updated_by_username, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
                   FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   LEFT JOIN users u ON b.stok_updated_by = u.id_user
@@ -303,7 +303,7 @@ class Barang {
             $where .= " AND id_kategori = :id_kategori";
         }
         
-        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+        $query = "SELECT b.*, k.nama_kategori, u.username AS stok_updated_by_username, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
                   FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
                   LEFT JOIN users u ON b.stok_updated_by = u.id_user
