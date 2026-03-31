@@ -161,7 +161,7 @@ class UserController {
             <!-- Footer Info -->
             <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
                 <p>Total pengguna: <span class="font-semibold text-gray-800"><?= count($users) ?></span></p>
-                <p class="text-gray-500">Admin: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'admin')) ?></span> | Kasir: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'kasir')) ?></span></p>
+                <p class="text-gray-500">Admin: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'admin')) ?></span> | Kasir: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'kasir')) ?></span> | Inspeksi: <span class="font-semibold text-gray-700"><?= count(array_filter($users, fn($u) => $u['role'] === 'inspeksi')) ?></span></p>
             </div>
         </div>
         <?php
@@ -240,6 +240,7 @@ class UserController {
                                 required>
                             <option value="">-- Pilih Role --</option>
                             <option value="kasir">Kasir</option>
+                            <option value="inspeksi">Inspeksi</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
@@ -305,7 +306,7 @@ class UserController {
             exit;
         }
 
-        if (!in_array($role, ['admin', 'kasir'])) {
+        if (!in_array($role, ['admin', 'kasir', 'inspeksi'], true)) {
             $_SESSION['error'] = 'Role tidak valid';
             header('Location: /user/create');
             exit;
@@ -380,6 +381,7 @@ class UserController {
                                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
                                 required>
                             <option value="kasir" <?= $user['role'] === 'kasir' ? 'selected' : '' ?>>Kasir</option>
+                            <option value="inspeksi" <?= $user['role'] === 'inspeksi' ? 'selected' : '' ?>>Inspeksi</option>
                             <option value="admin" <?= $user['role'] === 'admin' ? 'selected' : '' ?>>Admin</option>
                         </select>
                     </div>
@@ -433,6 +435,12 @@ class UserController {
 
         if ($this->userModel->usernameExists($username, $id)) {
             $_SESSION['error'] = 'Username sudah digunakan oleh pengguna lain';
+            header('Location: /user/edit/' . $id);
+            exit;
+        }
+
+        if (!in_array($role, ['admin', 'kasir', 'inspeksi'], true)) {
+            $_SESSION['error'] = 'Role tidak valid';
             header('Location: /user/edit/' . $id);
             exit;
         }

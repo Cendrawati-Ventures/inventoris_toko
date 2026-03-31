@@ -16,12 +16,12 @@
     }
 ?>
 
-<div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+<div class="app-card p-6 sm:p-8 app-reveal">
     <div class="mb-6 space-y-5">
-        <div class="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 p-5 sm:p-6">
+        <div class="rounded-2xl border border-teal-100 bg-gradient-to-r from-teal-50 via-white to-amber-50 p-5 sm:p-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-start gap-4">
-                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-inner">
+                    <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-teal-100 text-teal-700 shadow-inner">
                         <i class="fas fa-cash-register text-xl"></i>
                     </span>
                     <div>
@@ -29,7 +29,7 @@
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <a href="/penjualan/create" class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 shadow">
+                    <a href="/penjualan/create" class="inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
                         <i class="fas fa-plus"></i>
                         <span>Tambah Penjualan</span>
                     </a>
@@ -50,18 +50,18 @@
                     <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Tanggal Mulai</label>
                     <div class="relative">
                         <i class="fas fa-calendar-day text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        <input type="date" name="tanggal_awal" value="<?= htmlspecialchars($filter_tanggal_awal ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <input type="date" name="tanggal_awal" value="<?= htmlspecialchars($filter_tanggal_awal ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
                 <div class="md:col-span-5">
                     <label class="block text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Tanggal Akhir</label>
                     <div class="relative">
                         <i class="fas fa-calendar-check text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                        <input type="date" name="tanggal_akhir" value="<?= htmlspecialchars($filter_tanggal_akhir ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <input type="date" name="tanggal_akhir" value="<?= htmlspecialchars($filter_tanggal_akhir ?? '') ?>" class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-700 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
                 <div class="md:col-span-2 flex flex-col sm:flex-row gap-2 items-stretch md:items-end">
-                    <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 shadow">
+                    <button type="submit" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
                         <i class="fas fa-search"></i>
                         <span>Cari!</span>
                     </button>
@@ -74,20 +74,20 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-            <div class="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 text-center shadow-sm">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 mb-3">
+            <div class="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5 text-center shadow-sm">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-teal-100 text-teal-700 mb-3">
                     <i class="fas fa-wallet"></i>
                 </span>
-                <p class="text-xs font-semibold uppercase tracking-wide text-blue-500">Total Penjualan</p>
-                <p class="text-2xl font-bold text-blue-700"><?= formatRupiah($grandTotal) ?></p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-teal-600">Total Penjualan</p>
+                <p class="text-2xl font-bold text-teal-700"><?= formatRupiah($grandTotal) ?></p>
                 <p class="text-xs text-gray-500 mt-1">Akumulasi periode terpilih</p>
             </div>
-            <div class="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 text-center shadow-sm">
-                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 mb-3">
+            <div class="rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-5 text-center shadow-sm">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-cyan-700 mb-3">
                     <i class="fas fa-receipt"></i>
                 </span>
-                <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Jumlah Transaksi</p>
-                <p class="text-2xl font-bold text-indigo-700"><?= number_format($totalTransaksi, 0, ',', '.') ?></p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-cyan-600">Jumlah Transaksi</p>
+                <p class="text-2xl font-bold text-cyan-700"><?= number_format($totalTransaksi, 0, ',', '.') ?></p>
                 <p class="text-xs text-gray-500 mt-1">Ditampilkan di halaman ini: <?= number_format($totalTransaksiHalaman, 0, ',', '.') ?> transaksi</p>
             </div>
             <div class="rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-white p-5 text-center shadow-sm">
@@ -141,18 +141,10 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                        <i class="fas fa-user"></i>
-                                    </span>
-                                    <div>
-                                        <p class="font-semibold text-gray-800"><?= htmlspecialchars($item['nama_pembeli'] ?? '') ?></p>
-                                    </div>
-                                </div>
+                                <p class="font-semibold text-gray-800"><?= htmlspecialchars(trim((string)($item['nama_pembeli'] ?? '')) !== '' ? $item['nama_pembeli'] : '-') ?></p>
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="inline-flex items-center justify-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-700">
-                                    <i class="fas fa-box"></i>
                                     <span><?= number_format((int)($item['jumlah_item'] ?? 0), 0, ',', '.') ?> item</span>
                                 </span>
                             </td>

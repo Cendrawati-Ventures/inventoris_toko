@@ -9,6 +9,41 @@ class Barang {
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->ensureStockAuditStructure();
+    }
+
+    private function ensureStockAuditStructure() {
+        try {
+            $checkColumnQuery = "SELECT 1
+                                 FROM information_schema.columns
+                                 WHERE table_schema = 'public'
+                                   AND table_name = 'barang'
+                                   AND column_name = 'stok_updated_by'
+                                 LIMIT 1";
+            $stmt = $this->conn->query($checkColumnQuery);
+            $exists = $stmt && $stmt->fetch();
+
+            if (!$exists) {
+                $this->conn->exec("ALTER TABLE barang ADD COLUMN stok_updated_by INT NULL");
+            }
+
+            $checkConstraintQuery = "SELECT 1
+                                     FROM information_schema.table_constraints
+                                     WHERE table_schema = 'public'
+                                       AND table_name = 'barang'
+                                       AND constraint_name = 'fk_barang_stok_updated_by'
+                                     LIMIT 1";
+            $stmtConstraint = $this->conn->query($checkConstraintQuery);
+            $constraintExists = $stmtConstraint && $stmtConstraint->fetch();
+
+            if (!$constraintExists) {
+                $this->conn->exec("ALTER TABLE barang
+                                   ADD CONSTRAINT fk_barang_stok_updated_by
+                                   FOREIGN KEY (stok_updated_by) REFERENCES users(id_user) ON DELETE SET NULL");
+            }
+        } catch (Exception $e) {
+            error_log('ensureStockAuditStructure error: ' . $e->getMessage());
+        }
     }
 
     // Generate incremental kode barang (BRG-001, BRG-002, ...)
@@ -27,8 +62,10 @@ class Barang {
             $where = 'WHERE b.id_kategori = :id_kategori';
         }
 
-        $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
+        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+                  FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  LEFT JOIN users u ON b.stok_updated_by = u.id_user
                   $where
                   ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
@@ -52,8 +89,10 @@ class Barang {
             $where = 'WHERE b.id_kategori = :id_kategori';
         }
 
-        $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
+        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+                  FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  LEFT JOIN users u ON b.stok_updated_by = u.id_user
                   $where
                   ORDER BY b.nama_barang ASC
                   LIMIT :limit OFFSET :offset";
@@ -117,8 +156,10 @@ class Barang {
     }
 
     public function getById($id) {
-        $query = "SELECT b.*, k.nama_kategori FROM " . $this->table . " b
+        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
+                  FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  LEFT JOIN users u ON b.stok_updated_by = u.id_user
                   WHERE b.id_barang = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -145,8 +186,8 @@ class Barang {
     public function create($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, stok_updated_by) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :stok_updated_by)";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
@@ -156,6 +197,8 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
+        $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
         return $stmt->execute();
     }
@@ -163,8 +206,8 @@ class Barang {
     public function createAndReturn($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, stok_updated_by) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :stok_updated_by)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
@@ -174,6 +217,8 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
+        $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             $newId = $this->conn->lastInsertId();
@@ -194,6 +239,7 @@ class Barang {
                       harga_beli = :harga_beli, 
                       harga_jual = :harga_jual, 
                       stok = :stok,
+                      stok_updated_by = :stok_updated_by,
                       updated_at = NOW()
                   WHERE id_barang = :id";
         
@@ -206,6 +252,8 @@ class Barang {
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
+        $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
+        $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
         return $stmt->execute();
     }
@@ -225,15 +273,18 @@ class Barang {
         return $stmt->execute();
     }
 
-    public function updateStok($id, $jumlah) {
+    public function updateStok($id, $jumlah, $updatedBy = null) {
         $query = "UPDATE " . $this->table . " 
                   SET stok = stok + :jumlah,
+                      stok_updated_by = :stok_updated_by,
                       updated_at = NOW() 
                   WHERE id_barang = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':jumlah', $jumlah);
+        $updatedByValue = $updatedBy !== null && $updatedBy !== '' ? (int)$updatedBy : null;
+        $stmt->bindValue(':stok_updated_by', $updatedByValue, $updatedByValue === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
         
         return $stmt->execute();
     }
@@ -252,9 +303,10 @@ class Barang {
             $where .= " AND id_kategori = :id_kategori";
         }
         
-        $query = "SELECT b.*, k.nama_kategori 
+        $query = "SELECT b.*, k.nama_kategori, u.nama AS stok_updated_by_nama, u.role AS stok_updated_by_role
                   FROM " . $this->table . " b
                   LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  LEFT JOIN users u ON b.stok_updated_by = u.id_user
                   " . $where . " 
                   ORDER BY b.nama_barang ASC";
         

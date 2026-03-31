@@ -93,10 +93,16 @@ class Pembelian {
                 $stmtDetail->execute();
 
                 // Update stok barang (tambah)
-                $queryStok = "UPDATE barang SET stok = stok + :jumlah WHERE id_barang = :id_barang";
+                $queryStok = "UPDATE barang
+                              SET stok = stok + :jumlah,
+                                  stok_updated_by = :updated_by,
+                                  updated_at = NOW()
+                              WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
                 $stmtStok->bindParam(':jumlah', $item['jumlah']);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtStok->execute();
             }
 
@@ -121,10 +127,16 @@ class Pembelian {
 
             // Restore old stock (reverse the addition)
             foreach ($oldDetails as $oldItem) {
-                $queryRestore = "UPDATE barang SET stok = stok - :jumlah WHERE id_barang = :id_barang";
+                $queryRestore = "UPDATE barang
+                                 SET stok = stok - :jumlah,
+                                     stok_updated_by = :updated_by,
+                                     updated_at = NOW()
+                                 WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
                 $stmtRestore->bindParam(':jumlah', $oldItem['jumlah']);
                 $stmtRestore->bindParam(':id_barang', $oldItem['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtRestore->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtRestore->execute();
             }
 
@@ -180,10 +192,16 @@ class Pembelian {
                 $stmtDetail->execute();
 
                 // Update stok barang (tambah)
-                $queryStok = "UPDATE barang SET stok = stok + :jumlah WHERE id_barang = :id_barang";
+                $queryStok = "UPDATE barang
+                              SET stok = stok + :jumlah,
+                                  stok_updated_by = :updated_by,
+                                  updated_at = NOW()
+                              WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
                 $stmtStok->bindParam(':jumlah', $item['jumlah']);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
+                $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
+                $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtStok->execute();
             }
 
@@ -209,7 +227,7 @@ class Pembelian {
         }
     }
 
-    public function delete($id) {
+    public function delete($id, $updatedBy = null) {
         try {
             $this->conn->beginTransaction();
 
@@ -222,10 +240,16 @@ class Pembelian {
 
             // Restore all stock (reverse the addition)
             foreach ($details as $detail) {
-                $queryRestore = "UPDATE barang SET stok = stok - :jumlah WHERE id_barang = :id_barang";
+                $queryRestore = "UPDATE barang
+                                 SET stok = stok - :jumlah,
+                                     stok_updated_by = :updated_by,
+                                     updated_at = NOW()
+                                 WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
                 $stmtRestore->bindParam(':jumlah', $detail['jumlah']);
                 $stmtRestore->bindParam(':id_barang', $detail['id_barang']);
+                $updatedByValue = $updatedBy !== null && $updatedBy !== '' ? (int)$updatedBy : null;
+                $stmtRestore->bindValue(':updated_by', $updatedByValue, $updatedByValue === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtRestore->execute();
             }
 
@@ -278,4 +302,3 @@ class Pembelian {
         return $result['total'] ?? 0;
     }
 }
-

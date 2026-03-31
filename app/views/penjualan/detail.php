@@ -1,106 +1,183 @@
 <?php ob_start(); ?>
 
-<div class="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
-        <i class="fas fa-info-circle text-blue-600 mr-2"></i>Detail Penjualan
-    </h2>
+<?php
+$totalItem = 0;
+$totalDiskon = 0;
+foreach ($details as $d) {
+    $totalItem += (float)($d['jumlah'] ?? 0);
+    $totalDiskon += (float)($d['diskon'] ?? 0);
+}
+?>
 
-    <!-- Info Transaksi -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div class="bg-gray-50 border border-gray-300 rounded-lg p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-gray-400">Informasi Transaksi</h3>
-            <div class="space-y-5">
-                <div class="flex justify-between items-start">
-                    <span class="text-gray-600 text-sm font-medium">Tanggal:</span>
-                    <span class="text-gray-800 font-bold text-right"><?= date('d/m/Y', strtotime($penjualan['tanggal'])) ?></span>
+<div class="app-card p-5 sm:p-6 app-reveal">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div>
+            <h2 class="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                </span>
+                Detail Penjualan
+            </h2>
+            <p class="text-sm text-slate-500 mt-2">Informasi transaksi, ringkasan pembayaran, dan daftar item penjualan.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="px-3 py-1 rounded-full bg-cyan-100 text-cyan-700 font-semibold"><i class="fas fa-calendar-day mr-1"></i><?= date('d M Y', strtotime($penjualan['tanggal'])) ?></span>
+            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold"><i class="fas fa-boxes mr-1"></i><?= number_format($totalItem, 0, ',', '.') ?> item</span>
+            <span class="px-3 py-1 rounded-full <?= ($penjualan['kembalian'] ?? 0) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' ?> font-semibold">
+                <i class="fas <?= ($penjualan['kembalian'] ?? 0) >= 0 ? 'fa-check-circle' : 'fa-exclamation-circle' ?> mr-1"></i>
+                <?= ($penjualan['kembalian'] ?? 0) >= 0 ? 'Lunas/Tunai' : 'Kurang Bayar' ?>
+            </span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+        <div class="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-4 xl:col-span-2">
+            <h3 class="text-sm font-bold tracking-wide uppercase text-slate-600 mb-4">Informasi Transaksi</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-slate-200 bg-white p-3">
+                    <p class="text-xs text-slate-500 mb-1">Tanggal</p>
+                    <p class="font-semibold text-slate-800"><?= date('d/m/Y', strtotime($penjualan['tanggal'])) ?></p>
                 </div>
-                <div class="flex justify-between items-start border-t pt-4">
-                    <span class="text-gray-600 text-sm font-medium">Waktu:</span>
-                    <span class="text-gray-800 font-bold text-right"><?= date('H:i', strtotime($penjualan['tanggal'])) ?></span>
+                <div class="rounded-xl border border-slate-200 bg-white p-3">
+                    <p class="text-xs text-slate-500 mb-1">Waktu</p>
+                    <p class="font-semibold text-slate-800"><?= date('H:i', strtotime($penjualan['tanggal'])) ?> WIB</p>
                 </div>
-                <div class="flex justify-between items-start border-t pt-4">
-                    <span class="text-gray-600 text-sm font-medium">Nama Pembeli:</span>
-                    <span class="text-gray-800 font-bold text-right"><?= htmlspecialchars($penjualan['nama_pembeli'] ?? '-') ?></span>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 md:col-span-2">
+                    <p class="text-xs text-slate-500 mb-1">Nama Pembeli</p>
+                    <p class="font-semibold text-slate-800"><?= htmlspecialchars($penjualan['nama_pembeli'] ?? '-') ?></p>
                 </div>
                 <?php if (!empty($penjualan['keterangan'])): ?>
-                <div class="border-t pt-4">
-                    <p class="text-gray-600 text-sm font-medium mb-2">Keterangan:</p>
-                    <p class="text-gray-800 bg-white p-3 rounded border border-gray-200 text-sm"><?= htmlspecialchars($penjualan['keterangan']) ?></p>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 md:col-span-2">
+                    <p class="text-xs text-slate-500 mb-1">Keterangan</p>
+                    <p class="text-slate-700"><?= htmlspecialchars($penjualan['keterangan']) ?></p>
                 </div>
                 <?php endif; ?>
             </div>
         </div>
 
-        <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6">
-            <h3 class="text-xl font-bold text-blue-900 mb-6 pb-3 border-b-2 border-blue-400">Ringkasan Pembayaran</h3>
-            <div class="space-y-5">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-700 text-sm font-medium">Total Harga:</span>
-                    <span class="text-2xl font-bold text-blue-600"><?= formatRupiah($penjualan['total_harga']) ?></span>
+        <div class="rounded-2xl border border-teal-200 bg-gradient-to-b from-teal-50 to-white p-4">
+            <h3 class="text-sm font-bold tracking-wide uppercase text-teal-700 mb-4">Ringkasan Pembayaran</h3>
+            <div class="space-y-3 text-sm">
+                <div class="rounded-xl bg-white border border-teal-100 p-3 flex items-center justify-between">
+                    <span class="text-slate-500">Total Harga</span>
+                    <span class="text-lg font-extrabold text-teal-700"><?= formatRupiah($penjualan['total_harga']) ?></span>
                 </div>
-                <div class="flex justify-between items-center border-t-2 border-blue-200 pt-4">
-                    <span class="text-gray-700 text-sm font-medium">Uang Diberikan:</span>
-                    <span class="text-xl font-bold text-gray-800"><?= formatRupiah($penjualan['uang_diberikan']) ?></span>
+                <div class="rounded-xl bg-white border border-slate-200 p-3 flex items-center justify-between">
+                    <span class="text-slate-500">Uang Diberikan</span>
+                    <span class="font-bold text-slate-800"><?= formatRupiah($penjualan['uang_diberikan']) ?></span>
                 </div>
-                <div class="flex justify-between items-center border-t-2 border-blue-200 pt-4">
-                    <span class="text-gray-700 text-sm font-medium">Kembalian:</span>
-                    <span class="text-2xl font-bold <?= $penjualan['kembalian'] >= 0 ? 'text-green-600' : 'text-red-600' ?>"><?= formatRupiah($penjualan['kembalian']) ?></span>
+                <div class="rounded-xl bg-white border border-slate-200 p-3 flex items-center justify-between">
+                    <span class="text-slate-500">Kembalian</span>
+                    <span class="text-lg font-extrabold <?= ($penjualan['kembalian'] ?? 0) >= 0 ? 'text-emerald-700' : 'text-red-700' ?>">
+                        <?= formatRupiah($penjualan['kembalian']) ?>
+                    </span>
+                </div>
+                <div class="rounded-xl bg-white border border-slate-200 p-3 flex items-center justify-between">
+                    <span class="text-slate-500">Total Diskon</span>
+                    <span class="font-bold <?= $totalDiskon > 0 ? 'text-orange-600' : 'text-slate-700' ?>">
+                        <?= $totalDiskon > 0 ? formatRupiah($totalDiskon) : '-' ?>
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Daftar Item -->
-    <div class="mb-8">
-        <h3 class="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-gray-300">Item Penjualan</h3>
-        <div class="overflow-x-auto">
-            <table class="w-full border border-gray-300 rounded-lg">
-                <thead class="bg-blue-100 border-b-2 border-blue-300">
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-bold text-slate-800">Item Penjualan</h3>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 font-semibold"><?= count($details) ?> jenis barang</span>
+        </div>
+
+        <div class="hidden md:block overflow-x-auto rounded-2xl border border-slate-200">
+            <table class="min-w-full bg-white">
+                <thead class="bg-slate-100/80">
                     <tr>
-                        <th class="px-6 py-4 text-center text-sm font-bold w-12">No</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold w-20">Kode</th>
-                        <th class="px-6 py-4 text-left text-sm font-bold w-40">Nama Barang</th>
-                        <th class="px-6 py-4 text-center text-sm font-bold w-28">Jumlah</th>
-                        <th class="px-6 py-4 text-right text-sm font-bold w-32">Harga Jual</th>
-                        <th class="px-6 py-4 text-right text-sm font-bold w-28">Diskon</th>
-                        <th class="px-6 py-4 text-right text-sm font-bold w-32">Subtotal</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 w-12">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">Barang</th>
+                        <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-600 w-28">Jumlah</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-36">Harga</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-32">Diskon</th>
+                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600 w-40">Subtotal</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-slate-100">
                     <?php foreach ($details as $index => $detail): ?>
-                    <tr class="hover:bg-blue-50 transition duration-200">
-                        <td class="px-6 py-4 text-center font-medium text-gray-800"><?= $index + 1 ?></td>
-                        <td class="px-6 py-4 font-mono text-sm text-gray-600"><?= htmlspecialchars($detail['kode_barang'] ?? '-') ?></td>
-                        <td class="px-6 py-4 font-semibold text-gray-800"><?= htmlspecialchars($detail['nama_barang']) ?></td>
-                        <td class="px-6 py-4 text-center font-medium text-gray-800"><?= $detail['jumlah'] ?> <?= $detail['satuan'] ?></td>
-                        <td class="px-6 py-4 text-right font-semibold text-gray-800"><?= formatRupiah($detail['harga_satuan']) ?></td>
-                        <td class="px-6 py-4 text-right font-semibold <?= $detail['diskon'] > 0 ? 'text-red-600' : 'text-gray-500' ?>"><?= $detail['diskon'] > 0 ? formatRupiah($detail['diskon']) : '-' ?></td>
-                        <td class="px-6 py-4 text-right font-bold text-green-600"><?= formatRupiah($detail['subtotal']) ?></td>
+                    <tr class="hover:bg-cyan-50/50 transition">
+                        <td class="px-4 py-3 text-center text-sm font-semibold text-slate-700"><?= $index + 1 ?></td>
+                        <td class="px-4 py-3">
+                            <p class="font-semibold text-slate-800"><?= htmlspecialchars($detail['nama_barang']) ?></p>
+                            <p class="text-xs text-slate-500 font-mono mt-1"><?= htmlspecialchars($detail['kode_barang'] ?? '-') ?></p>
+                        </td>
+                        <td class="px-4 py-3 text-center text-sm font-semibold text-slate-700"><?= number_format($detail['jumlah'], 0, ',', '.') ?> <?= htmlspecialchars($detail['satuan']) ?></td>
+                        <td class="px-4 py-3 text-right text-sm font-semibold text-slate-700"><?= formatRupiah($detail['harga_satuan']) ?></td>
+                        <td class="px-4 py-3 text-right text-sm font-semibold <?= ($detail['diskon'] ?? 0) > 0 ? 'text-orange-600' : 'text-slate-400' ?>">
+                            <?= ($detail['diskon'] ?? 0) > 0 ? formatRupiah($detail['diskon']) : '-' ?>
+                        </td>
+                        <td class="px-4 py-3 text-right text-sm font-bold text-emerald-700"><?= formatRupiah($detail['subtotal']) ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
+
+        <div class="md:hidden space-y-3">
+            <?php foreach ($details as $index => $detail): ?>
+            <div class="rounded-xl border border-slate-200 bg-white p-3">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                    <div>
+                        <p class="text-sm font-bold text-slate-800"><?= htmlspecialchars($detail['nama_barang']) ?></p>
+                        <p class="text-[11px] text-slate-500 font-mono"><?= htmlspecialchars($detail['kode_barang'] ?? '-') ?></p>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-600">#<?= $index + 1 ?></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+                        <p class="text-slate-500 mb-1">Jumlah</p>
+                        <p class="font-semibold text-slate-700"><?= number_format($detail['jumlah'], 0, ',', '.') ?> <?= htmlspecialchars($detail['satuan']) ?></p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+                        <p class="text-slate-500 mb-1">Harga</p>
+                        <p class="font-semibold text-slate-700"><?= formatRupiah($detail['harga_satuan']) ?></p>
+                    </div>
+                    <div class="rounded-lg bg-slate-50 border border-slate-200 p-2">
+                        <p class="text-slate-500 mb-1">Diskon</p>
+                        <p class="font-semibold <?= ($detail['diskon'] ?? 0) > 0 ? 'text-orange-600' : 'text-slate-500' ?>">
+                            <?= ($detail['diskon'] ?? 0) > 0 ? formatRupiah($detail['diskon']) : '-' ?>
+                        </p>
+                    </div>
+                    <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-2">
+                        <p class="text-emerald-700 mb-1">Subtotal</p>
+                        <p class="font-bold text-emerald-700"><?= formatRupiah($detail['subtotal']) ?></p>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 
-    <!-- Buttons -->
-    <div class="flex gap-4 justify-center flex-wrap">
-        <a href="/penjualan/edit/<?= $penjualan['id_penjualan'] ?>" class="bg-yellow-600 hover:bg-yellow-700 text-white px-8 py-3 rounded-lg transition font-semibold">
-            <i class="fas fa-edit mr-2"></i>Edit
+    <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+        <a href="/penjualan/edit/<?= $penjualan['id_penjualan'] ?>" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition">
+            <i class="fas fa-edit"></i>
+            Edit
         </a>
-        <a href="/penjualan/delete/<?= $penjualan['id_penjualan'] ?>" 
+        <a href="/penjualan/delete/<?= $penjualan['id_penjualan'] ?>"
            onclick="return confirm('Yakin ingin menghapus penjualan ini? Stok akan dikembalikan.')"
-           class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg transition font-semibold">
-            <i class="fas fa-trash mr-2"></i>Hapus
+           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition">
+            <i class="fas fa-trash"></i>
+            Hapus
         </a>
-        <button type="button" onclick="printNotaDetail()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg transition font-semibold">
-            <i class="fas fa-print mr-2"></i>Print Nota
+        <button type="button" onclick="printNotaDetail()" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition">
+            <i class="fas fa-print"></i>
+            Print Nota
         </button>
-        <a href="/penjualan" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg transition font-semibold">
-            <i class="fas fa-arrow-left mr-2"></i>Kembali
+        <a href="/penjualan" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg app-btn-secondary font-semibold transition">
+            <i class="fas fa-arrow-left"></i>
+            Kembali
         </a>
     </div>
 </div>
+
+<div id="toast" class="hidden fixed top-4 right-4 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-lg"></div>
 
 <script>
     const detailPenjualanData = <?= json_encode($penjualan) ?>;
@@ -123,6 +200,16 @@
         font_nota: 'Arial'
     }, <?= json_encode($notaConfig ?? []) ?>);
 
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.className = 'fixed top-4 right-4 z-[60] max-w-sm rounded-xl px-4 py-3 text-sm font-semibold shadow-lg';
+        toast.classList.add(type === 'error' ? 'bg-red-100' : 'bg-emerald-100', type === 'error' ? 'text-red-700' : 'text-emerald-700', 'border', type === 'error' ? 'border-red-200' : 'border-emerald-200');
+        toast.textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 2600);
+    }
+
     function printNotaDetail() {
         const cfg = notaConfig || {};
         const width = parseInt(cfg.lebar_kertas || 80, 10);
@@ -144,7 +231,7 @@
         if (alamat) html += '<p class="muted">' + alamat + '</p>';
         if (telp) html += '<p class="muted">Telp: ' + telp + '</p>';
         if (email) html += '<p class="muted">Email: ' + email + '</p>';
-        const headerLines = (cfg.custom_header_text || '').split(/\n+/).map(l => l.trim()).filter(Boolean);
+        const headerLines = (cfg.custom_header_text || '').split(/\n+/).map((l) => l.trim()).filter(Boolean);
         if (headerLines.length) {
             html += '<div class="custom">';
             for (let i = 0; i < headerLines.length; i++) {
@@ -154,12 +241,12 @@
         }
         html += '<hr></div>';
         html += '<div class="info"><div><strong>Tanggal:</strong> ' + tanggal;
-        if ((cfg.tampilkan_jam ?? 1) == 1) {
+        if ((cfg.tampilkan_jam ?? 1) === 1) {
             html += ' ' + waktu;
         }
         html += '</div>';
         const pembeliNama = detailPenjualanData.nama_pembeli || '';
-        if ((cfg.tampilkan_nama_pembeli ?? 1) == 1 && pembeliNama) {
+        if ((cfg.tampilkan_nama_pembeli ?? 1) === 1 && pembeliNama) {
             html += '<div><strong>Pembeli:</strong> ' + escapeHtml(pembeliNama) + '</div>';
         }
         html += '</div><table><thead><tr><th>Item</th><th>Jumlah</th><th>Harga</th><th>Total</th></tr></thead><tbody>';
@@ -180,10 +267,10 @@
             totalDiskon += diskon;
             totalBruto += bruto;
             let itemCell = '<div>' + escapeHtml(nama.substring(0, 22)) + '</div>';
-            if ((cfg.tampilkan_kode_barang ?? 1) == 1 && kode) {
+            if ((cfg.tampilkan_kode_barang ?? 1) === 1 && kode) {
                 itemCell += '<div class="muted">Kode: ' + escapeHtml(kode) + '</div>';
             }
-            if ((cfg.tampilkan_satuan ?? 1) == 1 && satuan) {
+            if ((cfg.tampilkan_satuan ?? 1) === 1 && satuan) {
                 itemCell += '<div class="muted">Satuan: ' + escapeHtml(satuan) + '</div>';
             }
             html += '<tr><td>' + itemCell + '</td><td>' + jumlah + '</td><td>' + formatRupiah(harga) + '</td><td>' + formatRupiah(subtotal) + '</td></tr>';
@@ -193,7 +280,7 @@
         const kembalian = uangDiberikan - totalHarga;
         html += '</tbody></table><div class="summary">';
         html += '<div class="summary-row"><span><strong>Total Item:</strong></span><span>' + totalQty + '</span></div>';
-        if ((cfg.jumlah_diskon_terpisah ?? 0) == 1) {
+        if ((cfg.jumlah_diskon_terpisah ?? 0) === 1) {
             html += '<div class="summary-row"><span><strong>Subtotal:</strong></span><span>' + formatRupiah(totalBruto) + '</span></div>';
             html += '<div class="summary-row"><span><strong>Diskon:</strong></span><span>' + formatRupiah(totalDiskon) + '</span></div>';
         }
@@ -201,19 +288,13 @@
         html += '<div class="summary-row"><span><strong>Uang Diberikan:</strong></span><span>' + formatRupiah(uangDiberikan) + '</span></div>';
         html += '<div class="summary-row"><span><strong>Kembalian:</strong></span><span>' + formatRupiah(kembalian) + '</span></div>';
 
-        if ((detailPenjualanData.ada_hutang ?? 0) == 1 && (cfg.tampilkan_info_hutang ?? 1) == 1) {
+        if ((detailPenjualanData.ada_hutang ?? 0) === 1 && (cfg.tampilkan_info_hutang ?? 1) === 1) {
             if (detailPenjualanData.nama_pembeli) {
                 html += '<div class="summary-row"><span><strong>Nama Hutang:</strong></span><span>' + escapeHtml(detailPenjualanData.nama_pembeli) + '</span></div>';
             }
-            // Jika ada field tambahan hutang, bisa ditambahkan di sini
         }
 
-        if (cfg.custom_footer_text) {
-            html += '<div class="summary-row total-row" style="flex-direction:column;align-items:center;gap:4px;text-align:center;">';
-            html += '<div>' + escapeHtml(cfg.custom_footer_text) + '</div>';
-            html += '</div>';
-        }
-        html += '</div>'; // summary
+        html += '</div>';
 
         if (cfg.footer_nota) {
             html += '<div class="footer">' + escapeHtml(cfg.footer_nota) + '</div>';
@@ -222,7 +303,10 @@
         html += '</body></html>';
 
         const w = window.open('', '_blank');
-        if (!w) return alert('Popup diblokir, izinkan popup untuk mencetak nota.');
+        if (!w) {
+            showToast('Popup diblokir, izinkan popup untuk mencetak nota.', 'error');
+            return;
+        }
         w.document.open();
         w.document.write(html);
         w.document.close();
@@ -231,7 +315,7 @@
     }
 </script>
 
-<?php 
+<?php
 $content = ob_get_clean();
 $title = 'Detail Penjualan - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';

@@ -215,6 +215,7 @@ class PenjualanController {
                 'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => $_POST['keterangan'] ?? '',
+                'id_user' => $_SESSION['user_id'] ?? null,
                 'tanggal' => $tanggal_input
             ];
 
@@ -243,7 +244,7 @@ class PenjualanController {
     }
 
     public function delete($id) {
-        $result = $this->model->delete($id);
+        $result = $this->model->delete($id, $_SESSION['user_id'] ?? null);
         
         if ($result['success']) {
             $_SESSION['success'] = $result['message'];
@@ -253,4 +254,3 @@ class PenjualanController {
         redirect('/penjualan');
     }
 }
-

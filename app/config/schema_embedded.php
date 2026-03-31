@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS barang (
     harga_beli DECIMAL(15,2) DEFAULT 0,
     harga_jual DECIMAL(15,2) DEFAULT 0,
     stok INTEGER DEFAULT 0,
+    stok_updated_by INTEGER REFERENCES users(id_user) ON DELETE SET NULL,
     stok_minimum INTEGER DEFAULT 0,
     deskripsi TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

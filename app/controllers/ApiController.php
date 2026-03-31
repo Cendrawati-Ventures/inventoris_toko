@@ -78,7 +78,8 @@ class ApiController {
             'satuan' => $satuan,
             'harga_beli' => $hargaBeli,
             'harga_jual' => $hargaJual,
-            'stok' => $stok
+            'stok' => $stok,
+            'stok_updated_by' => $_SESSION['user_id'] ?? null
         ]);
 
         if ($result['success']) {
