@@ -60,14 +60,17 @@ class PenjualanController {
         $summary_total_penjualan = 0;
         $summary_total_item = 0;
         $summary_hutang_belum = 0;
+        $summary_total_laba_bersih = 0;
         foreach ($penjualanSummary as $summaryRow) {
             $summary_total_penjualan += (float)($summaryRow['total_harga'] ?? 0);
             $summary_total_item += (int)($summaryRow['jumlah_item'] ?? 0);
+            $summary_total_laba_bersih += (float)($summaryRow['laba_bersih'] ?? 0);
             if (($summaryRow['hutang_status'] ?? '') === 'belum_bayar') {
                 $summary_hutang_belum++;
             }
         }
         $summary_total_transaksi = $total_penjualan;
+        $show_profit_admin = strtolower((string)($_SESSION['role'] ?? '')) === 'admin';
         
         $total_pages = ceil($total_penjualan / $items_per_page);
         $current_page = $page;

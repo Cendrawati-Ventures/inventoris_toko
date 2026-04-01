@@ -85,6 +85,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -102,6 +103,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -122,6 +124,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p
@@ -142,6 +145,7 @@ class Penjualan {
         $query = "SELECT p.*, 
               string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
               COUNT(dp.id_detail) as jumlah_item,
+              COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as laba_bersih,
               MAX(h.id_hutang) as id_hutang,
               MAX(h.status) as hutang_status
               FROM " . $this->table . " p

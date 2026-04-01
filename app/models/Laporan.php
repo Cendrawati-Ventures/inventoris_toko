@@ -220,13 +220,25 @@ class Laporan {
         $stmtPembelian->execute();
         $totalPembelianHariIni = $stmtPembelian->fetch()['total'] ?? 0;
 
+        // Laba Bersih Hari Ini
+        $queryLabaBersih = "SELECT COALESCE(SUM(((dp.harga_satuan - COALESCE(b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)), 0) as total
+                            FROM detail_penjualan dp
+                            JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
+                            JOIN barang b ON dp.id_barang = b.id_barang
+                            WHERE DATE(p.tanggal) = :today";
+        $stmtLabaBersih = $this->conn->prepare($queryLabaBersih);
+        $stmtLabaBersih->bindParam(':today', $today);
+        $stmtLabaBersih->execute();
+        $labaBersihHariIni = $stmtLabaBersih->fetch()['total'] ?? 0;
+
         return [
             'barang_terjual_hari_ini' => $barangTerjualHariIni,
             'total_stok' => $totalStok,
             'total_harga_beli' => $nilaiPersediaan['total_harga_beli'] ?? 0,
             'total_harga_jual' => $nilaiPersediaan['total_harga_jual'] ?? 0,
             'penjualan_hari_ini' => $totalPenjualanHariIni,
-            'pembelian_hari_ini' => $totalPembelianHariIni
+            'pembelian_hari_ini' => $totalPembelianHariIni,
+            'laba_bersih_hari_ini' => $labaBersihHariIni
         ];
     }
 
