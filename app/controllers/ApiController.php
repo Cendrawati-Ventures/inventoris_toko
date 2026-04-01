@@ -91,6 +91,58 @@ class ApiController {
         }
     }
 
+    // Tambah stok barang dari modal di halaman penjualan/create
+    public function tambahStokBarang() {
+        header('Content-Type: application/json');
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            return;
+        }
+
+        $idBarang = (int)($_POST['id_barang'] ?? 0);
+        $jumlahTambah = (int)($_POST['jumlah_tambah'] ?? 0);
+
+        if ($idBarang <= 0 || $jumlahTambah <= 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'ID barang atau jumlah tambah stok tidak valid'
+            ]);
+            return;
+        }
+
+        $barang = $this->barang->getById($idBarang);
+        if (!$barang) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Barang tidak ditemukan'
+            ]);
+            return;
+        }
+
+        $updatedBy = $_SESSION['user_id'] ?? null;
+        $ok = $this->barang->updateStok($idBarang, $jumlahTambah, $updatedBy);
+        if (!$ok) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Gagal menambah stok'
+            ]);
+            return;
+        }
+
+        $updated = $this->barang->getById($idBarang);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Stok berhasil ditambahkan',
+            'barang' => [
+                'id_barang' => (int)($updated['id_barang'] ?? $idBarang),
+                'stok' => (int)($updated['stok'] ?? 0),
+                'satuan' => $updated['satuan'] ?? ($barang['satuan'] ?? '')
+            ]
+        ]);
+    }
+
     // Notifikasi operasional realtime untuk navbar (stok/expired/hutang)
     public function operationalAlerts() {
         header('Content-Type: application/json');

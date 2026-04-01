@@ -30,6 +30,7 @@ $routes = [
     // API routes
     '/api/search-barang' => ['controller' => 'ApiController', 'method' => 'searchBarang'],
     '/api/barang/store' => ['controller' => 'ApiController', 'method' => 'createBarang'],
+    '/api/barang/tambah-stok' => ['controller' => 'ApiController', 'method' => 'tambahStokBarang'],
     '/api/operational-alerts' => ['controller' => 'ApiController', 'method' => 'operationalAlerts'],
     
     // Dashboard
