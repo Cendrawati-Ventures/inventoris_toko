@@ -90,7 +90,7 @@ $isInspeksi = ($currentRole === 'inspeksi');
     </div>
 </div>
 <?php else: ?>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 app-reveal">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 app-reveal">
     <!-- Card Total Harga Beli -->
     <div class="bg-gradient-to-br from-teal-700 to-teal-600 rounded-lg shadow-lg p-6 text-white">
         <div class="flex items-center justify-between">
@@ -139,6 +139,19 @@ $isInspeksi = ($currentRole === 'inspeksi');
             </div>
             <div class="bg-amber-500 bg-opacity-30 rounded-full p-4">
                 <i class="fas fa-money-bill-wave text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Laba Bersih Hari Ini -->
+    <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-lg shadow-lg p-6 text-white">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-emerald-100 text-sm font-semibold">Laba Bersih Hari Ini</p>
+                <p class="text-2xl font-bold mt-2"><?= formatRupiah($stats['laba_bersih_hari_ini'] ?? 0) ?></p>
+            </div>
+            <div class="bg-emerald-500 bg-opacity-30 rounded-full p-4">
+                <i class="fas fa-chart-line text-3xl"></i>
             </div>
         </div>
     </div>

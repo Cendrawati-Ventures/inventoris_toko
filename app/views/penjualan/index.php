@@ -6,6 +6,8 @@
     $hutangBelumBayar = $summary_hutang_belum ?? 0;
     $totalTransaksi = $summary_total_transaksi ?? ($total_penjualan ?? 0);
     $totalTransaksiHalaman = count($penjualan);
+    $totalLabaBersih = $summary_total_laba_bersih ?? 0;
+    $showProfitAdmin = !empty($show_profit_admin);
 
     $paginationQuery = '';
     if (!empty($filter_tanggal_awal ?? '')) {
@@ -73,7 +75,7 @@
             </form>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 <?= $showProfitAdmin ? 'xl:grid-cols-5' : 'xl:grid-cols-4' ?> gap-3 sm:gap-4">
             <div class="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5 text-center shadow-sm">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-teal-100 text-teal-700 mb-3">
                     <i class="fas fa-wallet"></i>
@@ -82,6 +84,16 @@
                 <p class="text-2xl font-bold text-teal-700"><?= formatRupiah($grandTotal) ?></p>
                 <p class="text-xs text-gray-500 mt-1">Akumulasi periode terpilih</p>
             </div>
+            <?php if ($showProfitAdmin): ?>
+            <div class="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 text-center shadow-sm">
+                <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 mb-3">
+                    <i class="fas fa-chart-line"></i>
+                </span>
+                <p class="text-xs font-semibold uppercase tracking-wide text-emerald-600">Laba Bersih</p>
+                <p class="text-2xl font-bold <?= $totalLabaBersih >= 0 ? 'text-emerald-700' : 'text-red-600' ?>"><?= formatRupiah($totalLabaBersih) ?></p>
+                <p class="text-xs text-gray-500 mt-1">Dari barang terjual di periode ini</p>
+            </div>
+            <?php endif; ?>
             <div class="rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 to-white p-5 text-center shadow-sm">
                 <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 text-cyan-700 mb-3">
                     <i class="fas fa-receipt"></i>
@@ -120,6 +132,9 @@
                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-44">Pembeli</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 w-56">Item (Jumlah)</th>
                     <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Total</th>
+                    <?php if ($showProfitAdmin): ?>
+                    <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Laba Bersih</th>
+                    <?php endif; ?>
                     <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Kembalian</th>
                     <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 w-32">Status</th>
                     <th class="px-6 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 w-28">Aksi</th>
@@ -128,7 +143,7 @@
             <tbody class="divide-y divide-gray-100">
                 <?php if (empty($penjualan)): ?>
                     <tr>
-                        <td colspan="8" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data penjualan</td>
+                        <td colspan="<?= $showProfitAdmin ? '9' : '8' ?>" class="px-6 py-8 text-center text-gray-400 italic">Tidak ada data penjualan</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($penjualan as $index => $item): ?>
@@ -156,6 +171,17 @@
                                     </span>
                                 </span>
                             </td>
+                            <?php if ($showProfitAdmin): ?>
+                            <td class="px-6 py-4 text-right align-middle whitespace-nowrap">
+                                <?php $labaBersihRow = (float)($item['laba_bersih'] ?? 0); ?>
+                                <span class="inline-flex items-center justify-end gap-2 rounded-full px-3 py-1 text-sm font-semibold <?= $labaBersihRow >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600' ?>">
+                                    <i class="fas <?= $labaBersihRow >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down' ?>"></i>
+                                    <span class="not-italic">
+                                        <?= preg_replace('/^Rp\s*(\d+)/', '<span style="font-size:0.9em;display:inline;vertical-align:middle;">Rp</span> <span style="font-size:1.1em;display:inline;vertical-align:middle;">$1</span>', formatRupiah($labaBersihRow)) ?>
+                                    </span>
+                                </span>
+                            </td>
+                            <?php endif; ?>
                             <td class="px-6 py-4 text-right whitespace-nowrap">
                                 <span class="inline-flex items-center justify-end gap-2 rounded-full px-3 py-1 text-sm font-semibold <?= $item['kembalian'] >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' ?>">
                                     <i class="fas <?= $item['kembalian'] >= 0 ? 'fa-arrow-circle-up' : 'fa-arrow-circle-down' ?>"></i>
