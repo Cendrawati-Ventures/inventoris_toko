@@ -7,6 +7,7 @@ class PermissionGate {
             'dashboard.view',
             'barang.view',
             'barang.edit',
+            'barang.delete',
             'barang.export',
             'pembelian.view',
             'pembelian.create',
@@ -34,6 +35,8 @@ class PermissionGate {
         'inspeksi' => [
             'dashboard.view',
             'barang.view',
+            'barang.edit',
+            'barang.delete',
             'barang.export'
         ]
     ];
