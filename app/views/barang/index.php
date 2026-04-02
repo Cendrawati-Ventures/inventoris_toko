@@ -1,11 +1,16 @@
 <?php ob_start(); ?>
 <?php
-$role = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+$rawRole = strtolower(trim((string)($_SESSION['role'] ?? 'user')));
+if ($rawRole === 'user') {
+    $rawRole = 'kasir';
+}
+$role = $rawRole;
 if ($role === 'kasir' || $role === 'inspeksi') {
     $role = 'user';
 }
 $isAdmin = ($role === 'admin');
 $canEditStok = ($role === 'admin' || $role === 'user');
+$canDeleteStok = ($rawRole === 'admin' || $rawRole === 'kasir' || $rawRole === 'inspeksi');
 ?>
 
 <style>
@@ -242,7 +247,7 @@ $canEditStok = ($role === 'admin' || $role === 'user');
                         <a href="/barang/edit/<?= $item['id_barang'] ?>" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
-                        <?php if ($isAdmin): ?>
+                        <?php if ($canDeleteStok): ?>
                         <button onclick="confirmDelete(<?= $item['id_barang'] ?>)" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
@@ -329,7 +334,7 @@ $canEditStok = ($role === 'admin' || $role === 'user');
                                     <a href="/barang/edit/<?= $item['id_barang'] ?>" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
-                                    <?php if ($isAdmin): ?>
+                                    <?php if ($canDeleteStok): ?>
                                     <a href="/barang/delete/<?= $item['id_barang'] ?>" 
                                        onclick="return confirm('Yakin ingin menghapus barang ini?')" 
                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
@@ -418,6 +423,7 @@ const itemsPerPage = <?= (int)$items_per_page ?>;
 let currentKategori = <?= json_encode($selected_kategori !== null ? (string)$selected_kategori : 'all') ?>;
 const userRole = <?= json_encode($role) ?>;
 const canEditStok = userRole === 'admin' || userRole === 'user';
+const canDeleteStok = <?= json_encode($canDeleteStok) ?>;
 let currentQuery = '';
 let currentSearchPage = 1;
 let currentSearchTotal = 0;
@@ -803,7 +809,7 @@ function renderSearchResults(results, apiResponse = {}) {
                         <a href="/barang/edit/${item.id_barang}" class="flex-1 rounded-lg bg-yellow-100 py-2 text-center text-sm font-semibold text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                             <i class="fas fa-edit mr-1"></i>Edit
                         </a>
-                        ${userRole === 'admin' ? `
+                        ${canDeleteStok ? `
                         <button onclick="confirmDelete(${item.id_barang})" class="flex-1 rounded-lg bg-red-100 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-600 hover:text-white">
                             <i class="fas fa-trash mr-1"></i>Hapus
                         </button>
@@ -862,7 +868,7 @@ function renderSearchResults(results, apiResponse = {}) {
                                     <a href="/barang/edit/${item.id_barang}" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-700 transition hover:bg-yellow-500 hover:text-white">
                                         <i class="fas fa-edit text-sm"></i>
                                     </a>
-                                    ${userRole === 'admin' ? `
+                                    ${canDeleteStok ? `
                                     <a href="/barang/delete/${item.id_barang}" onclick="return confirm('Yakin ingin menghapus barang ini?')" class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 text-red-700 transition hover:bg-red-600 hover:text-white">
                                         <i class="fas fa-trash text-sm"></i>
                                     </a>
@@ -988,6 +994,13 @@ function clearSearch() {
     
     // Load all barang again
     loadAllBarang(1);
+}
+
+function confirmDelete(idBarang) {
+    if (!idBarang) return;
+    if (confirm('Yakin ingin menghapus barang ini?')) {
+        window.location.href = '/barang/delete/' + idBarang;
+    }
 }
 
 // Init summary & counts dan load all barang di search results
