@@ -64,11 +64,16 @@ class ApiController {
         $satuan = trim($_POST['satuan'] ?? 'pcs');
         $hargaBeli = $_POST['harga_beli'] ?? 0;
         $hargaJual = $_POST['harga_jual'] ?? 0;
-        $stok = $_POST['stok'] ?? 0;
+        $stok = (int)($_POST['stok'] ?? 0);
         $tanggalExpired = trim((string)($_POST['tanggal_expired'] ?? ''));
 
         if ($nama === '' || !$idKategori) {
             echo json_encode(['success' => false, 'message' => 'Nama dan kategori wajib diisi']);
+            return;
+        }
+
+        if ($stok < 1) {
+            echo json_encode(['success' => false, 'message' => 'Jumlah stok minimal 1']);
             return;
         }
 

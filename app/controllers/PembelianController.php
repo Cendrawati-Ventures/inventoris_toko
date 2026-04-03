@@ -21,6 +21,18 @@ class PembelianController {
         }
     }
 
+    private function parseNumberInput($value): ?float {
+        $raw = trim((string)$value);
+        if ($raw === '') {
+            return null;
+        }
+        $normalized = preg_replace('/[^\d]/', '', $raw);
+        if ($normalized === null || $normalized === '') {
+            return null;
+        }
+        return (float)$normalized;
+    }
+
     public function index() {
         $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim((string)$_GET['tanggal_awal']) : '';
         $tanggal_akhir_input = isset($_GET['tanggal_akhir']) ? trim((string)$_GET['tanggal_akhir']) : '';
@@ -60,13 +72,19 @@ class PembelianController {
             if (isset($_POST['items'])) {
                 foreach ($_POST['items'] as $index => $item) {
                     if (!empty($item['id_barang'])) {
+                        $hargaSatuan = $this->parseNumberInput($item['harga_satuan'] ?? null);
+                        if ($hargaSatuan === null) {
+                            $_SESSION['error'] = 'Harga beli harus terisi untuk setiap item.';
+                            redirect('/pembelian/create');
+                        }
+                        $hargaJual = $this->parseNumberInput($item['harga_jual'] ?? null);
                         $items[] = [
                             'id_barang' => $item['id_barang'],
                             'satuan' => trim($item['satuan'] ?? ''),
                             'jumlah' => (int)$item['jumlah'],
-                            'harga_satuan' => (float)$item['harga_satuan'],
+                            'harga_satuan' => $hargaSatuan,
                             'diskon' => 0,
-                            'harga_jual' => isset($item['harga_jual']) && $item['harga_jual'] !== '' ? (float)$item['harga_jual'] : null,
+                            'harga_jual' => $hargaJual,
                             'tanggal_expired' => trim((string)($item['tanggal_expired'] ?? ''))
                         ];
                     }
@@ -143,13 +161,19 @@ class PembelianController {
             if (isset($_POST['items'])) {
                 foreach ($_POST['items'] as $index => $item) {
                     if (!empty($item['id_barang'])) {
+                        $hargaSatuan = $this->parseNumberInput($item['harga_satuan'] ?? null);
+                        if ($hargaSatuan === null) {
+                            $_SESSION['error'] = 'Harga beli harus terisi untuk setiap item.';
+                            redirect('/pembelian/edit/' . $id);
+                        }
+                        $hargaJual = $this->parseNumberInput($item['harga_jual'] ?? null);
                         $items[] = [
                             'id_barang' => $item['id_barang'],
                             'satuan' => trim($item['satuan'] ?? ''),
                             'jumlah' => (int)$item['jumlah'],
-                            'harga_satuan' => (float)$item['harga_satuan'],
+                            'harga_satuan' => $hargaSatuan,
                             'diskon' => 0,
-                            'harga_jual' => isset($item['harga_jual']) && $item['harga_jual'] !== '' ? (float)$item['harga_jual'] : null,
+                            'harga_jual' => $hargaJual,
                             'tanggal_expired' => trim((string)($item['tanggal_expired'] ?? ''))
                         ];
                     }
