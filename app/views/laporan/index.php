@@ -401,9 +401,9 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
 <?php if ($currentRole === 'admin'): ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+function initAdminSalesChart() {
     const chartEl = document.getElementById('adminSalesChart');
-    if (!chartEl || typeof Chart === 'undefined') return;
+    if (!chartEl || typeof Chart === 'undefined') return false;
 
     const rawLabels = <?= json_encode($trendLabels) ?>;
     const rawValues = <?= json_encode($trendValues) ?>;
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const safeDateKeys = Array.isArray(rawDateKeys) ? rawDateKeys.map((v) => String(v ?? '')) : [];
 
     const dataLength = Math.min(safeLabels.length, safeValues.length, safeDateKeys.length);
-    if (dataLength <= 0) return;
+    if (dataLength <= 0) return false;
 
     const labels = safeLabels.slice(0, dataLength);
     const values = safeValues.slice(0, dataLength);
@@ -506,7 +506,39 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-});
+    return true;
+}
+
+function showChartFallbackMessage() {
+    const container = document.getElementById('adminSalesChart')?.parentElement;
+    if (!container) return;
+    container.innerHTML = '<div class="h-full min-h-[220px] flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-sm font-semibold">Grafik belum dapat dimuat. Silakan refresh halaman.</div>';
+}
+
+function loadChartFallback(callback) {
+    const fallbackScript = document.createElement('script');
+    fallbackScript.src = 'https://unpkg.com/chart.js@4.4.3/dist/chart.umd.min.js';
+    fallbackScript.async = true;
+    fallbackScript.onload = () => callback(true);
+    fallbackScript.onerror = () => callback(false);
+    document.head.appendChild(fallbackScript);
+}
+
+function bootAdminChart() {
+    if (initAdminSalesChart()) return;
+    if (typeof Chart !== 'undefined') return;
+    loadChartFallback((ok) => {
+        if (!ok || !initAdminSalesChart()) {
+            showChartFallbackMessage();
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootAdminChart);
+} else {
+    bootAdminChart();
+}
 </script>
 <?php endif; ?>
 
