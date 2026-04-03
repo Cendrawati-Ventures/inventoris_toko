@@ -139,6 +139,10 @@
                 </div>
             </div>
             <div class="mb-4">
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Jumlah Stok</label>
+                <input type="number" name="stok" min="1" value="1" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
+            </div>
+            <div class="mb-4">
                 <label class="block text-sm font-semibold text-slate-700 mb-1">Tanggal Expired (Opsional)</label>
                 <input type="date" name="tanggal_expired" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
             </div>
@@ -176,7 +180,7 @@ function formatThousandID(value) {
 
 function normalizePriceInputs(scope = document) {
     scope.querySelectorAll('input[data-price-input]').forEach((input) => {
-        input.value = toDigitOnly(input.value) || '0';
+        input.value = toDigitOnly(input.value);
     });
 }
 
@@ -373,15 +377,31 @@ function validateForm() {
     }
 
     let isValid = true;
+    let hasEmptyHargaBeli = false;
     items.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
-        const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
+        const hargaInput = row.querySelector('input[name*="[harga_satuan]"]');
+        const hargaRaw = String(hargaInput?.value || '').trim();
+        const harga = parseCurrencyValue(hargaRaw);
         const hargaJual = parseCurrencyValue(row.querySelector('input[name*="[harga_jual]"]').value);
+        if (hargaRaw === '' || toDigitOnly(hargaRaw) === '') {
+            hasEmptyHargaBeli = true;
+            isValid = false;
+            if (hargaInput) {
+                hargaInput.classList.add('border-red-400', 'ring-2', 'ring-red-100');
+            }
+        } else if (hargaInput) {
+            hargaInput.classList.remove('border-red-400', 'ring-2', 'ring-red-100');
+        }
         if (jumlah < 1 || harga < 0 || hargaJual < 0) isValid = false;
     });
 
     if (!isValid) {
-        showToast('Periksa jumlah, harga beli, dan harga jual setiap item', 'error');
+        if (hasEmptyHargaBeli) {
+            showToast('Harga beli harus terisi', 'error');
+        } else {
+            showToast('Periksa jumlah, harga beli, dan harga jual setiap item', 'error');
+        }
         return false;
     }
 
@@ -400,9 +420,22 @@ function closeAddBarangModal() {
 async function submitAddBarang(event) {
     event.preventDefault();
     const form = document.getElementById('form_add_barang');
+    const hargaBeliInput = form.querySelector('input[name="harga_beli"]');
+    const hargaBeliRaw = String(hargaBeliInput?.value || '').trim();
+    if (hargaBeliRaw === '' || toDigitOnly(hargaBeliRaw) === '') {
+        showToast('Harga beli harus terisi', 'error');
+        if (hargaBeliInput) hargaBeliInput.focus();
+        return;
+    }
+    const stokInput = form.querySelector('input[name="stok"]');
+    const stokValue = parseInt(String(stokInput?.value || '0'), 10);
+    if (!Number.isFinite(stokValue) || stokValue < 1) {
+        showToast('Jumlah stok minimal 1', 'error');
+        if (stokInput) stokInput.focus();
+        return;
+    }
     normalizePriceInputs(form);
     const formData = new FormData(form);
-    formData.append('stok', '1');
 
     try {
         const resp = await fetch('/api/barang/store', { method: 'POST', body: formData });
