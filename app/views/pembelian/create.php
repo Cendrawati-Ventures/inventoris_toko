@@ -131,11 +131,11 @@
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Beli</label>
-                    <input type="number" name="harga_beli" min="0" step="0.01" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
+                    <input type="text" name="harga_beli" inputmode="numeric" autocomplete="off" data-price-input min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Contoh: 23.000">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Jual</label>
-                    <input type="number" name="harga_jual" min="0" step="0.01" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
+                    <input type="text" name="harga_jual" inputmode="numeric" autocomplete="off" data-price-input min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Contoh: 25.000">
                 </div>
             </div>
             <div class="mb-4">
@@ -157,6 +157,27 @@ const allBarang = <?= json_encode($barang) ?>;
 function formatRupiah(value) {
     const number = Number(value) || 0;
     return 'Rp ' + Math.floor(number).toLocaleString('id-ID');
+}
+
+function toDigitOnly(value) {
+    return String(value ?? '').replace(/[^\d]/g, '');
+}
+
+function parseCurrencyValue(value) {
+    const digits = toDigitOnly(value);
+    return digits ? parseInt(digits, 10) : 0;
+}
+
+function formatThousandID(value) {
+    const digits = toDigitOnly(value);
+    if (!digits) return '';
+    return (parseInt(digits, 10) || 0).toLocaleString('id-ID');
+}
+
+function normalizePriceInputs(scope = document) {
+    scope.querySelectorAll('input[data-price-input]').forEach((input) => {
+        input.value = toDigitOnly(input.value) || '0';
+    });
 }
 
 function showToast(message, type = 'success') {
@@ -224,7 +245,7 @@ function updateItemSubtotal(idx) {
     const row = document.querySelector(`[data-item-index="${idx}"]`);
     if (!row) return;
     const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
-    const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
+    const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
     const subtotal = jumlah * harga;
     const subtotalEl = row.querySelector('.subtotal-item');
     if (subtotalEl) subtotalEl.textContent = formatRupiah(subtotal < 0 ? 0 : subtotal);
@@ -272,11 +293,11 @@ function addItemFromBarang(barang) {
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Harga Beli</label>
-                    <input type="number" name="items[${idx}][harga_satuan]" value="${barang.harga_beli}" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                    <input type="text" name="items[${idx}][harga_satuan]" value="${formatThousandID(barang.harga_beli)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Harga Jual</label>
-                    <input type="number" name="items[${idx}][harga_jual]" value="${barang.harga_jual || 0}" min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                    <input type="text" name="items[${idx}][harga_jual]" value="${formatThousandID(barang.harga_jual || 0)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Tanggal Expired (Opsional)</label>
@@ -331,13 +352,11 @@ function hitungTotal() {
 
     rows.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
-        const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
-        const hargaJual = parseFloat(row.querySelector('input[name*="[harga_jual]"]').value) || 0;
+        const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
+        const hargaJual = parseCurrencyValue(row.querySelector('input[name*="[harga_jual]"]').value);
         totalItems += jumlah;
         totalHarga += (jumlah * harga);
-        if (hargaJual < 0) {
-            row.querySelector('input[name*="[harga_jual]"]').value = '0';
-        }
+        if (hargaJual < 0) row.querySelector('input[name*="[harga_jual]"]').value = '0';
     });
 
     document.getElementById('total_items').textContent = totalItems.toLocaleString('id-ID');
@@ -356,8 +375,8 @@ function validateForm() {
     let isValid = true;
     items.forEach((row) => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
-        const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
-        const hargaJual = parseFloat(row.querySelector('input[name*="[harga_jual]"]').value) || 0;
+        const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
+        const hargaJual = parseCurrencyValue(row.querySelector('input[name*="[harga_jual]"]').value);
         if (jumlah < 1 || harga < 0 || hargaJual < 0) isValid = false;
     });
 
@@ -366,6 +385,7 @@ function validateForm() {
         return false;
     }
 
+    normalizePriceInputs(document.getElementById('formPembelian'));
     return true;
 }
 
@@ -380,6 +400,7 @@ function closeAddBarangModal() {
 async function submitAddBarang(event) {
     event.preventDefault();
     const form = document.getElementById('form_add_barang');
+    normalizePriceInputs(form);
     const formData = new FormData(form);
     formData.append('stok', '1');
 
@@ -407,6 +428,14 @@ async function submitAddBarang(event) {
 
 document.getElementById('search_barang_main').addEventListener('input', function(e) {
     renderBarangList(e.target.value);
+});
+
+document.addEventListener('input', function (event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (!target.matches('input[data-price-input]')) return;
+    target.value = formatThousandID(target.value);
+    hitungTotal();
 });
 
 renderBarangList('');

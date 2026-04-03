@@ -32,6 +32,23 @@ class Pembelian {
         return $stmt->fetchAll();
     }
 
+    public function getByDateRange(string $startDate, string $endDate): array {
+        $query = "SELECT p.*, 
+                  string_agg(DISTINCT b.nama_barang, ', ') as barang_list,
+                  COUNT(dp.id_detail) as jumlah_item
+                  FROM " . $this->table . " p
+                  LEFT JOIN " . $this->detail_table . " dp ON p.id_pembelian = dp.id_pembelian
+                  LEFT JOIN barang b ON dp.id_barang = b.id_barang
+                  WHERE DATE(p.tanggal) BETWEEN :start_date AND :end_date
+                  GROUP BY p.id_pembelian
+                  ORDER BY p.tanggal DESC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':start_date', $startDate);
+        $stmt->bindValue(':end_date', $endDate);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function getById($id) {
         $query = "SELECT p.* FROM " . $this->table . " p WHERE p.id_pembelian = :id";
         $stmt = $this->conn->prepare($query);
