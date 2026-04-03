@@ -22,7 +22,25 @@ class PembelianController {
     }
 
     public function index() {
-        $pembelian = $this->model->getAll();
+        $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim((string)$_GET['tanggal_awal']) : '';
+        $tanggal_akhir_input = isset($_GET['tanggal_akhir']) ? trim((string)$_GET['tanggal_akhir']) : '';
+
+        $tanggal_awal = $tanggal_awal_input;
+        $tanggal_akhir = $tanggal_akhir_input;
+        if ($tanggal_awal !== '' && $tanggal_akhir === '') {
+            $tanggal_akhir = $tanggal_awal;
+        } elseif ($tanggal_awal === '' && $tanggal_akhir !== '') {
+            $tanggal_awal = $tanggal_akhir;
+        }
+
+        if ($tanggal_awal !== '' && $tanggal_akhir !== '') {
+            $pembelian = $this->model->getByDateRange($tanggal_awal, $tanggal_akhir);
+        } else {
+            $pembelian = $this->model->getAll();
+        }
+
+        $filter_tanggal_awal = $tanggal_awal_input;
+        $filter_tanggal_akhir = $tanggal_akhir_input;
         require_once __DIR__ . '/../views/pembelian/index.php';
     }
 
