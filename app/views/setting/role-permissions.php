@@ -58,7 +58,7 @@ unset($_SESSION['success'], $_SESSION['error']);
     <?php endif; ?>
 
     <form id="rolePermissionsForm" method="POST" action="/setting/role-permissions" class="space-y-5">
-        <div class="app-card border border-slate-200 p-4 sm:p-5 sticky top-20 z-20 backdrop-blur bg-white/95 shadow-sm">
+        <div class="app-card border border-slate-200 p-4 sm:p-5 md:sticky md:top-20 md:z-20 backdrop-blur bg-white/95 shadow-sm">
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-4">
                 <div class="xl:col-span-4">
                     <label for="permissionSearch" class="text-xs font-semibold uppercase tracking-wide text-slate-500">Cari Permission</label>
@@ -189,7 +189,7 @@ unset($_SESSION['success'], $_SESSION['error']);
             </section>
         <?php endforeach; ?>
 
-        <div class="app-card border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sticky bottom-4 z-20 bg-white/95 backdrop-blur">
+        <div class="app-card border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:sticky md:bottom-4 md:z-20 bg-white/95 backdrop-blur">
             <span id="permissionDirtyIndicator" class="hidden inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-700">
                 <i class="fas fa-pen"></i> Perubahan belum disimpan
             </span>
