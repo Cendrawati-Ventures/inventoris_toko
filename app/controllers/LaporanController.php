@@ -12,7 +12,7 @@ class LaporanController {
 
     public function index() {
         $quickPeriod = isset($_GET['periode']) ? trim((string)$_GET['periode']) : '1';
-        $allowedPeriods = ['1', '7', '30'];
+        $allowedPeriods = ['1', '7', '30', '60', '90', '180'];
         if (!in_array($quickPeriod, $allowedPeriods, true)) {
             $quickPeriod = '1';
         }
@@ -1360,7 +1360,12 @@ class LaporanController {
         if ($role === 'kasir') {
             $role = 'user';
         }
-        $showHarga = ($role === 'admin');
+        $normalizedRole = class_exists('PermissionGate')
+            ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
+            : $role;
+        $showHarga = class_exists('PermissionGate')
+            ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view')
+            : ($role === 'admin' || $role === 'manager');
 
         header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
