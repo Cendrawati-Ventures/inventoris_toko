@@ -8,6 +8,9 @@ $normalizedRole = class_exists('PermissionGate')
     ? PermissionGate::normalizeRole($rawRole)
     : $rawRole;
 $isAdmin = ($normalizedRole === 'admin');
+$canCreateStok = class_exists('PermissionGate')
+    ? PermissionGate::allows($normalizedRole, 'barang.create')
+    : ($normalizedRole === 'admin' || $normalizedRole === 'manager' || $normalizedRole === 'kasir');
 $canEditStok = class_exists('PermissionGate')
     ? PermissionGate::allows($normalizedRole, 'barang.edit')
     : ($normalizedRole === 'admin' || $normalizedRole === 'kasir' || $normalizedRole === 'inspeksi');
@@ -60,7 +63,7 @@ $canDeleteStok = class_exists('PermissionGate')
                 <i class="fas fa-file-excel"></i>
                 <span>Download Excel</span>
             </a>
-            <?php if ($isAdmin): ?>
+            <?php if ($canCreateStok): ?>
             <a href="/barang/create" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold transition">
                 <i class="fas fa-plus"></i>
                 <span>Tambah Stok Barang</span>

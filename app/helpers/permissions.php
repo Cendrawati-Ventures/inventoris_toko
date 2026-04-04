@@ -9,6 +9,7 @@ class PermissionGate {
         'manager' => [
             'dashboard.view',
             'barang.view',
+            'barang.create',
             'barang.edit',
             'barang.delete',
             'barang.export',
@@ -39,6 +40,7 @@ class PermissionGate {
         'kasir' => [
             'dashboard.view',
             'barang.view',
+            'barang.create',
             'barang.edit',
             'barang.delete',
             'barang.export',
