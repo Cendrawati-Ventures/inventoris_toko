@@ -22,6 +22,10 @@ $normalizedRole = class_exists('PermissionGate')
 $canViewLaporanStokMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.stok.view') : !$isInspeksi;
 $canViewLaporanPenjualanMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.penjualan.view') : true;
 $canViewLaporanPembelianMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.pembelian.view') : !$isInspeksi;
+$canViewBarangMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'barang.view') : true;
+$canCreateStokMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'barang.create') : ($normalizedRole === 'admin' || $normalizedRole === 'manager' || $normalizedRole === 'kasir');
+$canCreatePembelianMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'pembelian.create') : !$isInspeksi;
+$canCreatePenjualanMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'penjualan.create') : !$isInspeksi;
 $canViewLaporanAnyMenu = $canViewLaporanStokMenu || $canViewLaporanPenjualanMenu || $canViewLaporanPembelianMenu;
 $selectedChartDays = (string)($chartDaysParam ?? ($chartDays ?? 7));
 $trendDays = (int)($chartDays ?? 7);
@@ -276,10 +280,12 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
     </h2>
     <div class="<?= $isInspeksi ? 'grid grid-cols-1 gap-4 max-w-xl mx-auto' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4' ?>">
         <?php if ($isInspeksi): ?>
+        <?php if ($canViewBarangMenu): ?>
         <a href="/barang" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Kelola Stok Barang</p>
         </a>
+        <?php endif; ?>
         <?php if ($canViewLaporanAnyMenu): ?>
         <a href="<?= $canViewLaporanStokMenu ? '/laporan/stok' : ($canViewLaporanPenjualanMenu ? '/laporan/penjualan' : '/laporan/pembelian') ?>" class="bg-cyan-50 hover:bg-cyan-100 border-2 border-cyan-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-chart-line text-cyan-600 text-3xl mb-2"></i>
@@ -288,40 +294,62 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
         <?php endif; ?>
         <?php elseif ($currentRole === 'user'): ?>
         <!-- Menu untuk User -->
+        <?php if ($canCreatePenjualanMenu): ?>
         <a href="/penjualan/create" class="bg-teal-50 hover:bg-teal-100 border-2 border-teal-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-cash-register text-teal-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Input Penjualan</p>
         </a>
+        <?php endif; ?>
+        <?php if ($canCreatePembelianMenu): ?>
         <a href="/pembelian/create" class="bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-shopping-cart text-green-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Input Barang Masuk</p>
         </a>
+        <?php endif; ?>
+        <?php if ($canViewBarangMenu): ?>
         <a href="/barang" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Lihat Stok Barang</p>
         </a>
-        <a href="/laporan/penjualan" class="bg-cyan-50 hover:bg-cyan-100 border-2 border-cyan-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-chart-line text-cyan-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Laporan Penjualan</p>
-        </a>
-        <?php else: ?>
-        <!-- Menu untuk Admin -->
-        <a href="/penjualan/create" class="bg-teal-50 hover:bg-teal-100 border-2 border-teal-200 rounded-lg p-4 text-center transition">
-            <i class="fas fa-cash-register text-teal-600 text-3xl mb-2"></i>
-            <p class="font-semibold text-gray-700">Penjualan</p>
-        </a>
+        <?php endif; ?>
+        <?php if ($canCreateStokMenu): ?>
         <a href="/barang/create" class="bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-plus-circle text-blue-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Tambah Stok Barang</p>
         </a>
+        <?php endif; ?>
+        <?php if ($canViewLaporanPenjualanMenu): ?>
+        <a href="/laporan/penjualan" class="bg-cyan-50 hover:bg-cyan-100 border-2 border-cyan-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-chart-line text-cyan-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Laporan Penjualan</p>
+        </a>
+        <?php endif; ?>
+        <?php else: ?>
+        <!-- Menu untuk Admin -->
+        <?php if ($canCreatePenjualanMenu): ?>
+        <a href="/penjualan/create" class="bg-teal-50 hover:bg-teal-100 border-2 border-teal-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-cash-register text-teal-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Penjualan</p>
+        </a>
+        <?php endif; ?>
+        <?php if ($canCreateStokMenu): ?>
+        <a href="/barang/create" class="bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg p-4 text-center transition">
+            <i class="fas fa-plus-circle text-blue-600 text-3xl mb-2"></i>
+            <p class="font-semibold text-gray-700">Tambah Stok Barang</p>
+        </a>
+        <?php endif; ?>
+        <?php if ($canCreatePembelianMenu): ?>
         <a href="/pembelian/create" class="bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-shopping-cart text-green-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Input Barang Masuk</p>
         </a>
+        <?php endif; ?>
+        <?php if ($canViewLaporanStokMenu): ?>
         <a href="/laporan/stok" class="bg-orange-50 hover:bg-orange-100 border-2 border-orange-200 rounded-lg p-4 text-center transition">
             <i class="fas fa-boxes text-orange-600 text-3xl mb-2"></i>
             <p class="font-semibold text-gray-700">Cek Stok</p>
         </a>
+        <?php endif; ?>
         <?php endif; ?>
     </div>
 </div>

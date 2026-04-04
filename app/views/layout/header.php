@@ -155,6 +155,12 @@
     $canViewLaporanKeuntungan = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'laporan.keuntungan.view') : ($currentRole !== 'inspeksi');
     $canViewHutang = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'hutang.view') : ($currentRole !== 'inspeksi');
     $canViewAnyLaporan = $canViewLaporanPembelian || $canViewLaporanPenjualan || $canViewLaporanStok || $canViewLaporanKeuntungan || $canViewHutang;
+    $canViewUsersMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'users.view') : ($rawRole === 'admin');
+    $canViewMasterMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'setting.master.view') : ($rawRole === 'admin');
+    $canViewNotaMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'setting.nota.view') : ($rawRole === 'admin');
+    $canViewBackupMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'backup.manage') : ($rawRole === 'admin');
+    $canManageRolePermissionsMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'setting.roles.manage') : ($rawRole === 'admin');
+    $canViewSettingsMenu = $canViewUsersMenu || $canViewMasterMenu || $canViewNotaMenu || $canViewBackupMenu || $canManageRolePermissionsMenu;
     ?>
     <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl sticky top-0 z-50">
         <div class="container mx-auto px-4">
@@ -245,7 +251,7 @@
                         </div>
                     <?php endif; ?>
                     
-                    <?php if ($currentRole === 'admin'): ?>
+                    <?php if ($canViewSettingsMenu): ?>
                         <!-- Dropdown Pengaturan -->
                         <div class="relative" onclick="toggleDropdown(event, this)">
                             <button type="button" class="nav-item px-4 py-2 rounded-lg hover:bg-teal-800 transition flex items-center gap-2">
@@ -257,26 +263,36 @@
                                 <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
                                     <p class="text-xs font-semibold text-gray-500 uppercase">Pengaturan</p>
                                 </div>
+                                <?php if ($canViewUsersMenu): ?>
                                 <a href="/user" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-users text-blue-600 w-4"></i>
                                     <span>Manajemen Pengguna</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewMasterMenu): ?>
                                 <a href="/setting/kategori-satuan" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-tags text-green-600 w-4"></i>
                                     <span>Kategori & Satuan</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canManageRolePermissionsMenu): ?>
                                 <a href="/setting/role-permissions" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-user-shield text-indigo-600 w-4"></i>
                                     <span>Role Permission</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewNotaMenu): ?>
                                 <a href="/setting/nota" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-receipt text-purple-600 w-4"></i>
                                     <span>Format Nota</span>
                                 </a>
+                                <?php endif; ?>
+                                <?php if ($canViewBackupMenu): ?>
                                 <a href="/backup" class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition">
                                     <i class="fas fa-database text-emerald-600 w-4"></i>
                                     <span>Backup & Restore</span>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -408,29 +424,39 @@
                 <?php endif; ?>
                 
                 <!-- Settings Section -->
-                <?php if ($currentRole === 'admin'): ?>
+                <?php if ($canViewSettingsMenu): ?>
                     <div class="border-t border-gray-200 pt-2 mt-2">
                         <p class="text-xs font-semibold text-gray-500 uppercase px-4 mb-2">Pengaturan</p>
+                        <?php if ($canViewUsersMenu): ?>
                         <a href="/user" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-users text-blue-600 w-5"></i>
                             <span>Manajemen Pengguna</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if ($canViewMasterMenu): ?>
                         <a href="/setting/kategori-satuan" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-tags text-green-600 w-5"></i>
                             <span>Kategori & Satuan</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if ($canManageRolePermissionsMenu): ?>
                         <a href="/setting/role-permissions" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-user-shield text-indigo-600 w-5"></i>
                             <span>Role Permission</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if ($canViewNotaMenu): ?>
                         <a href="/setting/nota" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-receipt text-purple-600 w-5"></i>
                             <span>Format Nota</span>
                         </a>
+                        <?php endif; ?>
+                        <?php if ($canViewBackupMenu): ?>
                         <a href="/backup" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                             <i class="fas fa-database text-emerald-600 w-5"></i>
                             <span>Backup & Restore</span>
                         </a>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
                 
