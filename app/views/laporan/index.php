@@ -59,7 +59,7 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
 ?>
 
 <?php if ($isKasirView): ?>
-<div class="app-card p-4 sm:p-5 mb-6 app-reveal md:sticky md:top-20 md:z-30 backdrop-blur border border-slate-200/80">
+<div class="app-card p-4 sm:p-5 mb-6 app-reveal backdrop-blur border border-slate-200/80">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Dashboard Kasir</p>
@@ -71,7 +71,7 @@ $keuntunganDrilldownUrl = '/laporan/keuntungan?start=' . rawurlencode($periodSta
     </div>
 </div>
 <?php else: ?>
-<div class="app-card p-4 sm:p-5 mb-6 app-reveal md:sticky md:top-20 md:z-30 backdrop-blur border border-slate-200/80">
+<div class="app-card p-4 sm:p-5 mb-6 app-reveal backdrop-blur border border-slate-200/80">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Filter Dashboard</p>

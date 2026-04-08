@@ -40,7 +40,7 @@
                 <div id="barang_list" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[28rem] overflow-y-auto pr-1"></div>
             </div>
 
-            <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 h-fit lg:sticky lg:top-24">
+            <div class="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 h-fit">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-bold text-slate-700">Stok Barang Dipilih</h3>
                     <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
