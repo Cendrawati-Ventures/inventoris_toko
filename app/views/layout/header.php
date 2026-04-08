@@ -162,7 +162,7 @@
     $canManageRolePermissionsMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'setting.roles.manage') : ($rawRole === 'admin');
     $canViewSettingsMenu = $canViewUsersMenu || $canViewMasterMenu || $canViewNotaMenu || $canViewBackupMenu || $canManageRolePermissionsMenu;
     ?>
-    <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl sticky top-0 z-50">
+    <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl z-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-3">
                 <!-- Logo & Brand -->

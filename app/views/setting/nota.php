@@ -159,7 +159,7 @@
         </div>
 
         <aside class="xl:col-span-5">
-            <div class="app-card p-4 sm:p-5 border border-slate-200 sticky top-6">
+            <div class="app-card p-4 sm:p-5 border border-slate-200">
                 <div class="flex items-center justify-between gap-3 mb-4">
                     <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
                         <i class="fas fa-eye text-teal-600"></i>Preview Nota

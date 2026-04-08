@@ -6,7 +6,7 @@
     </h2>
 
     <!-- Filter -->
-    <form method="GET" class="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/95 to-white/95 p-4 sm:p-5 md:sticky md:top-20 md:z-20 backdrop-blur shadow-sm">
+    <form method="GET" class="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/95 to-white/95 p-4 sm:p-5 backdrop-blur shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Tanggal Mulai</label>
