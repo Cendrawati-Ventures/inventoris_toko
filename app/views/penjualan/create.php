@@ -40,7 +40,7 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
         </div>
     </div>
 
-    <form action="/penjualan/store" method="POST" id="formPenjualan" onsubmit="return validateForm()">
+    <form action="/penjualan/store" method="POST" id="formPenjualan" onsubmit="return validateForm()" data-skip-auto-submit-enhance="true">
 
         <!-- Tanggal Penjualan -->
         <div class="mb-6">
@@ -172,6 +172,7 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
     <div class="flex flex-col sm:flex-row gap-3 w-full">
         <button
             type="submit"
+            id="submitPenjualanBtn"
             class="w-full sm:w-auto app-btn-primary px-6 py-3 transition flex items-center justify-center gap-2 font-semibold">
             <i class="fas fa-save"></i>
             Simpan
@@ -269,6 +270,7 @@ const notaConfig = Object.assign({
 }, <?= json_encode($notaConfig ?? []) ?>);
 let stockModalBarang = null;
 let submitPenjualanConfirmed = false;
+let submitButtonOriginalHtml = '';
 
 console.log('DEBUG: Script loaded, barang count:', allBarang.length);
 
@@ -613,6 +615,13 @@ async function submitTambahStok(event) {
 }
 
 function validateForm() {
+    if (submitPenjualanConfirmed) {
+        submitPenjualanConfirmed = false;
+        return true;
+    }
+
+    resetSubmitButtonState();
+
     const tanggalPenjualan = document.getElementById('tanggal_penjualan');
     if (!tanggalPenjualan.value) {
         showToast('Tanggal penjualan wajib diisi', 'error');
@@ -668,11 +677,6 @@ function validateForm() {
         uangDiberikanInput.value = String(parseNominalInput(uangDiberikanInput.value));
     }
 
-    if (submitPenjualanConfirmed) {
-        submitPenjualanConfirmed = false;
-        return true;
-    }
-
     openSubmitConfirmModal();
     return false;
 }
@@ -697,12 +701,37 @@ function closeSubmitConfirmModal() {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
     }
+    resetSubmitButtonState();
 }
 
 function confirmSubmitPenjualan() {
     closeSubmitConfirmModal();
     submitPenjualanConfirmed = true;
+    setSubmitButtonLoadingState();
     document.getElementById('formPenjualan')?.requestSubmit();
+}
+
+function setSubmitButtonLoadingState() {
+    const submitBtn = document.getElementById('submitPenjualanBtn');
+    if (!submitBtn) return;
+    if (!submitButtonOriginalHtml) {
+        submitButtonOriginalHtml = submitBtn.innerHTML;
+    }
+    submitBtn.disabled = true;
+    submitBtn.setAttribute('aria-busy', 'true');
+    submitBtn.classList.add('cursor-not-allowed', 'opacity-90');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Memproses...</span>';
+}
+
+function resetSubmitButtonState() {
+    const submitBtn = document.getElementById('submitPenjualanBtn');
+    if (!submitBtn) return;
+    submitBtn.disabled = false;
+    submitBtn.removeAttribute('aria-busy');
+    submitBtn.classList.remove('cursor-not-allowed', 'opacity-90');
+    if (submitButtonOriginalHtml) {
+        submitBtn.innerHTML = submitButtonOriginalHtml;
+    }
 }
 
 function toggleHutangFields() {
@@ -873,6 +902,10 @@ function printNota() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         console.log('DEBUG: Init on DOMContentLoaded');
+        const submitBtn = document.getElementById('submitPenjualanBtn');
+        if (submitBtn && !submitButtonOriginalHtml) {
+            submitButtonOriginalHtml = submitBtn.innerHTML;
+        }
         renderBarangList();
         handleUangDiberikanInput();
         const searchInput = document.getElementById('search_barang_main');
@@ -886,6 +919,10 @@ if (document.readyState === 'loading') {
     });
 } else {
     console.log('DEBUG: Init immediate');
+    const submitBtn = document.getElementById('submitPenjualanBtn');
+    if (submitBtn && !submitButtonOriginalHtml) {
+        submitButtonOriginalHtml = submitBtn.innerHTML;
+    }
     renderBarangList();
     handleUangDiberikanInput();
     const searchInput = document.getElementById('search_barang_main');
