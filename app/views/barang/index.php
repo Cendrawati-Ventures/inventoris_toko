@@ -736,6 +736,7 @@ function renderSearchResults(results, apiResponse = {}) {
     const currentPage = apiResponse.page || 1;
     const totalResults = apiResponse.total || 0;
     const totalPages = apiResponse.total_pages || 0;
+    const perPage = apiResponse.per_page || results.length || 1;
     
     // Update counter
     const visibleEl = document.getElementById('visible_count');
@@ -849,7 +850,7 @@ function renderSearchResults(results, apiResponse = {}) {
                 <tbody class="divide-y divide-gray-100">
                     ${results.map((item, index) => `
                         <tr class="transition duration-200 hover:bg-blue-50/70">
-                            <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${index + 1}</td>
+                            <td class="px-6 py-4 text-center text-sm font-medium text-gray-700">${((currentPage - 1) * perPage) + index + 1}</td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap">${htmlSpecialChars(item.kode_barang || '-')}</td>
                             <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">${htmlSpecialChars(item.nama_barang)}</td>
                             <td class="px-6 py-4 text-center"><span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
