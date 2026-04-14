@@ -95,20 +95,32 @@
     </div>
 
     <!-- Table -->
-    <div class="overflow-x-auto">
-        <table class="min-w-full table-auto">
-            <thead class="bg-gray-200">
+    <div class="overflow-x-auto rounded-xl border border-slate-200">
+        <table class="min-w-full table-fixed bg-white text-center">
+            <colgroup>
+                <col style="width: 64px;">
+                <col style="width: 140px;">
+                <col style="width: 150px;">
+                <col style="width: auto;">
+                <col style="width: 130px;">
+                <col style="width: 100px;">
+                <col style="width: 100px;">
+                <col style="width: 110px;">
+                <col style="width: 170px;">
+                <col style="width: 170px;">
+            </colgroup>
+            <thead class="bg-slate-100">
                 <tr>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">No</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Pengguna</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Kode Barang</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Nama Barang</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Tanggal</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Jam</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Jumlah</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Satuan</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Harga Jual</th>
-                    <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Total</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">No</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Pengguna</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Kode Barang</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Nama Barang</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Tanggal</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Jam</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Jumlah</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Satuan</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Jual</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Total</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -118,17 +130,17 @@
                     </tr>
                 <?php else: ?>
                     <?php foreach ($penjualan as $index => $item): ?>
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
-                            <td class="px-4 py-3 font-medium text-blue-600"><?= htmlspecialchars($item['username'] ?? '-') ?></td>
-                            <td class="px-4 py-3 font-mono text-sm text-gray-700"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
-                            <td class="px-4 py-3 font-medium"><?= htmlspecialchars($item['nama_barang']) ?></td>
-                            <td class="px-4 py-3"><?= date('d/m/Y', strtotime($item['tanggal'])) ?></td>
-                            <td class="px-4 py-3 text-gray-600"><?= date('H:i', strtotime($item['tanggal'])) ?></td>
-                            <td class="px-4 py-3 text-left font-semibold"><?= $item['jumlah'] ?></td>
-                            <td class="px-4 py-3 text-center text-gray-600"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
-                            <td class="px-4 py-3 text-right"><?= formatRupiah($item['harga_satuan']) ?></td>
-                            <td class="px-4 py-3 text-left font-semibold text-blue-600"><?= formatRupiah($item['total_harga']) ?></td>
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-blue-600 align-middle"><?= htmlspecialchars($item['username'] ?? '-') ?></td>
+                            <td class="px-3 py-3 font-mono text-sm text-gray-700 align-middle"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
+                            <td class="px-3 py-3 text-sm font-medium text-gray-800 align-middle whitespace-nowrap overflow-hidden text-ellipsis" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
+                            <td class="px-3 py-3 text-sm text-gray-700 align-middle"><?= date('d/m/Y', strtotime($item['tanggal'])) ?></td>
+                            <td class="px-3 py-3 text-sm text-gray-600 align-middle"><?= date('H:i', strtotime($item['tanggal'])) ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-slate-700 align-middle"><?= $item['jumlah'] ?></td>
+                            <td class="px-3 py-3 text-sm text-gray-600 align-middle"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-emerald-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_satuan']) ?></td>
+                            <td class="px-3 py-3 text-sm font-bold text-blue-700 align-middle whitespace-nowrap"><?= formatRupiah($item['total_harga']) ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
