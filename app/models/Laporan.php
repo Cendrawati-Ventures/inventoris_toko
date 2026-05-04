@@ -135,6 +135,7 @@ class Laporan {
                                         b.nama_barang,
                                         b.satuan,
                                         COALESCE(dp.jumlah, 0) as jumlah,
+                                        COALESCE(dp.diskon, 0) as diskon,
                                         COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli,
                                         COALESCE(dp.harga_satuan, 0) as harga_jual,
                                         (COALESCE(dp.harga_satuan, 0) - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) as keuntungan_per_unit,

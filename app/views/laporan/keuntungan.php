@@ -94,6 +94,7 @@
                 <col style="width: 100px;">
                 <col style="width: 165px;">
                 <col style="width: 165px;">
+                <col style="width: 150px;">
                 <col style="width: 180px;">
                 <col style="width: 200px;">
             </colgroup>
@@ -109,6 +110,7 @@
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Satuan</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Beli</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Jual</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Diskon</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Keuntungan/Unit</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Total Keuntungan</th>
                 </tr>
@@ -116,7 +118,7 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($keuntungan)): ?>
                     <tr>
-                        <td colspan="12" class="px-4 py-4 text-center text-gray-500">Tidak ada data penjualan pada periode ini</td>
+                        <td colspan="13" class="px-4 py-4 text-center text-gray-500">Tidak ada data penjualan pada periode ini</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($keuntungan as $index => $item): ?>
@@ -131,6 +133,7 @@
                             <td class="px-3 py-3 text-sm text-gray-600 align-middle"><?= htmlspecialchars($item['satuan'] ?? '-') ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-slate-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-emerald-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold <?= ((float)($item['diskon'] ?? 0) > 0) ? 'text-orange-600' : 'text-slate-500' ?> align-middle whitespace-nowrap"><?= ((float)($item['diskon'] ?? 0) > 0) ? formatRupiah($item['diskon']) : '-' ?></td>
                             <td class="px-3 py-3 text-sm font-semibold <?= ((float)($item['keuntungan_per_unit'] ?? 0) >= 0) ? 'text-green-600' : 'text-red-600' ?> align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_per_unit']) ?></td>
                             <td class="px-3 py-3 text-sm font-bold <?= ((float)($item['keuntungan_total'] ?? 0) >= 0) ? 'text-green-700' : 'text-red-700' ?> align-middle whitespace-nowrap"><?= formatRupiah($item['keuntungan_total']) ?></td>
                         </tr>
