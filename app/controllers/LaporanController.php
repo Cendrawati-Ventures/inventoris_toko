@@ -926,16 +926,17 @@ class LaporanController {
             <thead>
                 <tr>
                     <th style="width: 4%;">No</th>
-                    <th style="width: 12%;">Tanggal</th>
-                    <th style="width: 14%;">Pengguna</th>
-                    <th style="width: 12%;">Kode Barang</th>
-                    <th style="width: 25%;">Nama Barang</th>
-                    <th style="width: 8%; text-align: center;">Jumlah</th>
-                    <th style="width: 10%; text-align: right;">Harga Beli</th>
-                    <th style="width: 10%; text-align: right;">Harga Jual</th>
-                    <th style="width: 8%; text-align: right;">Diskon</th>
-                    <th style="width: 12%; text-align: right;">Keuntungan/Unit</th>
-                    <th style="width: 12%; text-align: right;">Total Keuntungan</th>
+                    <th style="width: 11%;">Tanggal</th>
+                    <th style="width: 12%;">Pengguna</th>
+                    <th style="width: 12%;">Pembeli</th>
+                    <th style="width: 11%;">Kode Barang</th>
+                    <th style="width: 20%;">Nama Barang</th>
+                    <th style="width: 6%; text-align: center;">Jumlah</th>
+                    <th style="width: 9%; text-align: right;">Harga Beli</th>
+                    <th style="width: 9%; text-align: right;">Harga Jual</th>
+                    <th style="width: 7%; text-align: right;">Diskon</th>
+                    <th style="width: 10%; text-align: right;">Keuntungan/Unit</th>
+                    <th style="width: 11%; text-align: right;">Total Keuntungan</th>
                 </tr>
             </thead>
             <tbody>';
@@ -945,6 +946,7 @@ class LaporanController {
                 <td class="text-center">' . str_pad($index + 1, 2, '0', STR_PAD_LEFT) . '</td>
                 <td>' . date('d M Y', strtotime($item['tanggal'])) . '</td>
                 <td>' . htmlspecialchars($item['username'] ?? '-') . '</td>
+                <td>' . htmlspecialchars($item['nama_pembeli'] ?? '-') . '</td>
                 <td>' . htmlspecialchars($item['kode_barang'] ?? '-') . '</td>
                 <td><strong>' . htmlspecialchars($item['nama_barang']) . '</strong></td>
                 <td class="text-center">' . $item['jumlah'] . '</td>
@@ -980,7 +982,7 @@ class LaporanController {
         header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         echo '<table border="1"><tr>'
-            . '<th>No</th><th>Pengguna</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Diskon</th><th>Keuntungan/Unit</th><th>Total Keuntungan</th>'
+            . '<th>No</th><th>Pengguna</th><th>Pembeli</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Diskon</th><th>Keuntungan/Unit</th><th>Total Keuntungan</th>'
             . '</tr>';
         foreach ($keuntungan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
@@ -988,6 +990,7 @@ class LaporanController {
             echo '<tr>'
                 . '<td>' . ($index + 1) . '</td>'
                 . '<td>' . htmlspecialchars((string)($item['username'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
+                . '<td>' . htmlspecialchars((string)($item['nama_pembeli'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
                 . '<td>' . htmlspecialchars((string)($item['kode_barang'] ?? '-'), ENT_QUOTES, 'UTF-8') . '</td>'
                 . '<td>' . htmlspecialchars((string)($item['nama_barang'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
                 . '<td>' . $tanggal . '</td>'

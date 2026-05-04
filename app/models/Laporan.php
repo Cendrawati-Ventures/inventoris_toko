@@ -131,6 +131,7 @@ class Laporan {
                 $query = "SELECT 
                                         p.id_penjualan,
                                         u.username,
+                                        p.nama_pembeli,
                                         b.kode_barang,
                                         b.nama_barang,
                                         b.satuan,
