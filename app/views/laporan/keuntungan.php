@@ -86,9 +86,11 @@
             <colgroup>
                 <col style="width: 64px;">
                 <col style="width: 130px;">
+                <col style="width: 130px;">
                 <col style="width: 140px;">
-                <col style="width: auto;">
                 <col style="width: 120px;">
+                <col style="width: auto;">
+                <col style="width: 90px;">
                 <col style="width: 90px;">
                 <col style="width: 90px;">
                 <col style="width: 100px;">
@@ -102,6 +104,7 @@
                 <tr>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">No</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Pengguna</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Pembeli</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Kode Barang</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Nama Barang</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Tanggal</th>
@@ -118,13 +121,14 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php if (empty($keuntungan)): ?>
                     <tr>
-                        <td colspan="13" class="px-4 py-4 text-center text-gray-500">Tidak ada data penjualan pada periode ini</td>
+                        <td colspan="14" class="px-4 py-4 text-center text-gray-500">Tidak ada data penjualan pada periode ini</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($keuntungan as $index => $item): ?>
                         <tr class="hover:bg-slate-50">
                             <td class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-blue-600 align-middle"><?= htmlspecialchars($item['username'] ?? '-') ?></td>
+                            <td class="px-3 py-3 text-sm font-semibold text-purple-600 align-middle"><?= htmlspecialchars($item['nama_pembeli'] ?? '-') ?></td>
                             <td class="px-3 py-3 font-mono text-sm text-gray-700 align-middle"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-3 py-3 text-sm font-medium text-gray-800 align-middle whitespace-nowrap overflow-hidden text-ellipsis" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
                             <td class="px-3 py-3 text-sm text-gray-700 align-middle"><?= date('d/m/Y', strtotime($item['tanggal'])) ?></td>
