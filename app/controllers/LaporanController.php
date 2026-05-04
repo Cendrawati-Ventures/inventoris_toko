@@ -931,8 +931,9 @@ class LaporanController {
                     <th style="width: 8%; text-align: center;">Jumlah</th>
                     <th style="width: 12%; text-align: right;">Harga Beli</th>
                     <th style="width: 12%; text-align: right;">Harga Jual</th>
-                    <th style="width: 13%; text-align: right;">Keuntungan/Unit</th>
-                    <th style="width: 13%; text-align: right;">Total Keuntungan</th>
+                    <th style="width: 10%; text-align: right;">Diskon</th>
+                    <th style="width: 14%; text-align: right;">Keuntungan/Unit</th>
+                    <th style="width: 14%; text-align: right;">Total Keuntungan</th>
                 </tr>
             </thead>
             <tbody>';
@@ -945,6 +946,7 @@ class LaporanController {
                 <td class="text-center">' . $item['jumlah'] . '</td>
                 <td class="text-right">Rp ' . number_format((float)$item['harga_beli'], 0, ',', '.') . '</td>
                 <td class="text-right">Rp ' . number_format((float)$item['harga_jual'], 0, ',', '.') . '</td>
+                <td class="text-right">Rp ' . number_format((float)($item['diskon'] ?? 0), 0, ',', '.') . '</td>
                 <td class="text-right text-green">Rp ' . number_format((float)$item['keuntungan_per_unit'], 0, ',', '.') . '</td>
                 <td class="text-right text-green"><strong>Rp ' . number_format((float)$item['keuntungan_total'], 0, ',', '.') . '</strong></td>
             </tr>';
@@ -974,7 +976,7 @@ class LaporanController {
         header('Content-Type: application/vnd.ms-excel; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         echo '<table border="1"><tr>'
-            . '<th>No</th><th>Pengguna</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Keuntungan/Unit</th><th>Total Keuntungan</th>'
+            . '<th>No</th><th>Pengguna</th><th>Kode Barang</th><th>Nama Barang</th><th>Tanggal</th><th>Jam</th><th>Jumlah</th><th>Satuan</th><th>Harga Beli</th><th>Harga Jual</th><th>Diskon</th><th>Keuntungan/Unit</th><th>Total Keuntungan</th>'
             . '</tr>';
         foreach ($keuntungan as $index => $item) {
             $tanggal = isset($item['tanggal']) ? date('d/m/Y', strtotime($item['tanggal'])) : '';
@@ -990,6 +992,7 @@ class LaporanController {
                 . '<td>' . htmlspecialchars((string)($item['satuan'] ?? ''), ENT_QUOTES, 'UTF-8') . '</td>'
                 . '<td>' . (float)($item['harga_beli'] ?? 0) . '</td>'
                 . '<td>' . (float)($item['harga_jual'] ?? 0) . '</td>'
+                . '<td>' . (float)($item['diskon'] ?? 0) . '</td>'
                 . '<td>' . (float)($item['keuntungan_per_unit'] ?? 0) . '</td>'
                 . '<td>' . (float)($item['keuntungan_total'] ?? 0) . '</td>'
                 . '</tr>';
