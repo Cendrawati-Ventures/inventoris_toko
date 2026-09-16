@@ -19,15 +19,21 @@
     </div>
 
     <form action="/pembelian/store" method="POST" id="formPembelian" onsubmit="return validateForm()">
+        <div class="mb-6">
+            <label for="tanggal_masuk" class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Barang Masuk *</label>
+            <input type="date" id="tanggal_masuk" name="tanggal" required value="<?= htmlspecialchars($tanggal_default ?? date('Y-m-d')) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl">
+            <p class="text-xs text-slate-500 mt-1">Pilih tanggal barang benar-benar masuk, termasuk hari sebelumnya. Stok saat ini tetap memperhitungkan penjualan setelah tanggal tersebut.</p>
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
             <div class="lg:col-span-2 rounded-2xl border border-teal-100 bg-gradient-to-b from-teal-50/60 to-white p-4 min-w-0">
                 <div class="mb-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-                        <h3 class="text-lg font-bold text-slate-700">Daftar Stok Barang Tersedia</h3>
-                        <div class="flex items-center gap-2">
-                            <span id="barang_count_info" class="text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600">0 barang</span>
-                            <button type="button" class="app-btn-primary px-3 py-2 text-sm font-semibold" onclick="openAddBarangModal()">
-                                <i class="fas fa-plus mr-1"></i>Stok Barang Baru
+                    <div class="space-y-3 mb-4">
+                        <h3 class="text-base sm:text-lg font-bold leading-snug text-slate-800">Daftar Stok Barang Tersedia</h3>
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span id="barang_count_info" class="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700" aria-live="polite">0 barang</span>
+                            <button type="button" class="app-btn-primary inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold" onclick="openAddBarangModal()">
+                                <i class="fas fa-plus text-xs" aria-hidden="true"></i>
+                                <span>Stok Barang Baru</span>
                             </button>
                         </div>
                     </div>
@@ -95,68 +101,36 @@
 
 <!-- Modal Tambah Stok Barang Baru -->
 <div id="modal_add_barang" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden p-4">
-    <div class="bg-white rounded-2xl shadow-lg w-full max-w-lg p-6 relative">
+    <div class="bg-white rounded-2xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative">
         <button class="absolute top-3 right-3 text-slate-500 hover:text-slate-700" onclick="closeAddBarangModal()">
             <i class="fas fa-times"></i>
         </button>
         <h3 class="text-xl font-bold text-slate-800 mb-4">Tambah Stok Barang Baru</h3>
-        <form id="form_add_barang" onsubmit="submitAddBarang(event)">
-            <div class="mb-3">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Kode Barang</label>
-                <input type="text" name="kode_barang" placeholder="Misal: BRG-013"
-                       class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-            </div>
-            <div class="mb-3">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Barang</label>
-                <input type="text" name="nama_barang" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-            </div>
-            <div class="mb-3">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Kategori</label>
-                <select name="id_kategori" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-                    <option value="">-- Pilih Kategori --</option>
-                    <?php foreach (($kategori ?? []) as $kat): ?>
-                        <option value="<?= $kat['id_kategori'] ?>"><?= htmlspecialchars($kat['nama_kategori']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Satuan</label>
-                <select name="satuan" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-                    <option value="pcs">pcs</option>
-                    <?php foreach (($satuanList ?? []) as $sat): ?>
-                        <option value="<?= htmlspecialchars($sat['nama_satuan']) ?>"><?= htmlspecialchars($sat['nama_satuan']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Beli</label>
-                    <input type="text" name="harga_beli" inputmode="numeric" autocomplete="off" data-price-input min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Contoh: 23.000">
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Harga Jual</label>
-                    <input type="text" name="harga_jual" inputmode="numeric" autocomplete="off" data-price-input min="0" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Contoh: 25.000">
-                </div>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Jumlah Stok</label>
-                <input type="number" name="stok" min="1" value="1" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-semibold text-slate-700 mb-1">Tanggal Expired (Opsional)</label>
-                <input type="date" name="tanggal_expired" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-teal-500">
-            </div>
+        <form id="form_add_barang" onsubmit="submitAddBarang(event)" data-skip-auto-submit-enhance="true">
+            <?php include __DIR__ . '/../barang/_create-fields.php'; ?>
             <div class="flex gap-3">
-                <button type="submit" class="app-btn-primary px-5 py-2">Simpan & Tambah</button>
+                <button type="submit" class="app-btn-primary px-5 py-2">Simpan Barang</button>
                 <button type="button" class="app-btn-secondary px-4 py-2" onclick="closeAddBarangModal()">Batal</button>
             </div>
         </form>
     </div>
 </div>
 
+<script src="/assets/js/stock-units.js"></script>
+<script src="/assets/js/money.js"></script>
 <script>
 let itemIndex = 0;
-const allBarang = <?= json_encode($barang) ?>;
+const allBarang = <?= json_encode(array_values($barang ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?>;
+
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function formatRupiah(value) {
     const number = Number(value) || 0;
@@ -168,12 +142,7 @@ function toDigitOnly(value) {
 }
 
 function normalizeMoneyValue(value) {
-    const raw = String(value ?? '').trim();
-    if (raw === '') return 0;
-
-    const compact = raw.replace(/\s+/g, '');
-    const digitsOnly = toDigitOnly(compact);
-    return digitsOnly ? (parseInt(digitsOnly, 10) || 0) : 0;
+    return MoneyID.parse(value);
 }
 
 function parseCurrencyValue(value) {
@@ -181,15 +150,11 @@ function parseCurrencyValue(value) {
 }
 
 function formatThousandID(value) {
-    const numericValue = normalizeMoneyValue(value);
-    if (String(value ?? '').trim() === '') return '';
-    return numericValue.toLocaleString('id-ID');
+    return MoneyID.format(value);
 }
 
 function formatLiveMoneyInput(value) {
-    const digits = toDigitOnly(value);
-    if (!digits) return '';
-    return formatThousandID(digits);
+    return MoneyID.format(value);
 }
 
 function markPricePairInvalid(hargaBeliInput, hargaJualInput, invalid) {
@@ -203,7 +168,7 @@ function markPricePairInvalid(hargaBeliInput, hargaJualInput, invalid) {
 
 function normalizePriceInputs(scope = document) {
     scope.querySelectorAll('input[data-price-input]').forEach((input) => {
-        input.value = toDigitOnly(input.value);
+        input.value = String(MoneyID.parse(input.value));
     });
 }
 
@@ -217,26 +182,83 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.classList.add('hidden'), 2600);
 }
 
+function getBarangUnitOptions(barang) {
+    const rawOptions = Array.isArray(barang && barang.satuan_detail) && barang.satuan_detail.length > 0
+        ? barang.satuan_detail
+        : [{ satuan: barang?.satuan || 'pcs', nilai: 1, harga_beli: barang?.harga_beli || 0, harga_jual: barang?.harga_jual || 0 }];
+
+    return rawOptions.map((unit) => ({
+        satuan: String(unit?.satuan || barang?.satuan || 'pcs').trim() || (barang?.satuan || 'pcs'),
+        nilai: Number(unit?.nilai ?? unit?.nilai_satuan ?? unit?.konversi ?? 1),
+        harga_jual: Number(unit?.harga_jual ?? barang?.harga_jual ?? 0),
+        harga_beli: Number(unit?.harga_beli ?? barang?.harga_beli ?? 0)
+    })).filter((unit) => unit.satuan && unit.satuan !== '');
+}
+
+function formatKonversiText(unit, baseLabel = 'pcs') {
+    const nilai = Number(unit?.nilai ?? 1);
+    const safeNilai = Number.isFinite(nilai) && nilai > 0 ? nilai : 1;
+    const satuan = String(unit?.satuan || baseLabel || 'pcs').trim() || (baseLabel || 'pcs');
+    return `1 ${satuan} = ${safeNilai} ${baseLabel}`;
+}
+
+function resolveBarangSelection(barang, selectedSatuan = '') {
+    const options = getBarangUnitOptions(barang);
+    const normalized = String(selectedSatuan || '').trim();
+    const match = options.find((unit) => String(unit.satuan).toLowerCase() === normalized.toLowerCase());
+    return match || options[0] || { satuan: barang?.satuan || 'pcs', harga_jual: Number(barang?.harga_jual || 0), harga_beli: Number(barang?.harga_beli || 0) };
+}
+
 function createBarangCard(item) {
-    const itemStr = JSON.stringify(item).replace(/"/g, '&quot;');
     return `
-        <div class="border border-slate-200 rounded-xl p-3 bg-white hover:border-teal-300 hover:shadow-md transition cursor-pointer w-full" onclick='addItemFromBarang(${itemStr})'>
+        <div class="border border-slate-200 rounded-xl p-3 bg-white hover:border-teal-300 hover:shadow-md transition w-full" data-barang-card="card-${item.id_barang}">
             <div class="flex items-start justify-between gap-2 mb-2">
                 <div>
-                    <p class="font-semibold text-slate-800 leading-tight">${item.nama_barang}</p>
-                    <p class="text-xs text-slate-500 mt-1">Kategori: <strong>${item.nama_kategori || '-'}</strong></p>
+                    <p class="font-semibold text-slate-800 leading-tight">${escapeHtml(item.nama_barang)}</p>
+                    <p class="text-xs text-slate-500 mt-1">Kategori: ${escapeHtml(item.nama_kategori || '-')}</p>
                 </div>
-                <span class="text-[11px] bg-teal-100 text-teal-700 px-2 py-1 rounded font-mono">${item.kode_barang}</span>
+                <span class="text-[11px] bg-teal-100 text-teal-700 px-2 py-1 rounded font-mono">${escapeHtml(item.kode_barang)}</span>
             </div>
-            <div class="flex items-center justify-between text-xs text-slate-600">
-                <span>Stok: <strong>${item.stok}</strong> ${item.satuan}</span>
-                <span class="font-semibold text-emerald-700">${formatRupiah(item.harga_beli)}</span>
-            </div>
-            <button type="button" class="mt-3 w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-1.5">
+            <p class="text-sm text-slate-600">Stok: <strong>${Number(item.stok || 0)} ${escapeHtml(StockUnits.baseLabel(item))}</strong></p>
+            <button type="button" class="mt-3 w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2" data-picker-id="${escapeHtml(item.id_barang)}" onclick="addItemFromBarangButton(this)">
                 + Pilih Barang
             </button>
-        </div>
-    `;
+        </div>`;
+}
+
+function changeIncomingUnit(select, idx) {
+    const row = document.querySelector(`[data-item-index="${idx}"]`);
+    if (!row) return;
+    const id = row.querySelector('input[name*="[id_barang]"]').value;
+    const barang = allBarang.find(item => String(item.id_barang) === String(id));
+    if (!barang) return;
+    const unit = resolveBarangSelection(barang, select.value);
+    row.querySelector('input[name*="[satuan]"]').value = unit.satuan;
+    row.querySelector('input[name*="[harga_satuan]"]').value = formatThousandID(unit.harga_beli);
+    row.querySelector('input[name*="[harga_jual]"]').value = formatThousandID(unit.harga_jual);
+    onItemChange(idx);
+}
+
+function refreshIncomingStock() {
+    const rows = Array.from(document.querySelectorAll('#selected_container [data-item-index]'));
+    const addedByProduct = new Map();
+    const details = rows.map(row => {
+        const id = row.querySelector('input[name*="[id_barang]"]').value;
+        const barang = allBarang.find(item => String(item.id_barang) === String(id));
+        if (!barang) return null;
+        const unit = resolveBarangSelection(barang, row.querySelector('input[name*="[satuan]"]').value);
+        const quantity = Math.max(0, Number(row.querySelector('input[name*="[jumlah]"]').value) || 0);
+        const added = quantity * StockUnits.factor(unit);
+        addedByProduct.set(id, (addedByProduct.get(id) || 0) + added);
+        return { row, id, barang, unit, added };
+    }).filter(Boolean);
+    for (const { row, id, barang, unit, added } of details) {
+        const base = StockUnits.baseLabel(barang);
+        row.querySelector('[data-incoming-conversion]').textContent = formatKonversiText(unit, base);
+        row.querySelector('[data-stock-before]').textContent = Number(barang.stok || 0) + ' ' + base;
+        row.querySelector('[data-stock-added]').textContent = '+ ' + added + ' ' + base;
+        row.querySelector('[data-stock-after]').textContent = (Number(barang.stok || 0) + addedByProduct.get(id)) + ' ' + base;
+    }
 }
 
 function renderBarangList(filterText = '') {
@@ -246,8 +268,8 @@ function renderBarangList(filterText = '') {
 
     const q = filterText.toLowerCase().trim();
     const filtered = allBarang.filter((b) => {
-        const nama = (b.nama_barang || '').toLowerCase();
-        const kode = (b.kode_barang || '').toLowerCase();
+        const nama = String(b.nama_barang ?? '').toLowerCase();
+        const kode = String(b.kode_barang ?? '').toLowerCase();
         return q === '' || nama.includes(q) || kode.includes(q);
     });
 
@@ -278,15 +300,37 @@ function updateItemSubtotal(idx) {
     if (subtotalEl) subtotalEl.textContent = formatRupiah(subtotal < 0 ? 0 : subtotal);
 }
 
-function addItemFromBarang(barang, initialQty = 1) {
+function addItemFromBarangButton(button) {
+    if (!button) return;
+    const barangId = button.getAttribute('data-picker-id');
+    const barang = allBarang.find((item) => String(item.id_barang) === barangId);
+    if (!barang) return;
+    const card = button.closest('[data-barang-card]');
+    const select = card ? card.querySelector('select[data-unit-select]') : null;
+    const selectedSatuan = select ? select.value : (button.getAttribute('data-fallback-unit') || '');
+    addItemFromBarang(barang, selectedSatuan);
+}
+
+function addItemFromBarang(barang, selectedSatuan = '') {
     const container = document.getElementById('selected_container');
     const noItemsMsg = document.getElementById('no_items_msg');
-    const qty = Math.max(1, parseInt(initialQty, 10) || 1);
+    const chosenUnit = resolveBarangSelection(barang, selectedSatuan);
+    const finalHargaBeli = Number(chosenUnit.harga_beli ?? barang.harga_beli ?? 0);
+    const finalHargaJual = Number(chosenUnit.harga_jual ?? barang.harga_jual ?? 0);
+    const finalSatuan = chosenUnit.satuan || barang.satuan || 'pcs';
 
-    const existing = document.querySelector(`[data-barang-id="${barang.id_barang}"]`);
+    const existing = Array.from(container.querySelectorAll('[data-item-index]')).find((row) => {
+        const idInput = row.querySelector('input[name*="[id_barang]"]');
+        const satuanInput = row.querySelector('input[name*="[satuan]"]');
+        return idInput
+            && satuanInput
+            && parseInt(idInput.value, 10) === parseInt(barang.id_barang, 10)
+            && String(satuanInput.value).trim().toLowerCase() === String(finalSatuan).trim().toLowerCase();
+    });
+
     if (existing) {
         const qtyInput = existing.querySelector('input[name*="[jumlah]"]');
-        qtyInput.value = (parseInt(qtyInput.value, 10) || 0) + qty;
+        qtyInput.value = (parseInt(qtyInput.value, 10) || 0) + 1;
         updateItemSubtotal(existing.getAttribute('data-item-index'));
         container.prepend(existing);
         hitungTotal();
@@ -299,34 +343,46 @@ function addItemFromBarang(barang, initialQty = 1) {
         <div class="border border-blue-200 bg-white rounded-xl p-3" data-barang-id="${barang.id_barang}" data-item-index="${idx}">
             <div class="flex items-start justify-between gap-2 mb-2">
                 <div>
-                    <p class="font-semibold text-slate-800 text-sm">${barang.nama_barang}</p>
-                    <p class="text-[11px] text-slate-500">${barang.kode_barang} • ${barang.satuan}</p>
+                    <p class="font-semibold text-slate-800 text-sm">${escapeHtml(barang.nama_barang)}</p>
+                    <p class="text-[11px] text-slate-500">${escapeHtml(barang.kode_barang)} • ${escapeHtml(barang.nama_kategori || '-')}</p>
                 </div>
                 <button type="button" onclick="removeItem(${idx})" class="text-xs text-red-600 hover:text-red-700 font-semibold">
                     <i class="fas fa-trash mr-1"></i>Hapus
                 </button>
             </div>
 
+            <div data-incoming-conversion class="mb-2 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-[10px] text-sky-700 font-semibold">
+                ${escapeHtml(formatKonversiText(chosenUnit, StockUnits.baseLabel(barang)))}
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-3 text-xs">
+                <div class="rounded-lg bg-slate-50 border border-slate-200 p-2"><p class="text-slate-500">Stok sebelumnya</p><p data-stock-before class="font-bold text-slate-800">${Number(barang.stok || 0)} ${escapeHtml(StockUnits.baseLabel(barang))}</p></div>
+                <div class="rounded-lg bg-sky-50 border border-sky-200 p-2"><p class="text-sky-700">Jumlah Penambahan</p><p data-stock-added class="font-bold text-sky-800">+ ${StockUnits.factor(chosenUnit)} ${escapeHtml(StockUnits.baseLabel(barang))}</p></div>
+                <div class="rounded-lg bg-emerald-50 border border-emerald-200 p-2"><p class="text-emerald-700">Perkiraan stok akhir</p><p data-stock-after class="font-bold text-emerald-800">${Number(barang.stok || 0) + StockUnits.factor(chosenUnit)} ${escapeHtml(StockUnits.baseLabel(barang))}</p></div>
+            </div>
             <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
                 <div>
-                    <label class="block text-slate-500 mb-1">Jumlah</label>
+                    <label class="block text-slate-500 mb-1">Jumlah ditambahkan</label>
                     <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden">
                         <button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(${idx}, -1)">-</button>
-                        <input type="number" name="items[${idx}][jumlah]" value="${qty}" min="1" class="w-full text-center py-1.5 outline-none" onchange="onItemChange(${idx})">
+                        <input type="number" name="items[${idx}][jumlah]" value="1" min="1" class="w-full text-center py-1.5 outline-none" oninput="onItemChange(${idx})">
                         <button type="button" class="px-2 py-1.5 bg-slate-100" onclick="adjustQty(${idx}, 1)">+</button>
                     </div>
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Satuan</label>
-                    <input type="text" name="items[${idx}][satuan]" value="${barang.satuan || 'pcs'}" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="hitungTotal()">
+                    <select aria-label="Satuan barang masuk" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg bg-white" onchange="changeIncomingUnit(this, ${idx})">
+                        ${getBarangUnitOptions(barang).map(unit => `<option value="${escapeHtml(unit.satuan)}" ${unit.satuan === finalSatuan ? 'selected' : ''}>${escapeHtml(formatKonversiText(unit, StockUnits.baseLabel(barang)))}</option>`).join('')}
+                    </select>
+                    <input type="hidden" name="items[${idx}][satuan]" value="${escapeHtml(finalSatuan)}">
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Harga Beli</label>
-                    <input type="text" name="items[${idx}][harga_satuan]" value="${formatThousandID(barang.harga_beli)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                    <input type="text" name="items[${idx}][harga_satuan]" value="${formatThousandID(finalHargaBeli)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Harga Jual</label>
-                    <input type="text" name="items[${idx}][harga_jual]" value="${formatThousandID(barang.harga_jual || 0)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
+                    <input type="text" name="items[${idx}][harga_jual]" value="${formatThousandID(finalHargaJual)}" inputmode="numeric" autocomplete="off" data-price-input min="0" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg" onchange="onItemChange(${idx})">
                 </div>
                 <div>
                     <label class="block text-slate-500 mb-1">Tanggal Expired (Opsional)</label>
@@ -335,7 +391,7 @@ function addItemFromBarang(barang, initialQty = 1) {
             </div>
 
             <div class="text-right text-xs text-slate-500">
-                Subtotal: <span class="subtotal-item font-bold text-emerald-700">${formatRupiah(qty * parseCurrencyValue(barang.harga_beli))}</span>
+                Subtotal: <span class="subtotal-item font-bold text-emerald-700">${formatRupiah(finalHargaBeli)}</span>
             </div>
 
             <input type="hidden" name="items[${idx}][id_barang]" value="${barang.id_barang}">
@@ -384,11 +440,13 @@ function removeItem(idx) {
 }
 
 function hitungTotal() {
+    refreshIncomingStock();
     let totalItems = 0;
     let totalHarga = 0;
-    const rows = document.querySelectorAll('[data-barang-id]');
+    const rows = document.querySelectorAll('#selected_container [data-item-index]');
 
     rows.forEach((row) => {
+        updateItemSubtotal(row.getAttribute('data-item-index'));
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
         const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
         const hargaJual = parseCurrencyValue(row.querySelector('input[name*="[harga_jual]"]').value);
@@ -404,7 +462,7 @@ function hitungTotal() {
 }
 
 function validateForm() {
-    const items = document.querySelectorAll('[data-barang-id]');
+    const items = document.querySelectorAll('#selected_container [data-item-index]');
     if (items.length === 0) {
         showToast('Tambahkan minimal satu barang', 'error');
         return false;
@@ -465,37 +523,10 @@ function closeAddBarangModal() {
 async function submitAddBarang(event) {
     event.preventDefault();
     const form = document.getElementById('form_add_barang');
-    const hargaBeliInput = form.querySelector('input[name="harga_beli"]');
-    const hargaJualInput = form.querySelector('input[name="harga_jual"]');
-    const hargaBeliRaw = String(hargaBeliInput?.value || '').trim();
-    const hargaJualRaw = String(hargaJualInput?.value || '').trim();
-    if (hargaBeliRaw === '' || toDigitOnly(hargaBeliRaw) === '') {
-        showToast('Harga beli harus terisi', 'error');
-        if (hargaBeliInput) hargaBeliInput.focus();
+    if (!window.barangFormEditors.form_add_barang.validate() || !form.reportValidity()) {
+        showToast('Lengkapi satuan, isi kemasan, dan harga barang.', 'error');
         return;
     }
-    if (hargaJualRaw === '' || toDigitOnly(hargaJualRaw) === '') {
-        showToast('Harga jual harus terisi', 'error');
-        if (hargaJualInput) hargaJualInput.focus();
-        return;
-    }
-    const hargaBeli = parseCurrencyValue(hargaBeliRaw);
-    const hargaJual = parseCurrencyValue(hargaJualRaw);
-    if (hargaBeli >= hargaJual) {
-        markPricePairInvalid(hargaBeliInput, hargaJualInput, true);
-        showToast('Harga beli harus lebih kecil dari harga jual', 'error');
-        if (hargaBeliInput) hargaBeliInput.focus();
-        return;
-    }
-    markPricePairInvalid(hargaBeliInput, hargaJualInput, false);
-    const stokInput = form.querySelector('input[name="stok"]');
-    const stokValue = parseInt(String(stokInput?.value || '0'), 10);
-    if (!Number.isFinite(stokValue) || stokValue < 1) {
-        showToast('Jumlah stok minimal 1', 'error');
-        if (stokInput) stokInput.focus();
-        return;
-    }
-    normalizePriceInputs(form);
     const formData = new FormData(form);
 
     try {
@@ -509,8 +540,8 @@ async function submitAddBarang(event) {
 
         const barangBaru = data.barang;
         allBarang.push(barangBaru);
-        addItemFromBarang(barangBaru, stokValue);
-        form.reset();
+        window.barangFormEditors.form_add_barang.reset();
+        showToast('Barang baru tersimpan. Pilih barang untuk mencatat barang masuk.');
         closeAddBarangModal();
         document.getElementById('search_barang_main').value = '';
         renderBarangList('');
@@ -545,6 +576,9 @@ renderBarangList('');
 </script>
 
 <?php
+$satuan = $satuanList ?? [];
+$barangFormId = 'form_add_barang';
+include __DIR__ . '/../barang/_create-script.php';
 $content = ob_get_clean();
 $title = 'Input Barang Masuk - Sistem Inventori';
 include __DIR__ . '/../layout/header.php';

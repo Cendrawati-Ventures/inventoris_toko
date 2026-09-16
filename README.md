@@ -163,3 +163,28 @@ Free to use for educational purposes.
 ## Author
 
 Sistem Inventori Toko v1.0
+
+
+## Stok dan beberapa satuan per barang
+
+Pada Tambah/Edit Barang, isi **Satuan & Harga** untuk setiap barang. Sediakan satuan dasar dengan nilai **1** (misalnya pcs atau botol). Nilai satuan lain adalah jumlah satuan dasar di dalam kemasan, bukan jumlah kemasan bertingkat:
+
+| Satuan | Isi dalam satuan dasar | Harga |
+| --- | ---: | --- |
+| pcs | 1 | Harga per pcs |
+| renteng | 6 | Harga per renteng |
+| pack | 12 | Harga per pack |
+| dus | 100 | Harga per dus |
+
+Nilai ini khusus untuk masing-masing barang: pack pada barang lain dapat berisi 6 atau 10 pcs. Stok awal dan stok pada daftar/laporan selalu dalam satuan dasar. Jangan menjumlahkan stok pcs dan pack sebagai stok terpisah.
+
+Pembelian 2 dus isi 100 menambah 200 pcs. Penjualan campuran 1 dus + 2 pack + 1 renteng + 3 pcs mengurangi 133 pcs; dari stok 300 pcs tersisa 167 pcs. Harga mengikuti satuan yang dipilih, sedangkan modal batch dihitung per satuan dasar lalu dikonversi ke satuan penjualan. Edit/hapus pembelian menggunakan konversi yang tersimpan pada transaksi, sehingga perubahan isi kemasan tidak mengubah jumlah stok yang dikembalikan.
+
+Pengujian lokal:
+
+```sh
+node --test tests/*.test.cjs
+php tests/penjualan-save.php
+```
+
+Uji PHP memerlukan koneksi PostgreSQL dari konfigurasi aplikasi dan memakai tabel serta sequence sementara, tanpa mengubah data toko.

@@ -197,6 +197,11 @@
                         <i class="fas fa-box"></i>
                         <span>Stok</span>
                     </a>
+                    <?php if ($isKasir || $normalizedRole === 'admin'): ?>
+                    <a href="/catatan-operasional" class="nav-item px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2" aria-label="<?= $isKasir ? 'Tambah Catatan Operasional' : 'Lihat Catatan Operasional' ?>">
+                        <i class="fas fa-clipboard-list" aria-hidden="true"></i><span>Catatan</span>
+                    </a>
+                    <?php endif; ?>
                     <?php if ($canViewPembelian): ?>
                     <a href="/pembelian" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="fas fa-shopping-cart"></i>
@@ -379,6 +384,12 @@
                     <i class="fas fa-box text-green-600 w-5"></i>
                     <span>Stok</span>
                 </a>
+                <?php if ($isKasir || $normalizedRole === 'admin'): ?>
+                <a href="/catatan-operasional" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
+                    <i class="fas fa-clipboard-list text-teal-600 w-5" aria-hidden="true"></i>
+                    <span><?= $isKasir ? 'Tambah Catatan Operasional' : 'Catatan Operasional' ?></span>
+                </a>
+                <?php endif; ?>
                 <?php if ($canViewPembelian): ?>
                 <a href="/pembelian" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-blue-50 transition">
                     <i class="fas fa-shopping-cart text-orange-600 w-5"></i>

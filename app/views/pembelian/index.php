@@ -9,7 +9,7 @@
             <a href="/pembelian/export?format=excel" class="inline-flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100 transition">
                 <i class="fas fa-file-excel"></i>Unduh Excel Detail
             </a>
-            <a href="/pembelian/create" class="app-btn-primary px-4 py-2 font-semibold">
+            <a href="/pembelian/create?tanggal=<?= rawurlencode($filter_tanggal_akhir ?: ($filter_tanggal_awal ?: date('Y-m-d'))) ?>" class="app-btn-primary px-4 py-2 font-semibold">
                 <i class="fas fa-plus mr-2"></i>Input Barang Masuk
             </a>
         </div>

@@ -1,130 +1,6 @@
-<?php ob_start(); ?>
-<?php
-$showUpdateAlert = isset($_GET['updated']) && $_GET['updated'] === '1';
-$stokChanged = isset($_GET['stok_changed']) && $_GET['stok_changed'] === '1';
-$stokBefore = isset($_GET['stok_before']) ? (int)$_GET['stok_before'] : null;
-$stokAfter = isset($_GET['stok_after']) ? (int)$_GET['stok_after'] : null;
-?>
-
-<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 max-w-4xl mx-auto">
-    <?php if ($showUpdateAlert): ?>
-        <div class="mb-6 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
-            <div class="flex items-start gap-3">
-                <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                    <i class="fas fa-check"></i>
-                </span>
-                <div class="flex-1">
-                    <p class="text-sm font-bold text-emerald-800">Perubahan berhasil disimpan</p>
-                    <?php if ($stokChanged && $stokBefore !== null && $stokAfter !== null): ?>
-                        <p class="mt-1 text-sm text-emerald-700">
-                            Stok diperbarui dari <span class="font-semibold"><?= number_format($stokBefore, 0, ',', '.') ?></span>
-                            menjadi <span class="font-semibold"><?= number_format($stokAfter, 0, ',', '.') ?></span>.
-                        </p>
-                    <?php else: ?>
-                        <p class="mt-1 text-sm text-emerald-700">Data barang telah diperbarui. Silakan cek kembali sebelum lanjut.</p>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <div class="mb-8 flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-yellow-600">Produk</p>
-            <h2 class="mt-2 text-2xl font-bold text-slate-800">
-                <i class="fas fa-edit text-yellow-600 mr-2"></i>Edit Barang
-            </h2>
-        </div>
-        <span class="inline-flex items-center rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700 border border-yellow-100">
-            Update
-        </span>
-    </div>
-
-    <form action="/barang/update/<?= $barang['id_barang'] ?>" method="POST" id="formBarangEdit" class="space-y-6">
-        <div class="mb-6">
-            <label for="kode_barang" class="block text-gray-700 font-bold mb-2 text-sm">Kode Barang *</label>
-            <input type="text" id="kode_barang" name="kode_barang" required
-                   value="<?= htmlspecialchars($barang['kode_barang']) ?>"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-        </div>
-
-        <div class="mb-6">
-            <label for="nama_barang" class="block text-gray-700 font-bold mb-2 text-sm">Nama Barang *</label>
-            <input type="text" id="nama_barang" name="nama_barang" required
-                   value="<?= htmlspecialchars($barang['nama_barang']) ?>"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-        </div>
-
-        <div class="mb-6">
-            <label for="kategori" class="block text-gray-700 font-bold mb-2 text-sm">Kategori *</label>
-            <select id="kategori" name="id_kategori" required
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">-- Pilih Kategori --</option>
-                <?php foreach ($kategori as $kat): ?>
-                    <option value="<?= $kat['id_kategori'] ?>" <?= $barang['id_kategori'] == $kat['id_kategori'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($kat['nama_kategori']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-amber-50 p-4 sm:p-5 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-                <div>
-                    <label class="block text-slate-800 font-bold text-sm">Satuan & Harga</label>
-                    <p class="mt-1 text-xs text-slate-500">Atur satuan, harga beli, dan harga jual untuk setiap unit barang.</p>
-                </div>
-                <button type="button" id="btnAddSatuanDetail" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-3 py-2 text-sm font-semibold shadow-sm transition-all duration-200">
-                    <i class="fas fa-plus mr-2"></i>Tambah Satuan
-                </button>
-            </div>
-
-            <div class="mb-3 grid grid-cols-6 gap-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 md:grid-cols-[1.15fr_0.8fr_1.2fr_1.2fr_0.9fr_0.45fr]">
-                <span class="truncate">Satuan</span>
-                <span class="truncate">Isi (unit dasar)</span>
-                <span class="truncate">Harga Beli</span>
-                <span class="truncate">Harga Jual</span>
-                <span class="truncate">Keuntungan</span>
-                <span class="text-center truncate">Hapus</span>
-            </div>
-
-            <div id="satuan_detail_container" class="space-y-3"></div>
-            <input type="hidden" name="satuan_detail" id="satuan_detail_input" value='<?= htmlspecialchars(json_encode($barang['satuan_detail'] ?? []), ENT_QUOTES, 'UTF-8') ?>'>
-            <input type="hidden" name="satuan" id="default_satuan" value="<?= htmlspecialchars((string)($barang['satuan'] ?? 'pcs')) ?>">
-        </div>
-
-        <p id="price_notice" class="hidden -mt-1 mb-2 text-sm text-red-600 font-semibold">
-            Harga jual harus selalu lebih tinggi dari harga beli.
-        </p>
-
-        <div class="mb-8">
-            <label for="stok" class="block text-gray-700 font-bold mb-2 text-sm">Stok</label>
-            <input type="number" id="stok" name="stok" required min="0"
-                   value="<?= $barang['stok'] ?>"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-        </div>
-
-        <div class="mb-8">
-            <label for="tanggal_expired" class="block text-gray-700 font-bold mb-2 text-sm">Tanggal Expired</label>
-            <input type="date" id="tanggal_expired" name="tanggal_expired"
-                   value="<?= !empty($barang['tanggal_expired']) ? htmlspecialchars(date('Y-m-d', strtotime($barang['tanggal_expired']))) : '' ?>"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <p class="text-xs text-gray-500 mt-1">Kosongkan jika tidak ada masa expired.</p>
-        </div>
-
-        <div class="flex gap-4 justify-center">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition font-semibold">
-                <i class="fas fa-save mr-2"></i>Update
-            </button>
-            <a href="/barang" class="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg transition font-semibold">
-                <i class="fas fa-arrow-left mr-2"></i>Kembali
-            </a>
-        </div>
-    </form>
-</div>
-
-<script src="/assets/js/money.js"></script>
 <script>
+(() => {
+const editorFormId = <?= json_encode($barangFormId ?? 'formBarangCreate') ?>;
 const SATUAN_OPTIONS = <?= json_encode(array_values(array_map(function ($item) {
     return (string)($item['nama_satuan'] ?? '');
 }, $satuan ?? [])), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
@@ -204,7 +80,9 @@ function syncSatuanDetailState() {
 
     const defaultRow = detail.find(unit => Number(unit.nilai) === 1) || detail[0] || { satuan: '', harga_beli: 0, harga_jual: 0 };
     const defaultSatuanInput = document.getElementById('default_satuan');
-    if (defaultSatuanInput) defaultSatuanInput.value = defaultRow.satuan;
+    if (defaultSatuanInput) defaultSatuanInput.value = defaultRow.satuan || '';
+    document.getElementById('default_harga_beli').value = defaultRow.harga_beli || 0;
+    document.getElementById('default_harga_jual').value = defaultRow.harga_jual || 0;
 
     const notice = document.getElementById('price_notice');
     let hasInvalidRows = false;
@@ -246,7 +124,22 @@ function syncSatuanDetailState() {
         addSatuanDetailRow();
     }
 
-    return !hasInvalidRows;
+    const seen = new Set();
+    let message = '';
+    for (const unit of detail) {
+        const key = unit.satuan.toLowerCase();
+        if (seen.has(key)) message = 'Satuan tidak boleh berulang.';
+        seen.add(key);
+        if (!Number.isInteger(unit.nilai) || unit.nilai < 1) message = 'Isi satuan harus bilangan bulat minimal 1.';
+        if (unit.harga_beli < 0 || unit.harga_jual <= unit.harga_beli) message = 'Harga jual setiap satuan harus lebih tinggi dari harga beli.';
+    }
+    if (!detail.some(unit => unit.nilai === 1)) message = 'Tambahkan satuan dasar dengan isi 1.';
+    if (detail.length !== rows.length) message = 'Pilih satuan pada semua baris.';
+    if (message && notice) {
+        notice.textContent = message;
+        notice.classList.remove('hidden');
+    }
+    return !hasInvalidRows && !message;
 }
 
 function addSatuanDetailRow(rowData = { satuan: SATUAN_OPTIONS[0] || '', harga_beli: 0, harga_jual: 0, nilai: 1 }) {
@@ -346,26 +239,21 @@ function bindPriceInputFormatting(formId) {
     });
 }
 
-bindPriceInputFormatting('formBarangEdit');
-const baseSatuanDetail = <?= json_encode($barang['satuan_detail'] ?? []) ?>;
 const addBtn = document.getElementById('btnAddSatuanDetail');
 if (addBtn) {
     addBtn.addEventListener('click', () => addSatuanDetailRow());
 }
-if (Array.isArray(baseSatuanDetail) && baseSatuanDetail.length > 0) {
-    baseSatuanDetail.forEach((item) => addSatuanDetailRow({
-        satuan: item.satuan || '',
-        nilai: Number(item.nilai || item.nilai_satuan || item.konversi || 1),
-        harga_beli: Number(item.harga_beli || 0),
-        harga_jual: Number(item.harga_jual || 0)
-    }));
-} else {
-    addSatuanDetailRow({ satuan: '<?= htmlspecialchars((string)($barang['satuan'] ?? '')) ?>', harga_beli: Number(<?= (float)$barang['harga_beli'] ?>), harga_jual: Number(<?= (float)$barang['harga_jual'] ?>) });
-}
-</script>
 
-<?php 
-$content = ob_get_clean();
-$title = 'Edit Barang - Sistem Inventori';
-include __DIR__ . '/../layout/header.php';
-?>
+bindPriceInputFormatting(editorFormId);
+addSatuanDetailRow({ satuan: SATUAN_OPTIONS[0] || 'pcs', harga_beli: 0, harga_jual: 0, nilai: 1 });
+window.barangFormEditors = window.barangFormEditors || {};
+window.barangFormEditors[editorFormId] = {
+    validate: syncSatuanDetailState,
+    reset() {
+        document.getElementById(editorFormId).reset();
+        document.getElementById('satuan_detail_container').innerHTML = '';
+        addSatuanDetailRow({ satuan: 'pcs', nilai: 1, harga_beli: 0, harga_jual: 0 });
+    }
+};
+})();
+</script>

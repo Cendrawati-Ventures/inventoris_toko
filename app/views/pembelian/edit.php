@@ -8,6 +8,11 @@
     <p class="text-gray-600 mb-6">Hanya menampilkan item yang sudah dibeli untuk diedit tanpa panel pencarian baru.</p>
 
     <form action="/pembelian/update/<?= $pembelian['id_pembelian'] ?>" method="POST" id="formPembelian" onsubmit="return validateForm()">
+        <div class="mb-6">
+            <label for="tanggal_masuk" class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Barang Masuk *</label>
+            <input type="date" id="tanggal_masuk" name="tanggal" required value="<?= htmlspecialchars(substr((string)$pembelian['tanggal'], 0, 10)) ?>" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl">
+            <p class="text-xs text-slate-500 mt-1">Pilih tanggal barang benar-benar masuk, termasuk hari sebelumnya. Stok saat ini tetap memperhitungkan penjualan setelah tanggal tersebut.</p>
+        </div>
         <!-- Info Supplier -->
         <div class="mb-6">
             <label for="nama_pembeli" class="block text-gray-700 font-semibold mb-2">Nama Supplier</label>
@@ -61,16 +66,89 @@
     </form>
 </div>
 
+<script src="/assets/js/money.js"></script>
 <script>
 let itemIndex = 0;
 const existingDetails = <?= json_encode($details) ?>;
+const allBarang = <?= json_encode($barang ?? []) ?>;
 const satuanList = <?= json_encode($satuanList ?? []) ?>;
+
+function toDigitOnly(value) {
+    return String(value ?? '').replace(/[^\d]/g, '');
+}
+
+function normalizeMoneyValue(value) {
+    return MoneyID.parse(value);
+}
+
+function formatThousandID(value) {
+    return MoneyID.format(value);
+}
+
+function parseCurrencyValue(value) {
+    return normalizeMoneyValue(value);
+}
+
+function formatRupiah(value) {
+    const number = Number(value) || 0;
+    return 'Rp ' + Math.floor(number).toLocaleString('id-ID');
+}
+
+function markPricePairInvalid(hargaBeliInput, hargaJualInput, invalid) {
+    [hargaBeliInput, hargaJualInput].forEach((input) => {
+        if (!input) return;
+        input.classList.toggle('border-red-400', invalid);
+        input.classList.toggle('ring-2', invalid);
+        input.classList.toggle('ring-red-100', invalid);
+    });
+}
+
+function getBarangUnitOptions(barang) {
+    const rawOptions = Array.isArray(barang && barang.satuan_detail) && barang.satuan_detail.length > 0
+        ? barang.satuan_detail
+        : [{ satuan: barang?.satuan || 'pcs', harga_beli: barang?.harga_beli || 0, harga_jual: barang?.harga_jual || 0 }];
+
+    return rawOptions.map((unit) => ({
+        satuan: String(unit?.satuan || barang?.satuan || 'pcs').trim() || (barang?.satuan || 'pcs'),
+        harga_jual: Number(unit?.harga_jual ?? barang?.harga_jual ?? 0),
+        harga_beli: Number(unit?.harga_beli ?? barang?.harga_beli ?? 0)
+    })).filter((unit) => unit.satuan && unit.satuan !== '');
+}
+
+function resolveBarangSelection(barang, selectedSatuan = '') {
+    const options = getBarangUnitOptions(barang);
+    const normalized = String(selectedSatuan || '').trim();
+    const match = options.find((unit) => String(unit.satuan).toLowerCase() === normalized.toLowerCase());
+    return match || options[0] || { satuan: barang?.satuan || 'pcs', harga_jual: Number(barang?.harga_jual || 0), harga_beli: Number(barang?.harga_beli || 0) };
+}
+
+function syncDetailUnitPreview(select, idx) {
+    if (!select) return;
+    const row = document.querySelector(`[data-item-index="${idx}"]`);
+    if (!row) return;
+    const barangId = select.getAttribute('data-barang-id');
+    const barang = allBarang.find((item) => String(item.id_barang) === String(barangId));
+    if (!barang) return;
+    const selected = resolveBarangSelection(barang, select.value);
+    const beliInput = row.querySelector('input[name*="[harga_satuan]"]');
+    const jualInput = row.querySelector('input[name*="[harga_jual]"]');
+    if (beliInput) beliInput.value = formatThousandID(selected.harga_beli || 0);
+    if (jualInput) jualInput.value = formatThousandID(selected.harga_jual || 0);
+    updateItemSubtotal(idx);
+    hitungTotal();
+}
 
 function appendItem(detail) {
     const container = document.getElementById('selected_container');
     const noItemsMsg = document.getElementById('no_items_msg');
+    const barang = allBarang.find((item) => String(item.id_barang) === String(detail.id_barang)) || null;
+    const unitOptions = getBarangUnitOptions(barang);
+    const selectedSatuan = String(detail.satuan || (unitOptions[0]?.satuan || barang?.satuan || 'pcs')).trim();
+    const chosenUnit = resolveBarangSelection(barang, selectedSatuan);
+    const defaultHargaBeli = Number(detail.harga_satuan || chosenUnit.harga_beli || barang?.harga_beli || 0);
+    const defaultHargaJual = Number(chosenUnit.harga_jual || barang?.harga_jual || 0);
 
-    const itemHtml = `
+    const rowHtml = `
         <div class="bg-white border border-gray-200 rounded-lg p-4 selected-row" data-item-index="${itemIndex}">
             <div class="flex justify-between items-start mb-3">
                 <div>
@@ -85,13 +163,12 @@ function appendItem(detail) {
             <input type="hidden" name="items[${itemIndex}][id_barang]" value="${detail.id_barang}">
             <input type="hidden" name="items[${itemIndex}][diskon]" value="0">
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Satuan</label>
-                    <select name="items[${itemIndex}][satuan]" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
+                    <select name="items[${itemIndex}][satuan]" data-barang-id="${detail.id_barang}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm" onchange="syncDetailUnitPreview(this, ${itemIndex})">
                         <option value="">-- Pilih Satuan --</option>
-                        ${satuanList.map(sat => `<option value="${sat.nama_satuan}" ${sat.nama_satuan === detail.satuan ? 'selected' : ''}>${sat.nama_satuan}</option>`).join('')}
+                        ${(unitOptions.length ? unitOptions : [{ satuan: selectedSatuan, harga_beli: defaultHargaBeli, harga_jual: defaultHargaJual }]).map((unit) => `<option value="${unit.satuan}" ${unit.satuan === selectedSatuan ? 'selected' : ''}>${unit.satuan}</option>`).join('')}
                     </select>
                 </div>
                 <div>
@@ -102,23 +179,30 @@ function appendItem(detail) {
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Harga Beli</label>
-                    <input type="number" name="items[${itemIndex}][harga_satuan]" value="${detail.harga_satuan}" min="0" step="0.01" required
+                    <input type="text" name="items[${itemIndex}][harga_satuan]" value="${formatThousandID(defaultHargaBeli)}" data-price-input min="0" required
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-                           onchange="hitungTotal()" onkeyup="hitungTotal()">
+                           onchange="hitungTotal(); markPricePairInvalid(this, document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_jual]\"]'), parseCurrencyValue(this.value) > 0 && parseCurrencyValue(document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_jual]\"]').value) > 0 && parseCurrencyValue(this.value) >= parseCurrencyValue(document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_jual]\"]').value));">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">Harga Jual</label>
+                    <input type="text" name="items[${itemIndex}][harga_jual]" value="${formatThousandID(defaultHargaJual)}" data-price-input min="0" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+                           onchange="hitungTotal(); markPricePairInvalid(document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_satuan]\"]'), this, parseCurrencyValue(document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_satuan]\"]').value) > 0 && parseCurrencyValue(this.value) > 0 && parseCurrencyValue(document.querySelector('[data-item-index=\"'+${itemIndex}+'\"] input[name*=\"[harga_satuan]\"]').value) >= parseCurrencyValue(this.value));">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-600 mb-1">Subtotal</label>
                     <div class="subtotal w-full px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm font-bold text-green-700">
-                        Rp ${parseInt(detail.subtotal || 0).toLocaleString('id-ID')}
+                        Rp ${parseInt(detail.subtotal || (detail.jumlah * defaultHargaBeli) || 0).toLocaleString('id-ID')}
                     </div>
                 </div>
             </div>
         </div>
     `;
 
-    container.insertAdjacentHTML('beforeend', itemHtml);
+    container.insertAdjacentHTML('beforeend', rowHtml);
     noItemsMsg.classList.add('hidden');
     itemIndex++;
+    hitungTotal();
 }
 
 function removeItem(idx) {
@@ -138,13 +222,20 @@ function hitungTotal() {
 
     document.querySelectorAll('.selected-row').forEach(row => {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
-        const harga = parseFloat(row.querySelector('input[name*="[harga_satuan]"]').value) || 0;
+        const harga = parseCurrencyValue(row.querySelector('input[name*="[harga_satuan]"]').value);
         const subtotal = jumlah * harga;
 
         totalItems += jumlah;
         totalHarga += subtotal;
 
-        row.querySelector('.subtotal').textContent = 'Rp ' + subtotal.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+        const subtotalEl = row.querySelector('.subtotal');
+        if (subtotalEl) subtotalEl.textContent = 'Rp ' + subtotal.toLocaleString('id-ID', { maximumFractionDigits: 0 });
+
+        const hargaJualInput = row.querySelector('input[name*="[harga_jual]"]');
+        const hargaBeliInput = row.querySelector('input[name*="[harga_satuan]"]');
+        const hargaJual = parseCurrencyValue(hargaJualInput?.value);
+        const invalidPair = harga > 0 && hargaJual > 0 && harga >= hargaJual;
+        markPricePairInvalid(hargaBeliInput, hargaJualInput, invalidPair);
     });
 
     document.getElementById('total_items').textContent = totalItems;
@@ -161,8 +252,21 @@ function validateForm() {
 
     for (const row of items) {
         const jumlah = parseFloat(row.querySelector('input[name*="[jumlah]"]').value) || 0;
+        const hargaBeliInput = row.querySelector('input[name*="[harga_satuan]"]');
+        const hargaJualInput = row.querySelector('input[name*="[harga_jual]"]');
+        const hargaBeli = parseCurrencyValue(hargaBeliInput?.value);
+        const hargaJual = parseCurrencyValue(hargaJualInput?.value);
+
         if (jumlah <= 0) {
             alert('Jumlah tiap item harus lebih dari 0.');
+            return false;
+        }
+        if (hargaBeli <= 0 || hargaJual <= 0) {
+            alert('Harga beli dan harga jual tiap item harus terisi.');
+            return false;
+        }
+        if (hargaBeli >= hargaJual) {
+            alert('Harga beli harus lebih kecil dari harga jual untuk setiap satuan item.');
             return false;
         }
     }

@@ -1,8 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
+require_once __DIR__ . '/Barang.php';
 require_once __DIR__ . '/InventoryBatch.php';
 require_once __DIR__ . '/AuditTrail.php';
+require_once __DIR__ . '/StokMutasi.php';
 
 class Penjualan {
     private $conn;
@@ -10,6 +13,8 @@ class Penjualan {
     private $detail_table = 'detail_penjualan';
     private $batchModel;
     private $auditTrail;
+    private $stokMutasi;
+    private $barangModel;
 
     private function getAppTimezone(): DateTimeZone {
         $timezone = getenv('TIMEZONE') ?: 'Asia/Jakarta';
@@ -23,16 +28,8 @@ class Penjualan {
     private function buildTransactionTimestamp(?string $tanggalInput): string {
         $tz = $this->getAppTimezone();
         $now = new DateTimeImmutable('now', $tz);
-        $input = trim((string)$tanggalInput);
-
-        if ($input === '') {
-            return $now->format('Y-m-d H:i:s');
-        }
-
-        $parsedDate = DateTimeImmutable::createFromFormat('Y-m-d', $input, $tz);
-        if ($parsedDate === false) {
-            return $now->format('Y-m-d H:i:s');
-        }
+        $input = transactionDate($tanggalInput, $now->format('Y-m-d'));
+        $parsedDate = DateTimeImmutable::createFromFormat('!Y-m-d', $input, $tz);
 
         // Jika tanggal transaksi adalah hari ini, simpan timestamp real-time penuh.
         if ($parsedDate->format('Y-m-d') === $now->format('Y-m-d')) {
@@ -50,9 +47,24 @@ class Penjualan {
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->barangModel = new Barang();
         $this->batchModel = new InventoryBatch($this->conn);
         $this->auditTrail = new AuditTrail($this->conn);
+        $this->stokMutasi = new StokMutasi($this->conn);
         $this->ensureTableStructure();
+    }
+
+    private function ensureDetailUnitColumns(): void {
+        try {
+            $this->conn->exec("ALTER TABLE detail_penjualan ADD COLUMN IF NOT EXISTS satuan VARCHAR(50) DEFAULT 'pcs'");
+            $this->conn->exec("ALTER TABLE detail_penjualan ADD COLUMN IF NOT EXISTS nilai_satuan NUMERIC(12,2) DEFAULT 1");
+        } catch (Exception $e) {
+            error_log('ensure detail_penjualan columns error: ' . $e->getMessage());
+        }
+    }
+
+    private function convertJumlahToBaseUnit(int $idBarang, string $satuan, float $jumlah): float {
+        return $this->barangModel->convertQtyToBaseById($idBarang, $satuan, $jumlah);
     }
 
     private function ensureTableStructure() {
@@ -95,10 +107,12 @@ class Penjualan {
                                SET harga_beli_saat_transaksi = COALESCE(b.harga_beli, 0)
                                FROM barang b
                                WHERE dp.id_barang = b.id_barang
-                                 AND (dp.harga_beli_saat_transaksi IS NULL OR dp.harga_beli_saat_transaksi = 0)");
+                                 AND dp.harga_beli_saat_transaksi IS NULL");
         } catch (Exception $e) {
             error_log('ensureTableStructure (snapshot harga beli) error: ' . $e->getMessage());
         }
+
+        $this->ensureDetailUnitColumns();
     }
 
     public function getAll() {
@@ -206,7 +220,7 @@ class Penjualan {
     }
 
     public function getDetailById($id) {
-        $query = "SELECT dp.*, b.nama_barang, b.kode_barang, b.satuan,
+        $query = "SELECT dp.*, b.nama_barang, b.kode_barang, COALESCE(dp.satuan, b.satuan) AS satuan,
                          COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli_item,
                          (((dp.harga_satuan - COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0)) * dp.jumlah) - COALESCE(dp.diskon, 0)) as laba_item
                   FROM " . $this->detail_table . " dp
@@ -229,7 +243,7 @@ class Penjualan {
                     dp.id_detail,
                     b.kode_barang,
                     b.nama_barang,
-                    b.satuan,
+                    COALESCE(dp.satuan, b.satuan) AS satuan,
                     dp.jumlah,
                     dp.harga_satuan,
                     COALESCE(dp.diskon, 0) as diskon,
@@ -260,9 +274,14 @@ class Penjualan {
         try {
             $this->conn->beginTransaction();
 
-            // Validate all items and check stock
+            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
+            $tanggalDate = date('Y-m-d', strtotime($tanggal));
+            $todayDate = date('Y-m-d');
+
+            // Validate all items against historical stock at the transaction date.
             $total = 0;
             $hargaBeliSnapshot = [];
+            $requestedStock = [];
             foreach ($data['items'] as $item) {
                 $jumlah = (int)($item['jumlah'] ?? 0);
                 $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
@@ -273,15 +292,24 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
                 }
 
-                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang";
+                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang FOR UPDATE";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
                 $barang = $stmtCheck->fetch();
 
-                if (!$barang || (int)$barang['stok'] < $jumlah) {
+                if (!$barang) {
                     $this->conn->rollBack();
-                    return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang'];
+                    return ['success' => false, 'message' => 'Barang tidak ditemukan'];
+                }
+
+                $availableStock = $this->stokMutasi->getSaldoAt((int)$item['id_barang'], $tanggalDate);
+                $barangId = (int)$item['id_barang'];
+                $baseQty = $this->convertJumlahToBaseUnit($barangId, trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs', (float)$jumlah);
+                $requestedStock[$barangId] = ($requestedStock[$barangId] ?? 0) + $baseQty;
+                if ($baseQty <= 0 || min((float)$barang['stok'], $availableStock) < $requestedStock[$barangId]) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang pada tanggal transaksi'];
                 }
 
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
@@ -296,8 +324,6 @@ class Penjualan {
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
             $kembalian = $uang_diberikan - $total;
             $ada_hutang = $data['ada_hutang'] ?? 0;
-
-            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
 
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';
@@ -343,12 +369,22 @@ class Penjualan {
                 $jumlah = abs((int)$item['jumlah']);
                 $hargaSatuan = (float)$item['harga_satuan'];
                 $diskon = (float)$item['diskon'];
+                $satuanLabel = trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs';
+                $baseQty = $this->convertJumlahToBaseUnit((int)$item['id_barang'], $satuanLabel, (float)$jumlah);
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
-                
+                $nilaiSatuan = 1.0;
+                $barangInfo = $this->barangModel->getById((int)$item['id_barang']);
+                if ($barangInfo) {
+                    $unitInfo = $this->barangModel->resolveSatuanUnit($barangInfo, $satuanLabel);
+                    if (!empty($unitInfo['nilai'])) {
+                        $nilaiSatuan = (float)$unitInfo['nilai'];
+                    }
+                }
+
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi)
-                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi)";
-                
+                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi, satuan, nilai_satuan)
+                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi, :satuan, :nilai_satuan)";
+
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id_penjualan);
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
@@ -356,8 +392,10 @@ class Penjualan {
                 $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
-                $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
+                $hargaBeliSaatTransaksi = (float)($unitInfo['harga_beli'] ?? ($hargaBeliSnapshot[(int)$item['id_barang']] ?? 0));
                 $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
+                $stmtDetail->bindParam(':satuan', $satuanLabel);
+                $stmtDetail->bindParam(':nilai_satuan', $nilaiSatuan);
                 $stmtDetail->execute();
                 $idDetailPenjualan = (int)$this->conn->lastInsertId();
 
@@ -365,10 +403,10 @@ class Penjualan {
                     (int)$id_penjualan,
                     $idDetailPenjualan,
                     (int)$item['id_barang'],
-                    (float)$jumlah,
-                    (float)$hargaBeliSaatTransaksi
+                    (float)$baseQty,
+                    (float)$hargaBeliSaatTransaksi / $nilaiSatuan
                 );
-                $unitModal = (float)($consumed['unit_modal'] ?? $hargaBeliSaatTransaksi);
+                $unitModal = round((float)$consumed['total_modal'] / $jumlah, 2);
                 $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
                 $updateSnapshot->bindValue(':harga_beli', $unitModal);
                 $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
@@ -382,14 +420,23 @@ class Penjualan {
                     'harga_beli_snapshot' => $unitModal
                 ];
 
-                // Update stok barang (kurangi)
+                $this->stokMutasi->recordKeluar(
+                    (int)$item['id_barang'],
+                    (float)$baseQty,
+                    $tanggal,
+                    (int)$id_penjualan,
+                    'penjualan',
+                    $satuanLabel,
+                    'Penjualan barang keluar'
+                );
+
                 $queryStok = "UPDATE barang
                               SET stok = stok - :jumlah,
                                   stok_updated_by = :updated_by,
                                   updated_at = NOW()
                               WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $jumlah);
+                $stmtStok->bindParam(':jumlah', $baseQty);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
                 $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
                 $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
@@ -418,6 +465,7 @@ class Penjualan {
             $this->conn->beginTransaction();
             $headerLama = $this->getById($id);
             $this->batchModel->rollbackSale((int)$id);
+            $this->stokMutasi->rollbackByTransaksi('penjualan', (int)$id);
 
             // Get old details
             $queryOld = "SELECT * FROM " . $this->detail_table . " WHERE id_penjualan = :id";
@@ -428,7 +476,7 @@ class Penjualan {
 
             // Restore old stock
             foreach ($oldDetails as $oldItem) {
-                $restoreQty = abs((int)$oldItem['jumlah']);
+                $restoreQty = abs((float)$oldItem['jumlah']) * ((float)($oldItem['nilai_satuan'] ?? 1) ?: 1);
                 if ($restoreQty <= 0) {
                     continue;
                 }
@@ -445,9 +493,14 @@ class Penjualan {
                 $stmtRestore->execute();
             }
 
-            // Validate new items and check stock
+            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
+            $tanggalDate = date('Y-m-d', strtotime($tanggal));
+            $todayDate = date('Y-m-d');
+
+            // Validate new items against historical stock at the selected transaction date.
             $total = 0;
             $hargaBeliSnapshot = [];
+            $requestedStock = [];
             foreach ($data['items'] as $item) {
                 $jumlah = (int)($item['jumlah'] ?? 0);
                 $hargaSatuan = (float)($item['harga_satuan'] ?? 0);
@@ -458,15 +511,24 @@ class Penjualan {
                     return ['success' => false, 'message' => 'Data item penjualan tidak valid'];
                 }
 
-                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang";
+                $queryCheck = "SELECT stok, harga_beli FROM barang WHERE id_barang = :id_barang FOR UPDATE";
                 $stmtCheck = $this->conn->prepare($queryCheck);
                 $stmtCheck->bindParam(':id_barang', $item['id_barang']);
                 $stmtCheck->execute();
                 $barang = $stmtCheck->fetch();
 
-                if (!$barang || (int)$barang['stok'] < $jumlah) {
+                if (!$barang) {
                     $this->conn->rollBack();
-                    return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang'];
+                    return ['success' => false, 'message' => 'Barang tidak ditemukan'];
+                }
+
+                $availableStock = $this->stokMutasi->getSaldoAt((int)$item['id_barang'], $tanggalDate);
+                $barangId = (int)$item['id_barang'];
+                $baseQty = $this->convertJumlahToBaseUnit($barangId, trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs', (float)$jumlah);
+                $requestedStock[$barangId] = ($requestedStock[$barangId] ?? 0) + $baseQty;
+                if ($baseQty <= 0 || min((float)$barang['stok'], $availableStock) < $requestedStock[$barangId]) {
+                    $this->conn->rollBack();
+                    return ['success' => false, 'message' => 'Stok tidak mencukupi untuk salah satu barang pada tanggal transaksi'];
                 }
 
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
@@ -480,8 +542,6 @@ class Penjualan {
 
             $uang_diberikan = $data['uang_diberikan'] ?? 0;
             $kembalian = $uang_diberikan - $total;
-
-            $tanggal = $this->buildTransactionTimestamp($data['tanggal'] ?? null);
 
             // Jika ada hutang, gunakan nama penghutang sebagai nama pembeli
             $nama_pembeli = $data['nama_pembeli'] ?? '';
@@ -521,11 +581,22 @@ class Penjualan {
                 $jumlah = abs((int)$item['jumlah']);
                 $hargaSatuan = (float)$item['harga_satuan'];
                 $diskon = (float)$item['diskon'];
+                $satuanLabel = trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs';
+                $baseQty = $this->convertJumlahToBaseUnit((int)$item['id_barang'], $satuanLabel, (float)$jumlah);
                 $subtotal = ($hargaSatuan * $jumlah) - $diskon;
+                $nilaiSatuan = 1.0;
+                $barangInfo = $this->barangModel->getById((int)$item['id_barang']);
+                if ($barangInfo) {
+                    $unitInfo = $this->barangModel->resolveSatuanUnit($barangInfo, $satuanLabel);
+                    if (!empty($unitInfo['nilai'])) {
+                        $nilaiSatuan = (float)$unitInfo['nilai'];
+                    }
+                }
+
                 
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi)
-                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi)";
+                               (id_penjualan, id_barang, jumlah, harga_satuan, diskon, subtotal, harga_beli_saat_transaksi, satuan, nilai_satuan)
+                               VALUES (:id_penjualan, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :harga_beli_saat_transaksi, :satuan, :nilai_satuan)";
                 
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_penjualan', $id);
@@ -534,8 +605,10 @@ class Penjualan {
                 $stmtDetail->bindParam(':harga_satuan', $hargaSatuan);
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
-                $hargaBeliSaatTransaksi = $hargaBeliSnapshot[(int)$item['id_barang']] ?? 0;
+                $hargaBeliSaatTransaksi = (float)($unitInfo['harga_beli'] ?? ($hargaBeliSnapshot[(int)$item['id_barang']] ?? 0));
                 $stmtDetail->bindParam(':harga_beli_saat_transaksi', $hargaBeliSaatTransaksi);
+                $stmtDetail->bindParam(':satuan', $satuanLabel);
+                $stmtDetail->bindParam(':nilai_satuan', $nilaiSatuan);
                 $stmtDetail->execute();
                 $idDetailPenjualan = (int)$this->conn->lastInsertId();
 
@@ -543,10 +616,10 @@ class Penjualan {
                     (int)$id,
                     $idDetailPenjualan,
                     (int)$item['id_barang'],
-                    (float)$jumlah,
-                    (float)$hargaBeliSaatTransaksi
+                    (float)$baseQty,
+                    (float)$hargaBeliSaatTransaksi / $nilaiSatuan
                 );
-                $unitModal = (float)($consumed['unit_modal'] ?? $hargaBeliSaatTransaksi);
+                $unitModal = round((float)$consumed['total_modal'] / $jumlah, 2);
                 $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
                 $updateSnapshot->bindValue(':harga_beli', $unitModal);
                 $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
@@ -560,6 +633,16 @@ class Penjualan {
                     'harga_beli_snapshot' => $unitModal
                 ];
 
+                $this->stokMutasi->recordKeluar(
+                    (int)$item['id_barang'],
+                    (float)$baseQty,
+                    $tanggal,
+                    (int)$id,
+                    'penjualan',
+                    trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs',
+                    'Penjualan barang keluar (update)'
+                );
+
                 // Update stok barang (kurangi)
                 $queryStok = "UPDATE barang
                               SET stok = stok - :jumlah,
@@ -567,7 +650,7 @@ class Penjualan {
                                   updated_at = NOW()
                               WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $jumlah);
+                $stmtStok->bindParam(':jumlah', $baseQty);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
                 $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
                 $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
@@ -646,10 +729,11 @@ class Penjualan {
             $details = $stmtDetails->fetchAll();
 
             $this->batchModel->rollbackSale((int)$id);
+            $this->stokMutasi->rollbackByTransaksi('penjualan', (int)$id);
 
             // Restore all stock
             foreach ($details as $detail) {
-                $restoreQty = abs((int)$detail['jumlah']);
+                $restoreQty = abs((float)$detail['jumlah']) * ((float)($detail['nilai_satuan'] ?? 1) ?: 1);
                 if ($restoreQty <= 0) {
                     continue;
                 }

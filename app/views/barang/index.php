@@ -48,7 +48,68 @@ $canDeleteStok = class_exists('PermissionGate')
 .filter-pill-active:hover {
     background-color: #1d4ed8;
 }
+
+.unit-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 0.25rem 0.55rem;
+    white-space: nowrap;
+}
 </style>
+
+<?php
+function getBarangUnitEntries($item): array {
+    $detail = is_array($item['satuan_detail'] ?? null) ? $item['satuan_detail'] : [];
+    $entries = [];
+
+    if (!empty($detail)) {
+        foreach ($detail as $unit) {
+            if (!is_array($unit)) {
+                continue;
+            }
+            $satuan = trim((string)($unit['satuan'] ?? ''));
+            if ($satuan !== '') {
+                $entries[] = $satuan;
+            }
+        }
+    }
+
+    if (empty($entries)) {
+        $fallback = trim((string)($item['satuan'] ?? ''));
+        if ($fallback !== '') {
+            $entries[] = $fallback;
+        }
+    }
+
+    return array_values(array_unique($entries));
+}
+
+function renderBarangUnitBadges($item): string {
+    $units = getBarangUnitEntries($item);
+    if (empty($units)) {
+        return '<span class="text-xs text-slate-400">-</span>';
+    }
+
+    $badges = [];
+    foreach ($units as $unit) {
+        $badges[] = '<span class="unit-badge">' . htmlspecialchars($unit) . '</span>';
+    }
+
+    return '<div class="flex flex-wrap items-center gap-1.5">' . implode('', $badges) . '</div>';
+}
+
+function getBarangUnitSearchText($item): string {
+    $units = getBarangUnitEntries($item);
+    return trim(implode(' ', $units));
+}
+?>
 
 <div class="app-card p-4 sm:p-6 space-y-5 sm:space-y-6 app-reveal">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
@@ -210,7 +271,7 @@ $canDeleteStok = class_exists('PermissionGate')
                     $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
                     $updatedByLabel = $updatedByUsername !== '' ? $updatedByUsername : ($updatedByName !== '' ? $updatedByName : '-');
                 ?>
-                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md" data-item="barang-card" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?> <?= htmlspecialchars(satuanDasarBarang($item)) ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . getBarangUnitSearchText($item) . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
                             <div class="font-mono text-xs text-gray-500 mb-1"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></div>
@@ -220,7 +281,7 @@ $canDeleteStok = class_exists('PermissionGate')
                             </span>
                         </div>
                         <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
-                            <?= $item['stok'] ?> <?= htmlspecialchars($item['satuan']) ?>
+                            <?= $item['stok'] ?> <?= htmlspecialchars(satuanDasarBarang($item)) ?>
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
@@ -274,11 +335,9 @@ $canDeleteStok = class_exists('PermissionGate')
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800 w-20">Kode</th>
                     <th class="px-6 py-4 text-left text-sm font-bold text-gray-800" style="min-width: 12rem;">Nama Barang</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-28">Kategori</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Satuan</th>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Beli</th>
                     <th class="px-6 py-4 text-right text-sm font-bold text-gray-800 w-32">Harga Jual</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Stok</th>
-                    <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-32">Expired</th>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-40">Update Terakhir</th>
                     <?php if ($canEditStok): ?>
                     <th class="px-6 py-4 text-center text-sm font-bold text-gray-800 w-20">Aksi</th>
@@ -297,7 +356,7 @@ $canDeleteStok = class_exists('PermissionGate')
                             $updatedByName = trim((string)($item['stok_updated_by_nama'] ?? ''));
                             $updatedByLabel = $updatedByUsername !== '' ? $updatedByUsername : ($updatedByName !== '' ? $updatedByName : '-');
                         ?>
-                        <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . ($item['satuan'] ?? '') . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
+                        <tr class="transition duration-200 hover:bg-blue-50/70" data-item="barang-row" data-kategori="<?= $item['id_kategori'] ?>" data-beli="<?= $item['harga_beli'] ?>" data-jual="<?= $item['harga_jual'] ?>" data-stok="<?= $item['stok'] ?> <?= htmlspecialchars(satuanDasarBarang($item)) ?>" data-search="<?= htmlspecialchars(strtolower(trim(($item['kode_barang'] ?? '') . ' ' . ($item['nama_barang'] ?? '') . ' ' . ($item['nama_kategori'] ?? '') . ' ' . getBarangUnitSearchText($item) . ' ' . $updatedByLabel . ' ' . (!empty($item['updated_at']) ? date('Y-m-d H:i', strtotime($item['updated_at'])) : '')))) ?>" data-updated="<?= htmlspecialchars($item['updated_at'] ?? '') ?>">
                             <td class="px-6 py-4 text-center text-sm font-medium text-gray-700"><?= (($current_page - 1) * $items_per_page) + $index + 1 ?></td>
                             <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">
@@ -308,22 +367,12 @@ $canDeleteStok = class_exists('PermissionGate')
                                     <?= htmlspecialchars($item['nama_kategori']) ?>
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium"><?= htmlspecialchars($item['satuan']) ?></td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
                             <td class="px-6 py-4 text-center">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700' ?> inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
-                                    <?= $item['stok'] ?>
+                                    <?= $item['stok'] ?> <?= htmlspecialchars(satuanDasarBarang($item)) ?>
                                 </span>
-                            </td>
-                            <td class="px-6 py-4 text-center text-sm whitespace-nowrap">
-                                <?php if (!empty($item['tanggal_expired'])): ?>
-                                    <span class="<?= strtotime($item['tanggal_expired']) < strtotime(date('Y-m-d')) ? 'text-red-700 font-semibold' : 'text-gray-700' ?>">
-                                        <?= date('d/m/Y', strtotime($item['tanggal_expired'])) ?>
-                                    </span>
-                                <?php else: ?>
-                                    <span class="text-gray-400">-</span>
-                                <?php endif; ?>
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-600 text-center">
                                 <div class="inline-flex items-center gap-2">
@@ -404,6 +453,7 @@ $canDeleteStok = class_exists('PermissionGate')
     <?php endif; ?>
 </div>
 
+<script src="/assets/js/stock-units.js"></script>
 <script>
 const kategoriNames = <?= json_encode((object)array_reduce($kategori ?? [], function ($carry, $row) {
     $key = (string)($row['id_kategori'] ?? '');
@@ -790,7 +840,7 @@ function renderSearchResults(results, apiResponse = {}) {
                             </span>
                         </div>
                         <span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">
-                            ${item.stok} ${htmlSpecialChars(item.satuan || 'pcs')}
+                            ${item.stok} ${htmlSpecialChars(StockUnits.baseLabel(item))}
                         </span>
                     </div>
                     <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
@@ -862,7 +912,7 @@ function renderSearchResults(results, apiResponse = {}) {
                             <td class="px-6 py-4 font-mono text-sm text-gray-600 whitespace-nowrap">${htmlSpecialChars(item.kode_barang || '-')}</td>
                             <td class="px-6 py-4 font-medium text-gray-800 whitespace-nowrap">${htmlSpecialChars(item.nama_barang)}</td>
                             <td class="px-6 py-4 text-center"><span class="inline-flex items-center justify-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">${htmlSpecialChars(item.nama_kategori || '-')}</span></td>
-                            <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(item.satuan || 'pcs')}</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-700 font-medium">${htmlSpecialChars(StockUnits.baseLabel(item))}</td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_beli)}</td>
                             <td class="px-6 py-4 text-right font-semibold text-gray-800 whitespace-nowrap">${formatRupiah(item.harga_jual)}</td>
                             <td class="px-6 py-4 text-center"><span class="${item.stok <= 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold">${item.stok}</span></td>

@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . "/../helpers/money.php";
+
 require_once __DIR__ . '/../models/Barang.php';
 require_once __DIR__ . '/../helpers/format.php';
 
@@ -34,15 +36,55 @@ class BarangController {
     }
 
     private function parseNumberInput($value): ?float {
-        $raw = trim((string)$value);
-        if ($raw === '') {
-            return null;
+        return parseMoneyInput($value);
+    }
+
+    private function parseSatuanDetailInput($input): array {
+        if (is_string($input) && $input !== '') {
+            $decoded = json_decode($input, true);
+            if (is_array($decoded)) {
+                $input = $decoded;
+            }
         }
-        $normalized = preg_replace('/[^\d]/', '', $raw);
-        if ($normalized === null || $normalized === '') {
-            return null;
+
+        if (!is_array($input)) {
+            return [];
         }
-        return (float)$normalized;
+
+        $items = [];
+        foreach ($input as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $satuan = trim((string)($row['satuan'] ?? ''));
+            if ($satuan === '') {
+                continue;
+            }
+
+            $nilai = $this->parseNumberInput($row['nilai'] ?? $row['nilai_satuan'] ?? $row['konversi'] ?? 1);
+            if ($nilai === null || $nilai <= 0) {
+                $nilai = 1.0;
+            }
+
+            $hargaBeli = $this->parseNumberInput($row['harga_beli'] ?? 0);
+            $hargaJual = $this->parseNumberInput($row['harga_jual'] ?? 0);
+            if ($hargaBeli === null) {
+                $hargaBeli = 0.0;
+            }
+            if ($hargaJual === null) {
+                $hargaJual = 0.0;
+            }
+
+            $items[] = [
+                'satuan' => $satuan,
+                'nilai' => $nilai,
+                'harga_beli' => $hargaBeli,
+                'harga_jual' => $hargaJual,
+            ];
+        }
+
+        return $items;
     }
 
     public function store() {
@@ -58,8 +100,34 @@ class BarangController {
                 redirect('/barang/create');
             }
 
+            $satuanDetail = $this->parseSatuanDetailInput($_POST['satuan_detail'] ?? []);
+            $unitError = $this->model->validateUnitDefinitions($satuanDetail);
+            if ($unitError !== null) {
+                $_SESSION['error'] = $unitError;
+                redirect('/barang/create');
+            }
             $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
             $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
+            if (empty($satuanDetail)) {
+                $defaultSatuan = trim((string)($_POST['satuan'] ?? 'pcs'));
+                if ($defaultSatuan === '') {
+                    $defaultSatuan = 'pcs';
+                }
+                $satuanDetail = [[
+                    'satuan' => $defaultSatuan,
+                    'harga_beli' => $hargaBeli ?? 0,
+                    'harga_jual' => $hargaJual ?? 0,
+                ]];
+            }
+
+            if ($hargaBeli === null || $hargaJual === null) {
+                $fallbackRow = $satuanDetail[0] ?? null;
+                if ($fallbackRow !== null) {
+                    $hargaBeli = (float)($fallbackRow['harga_beli'] ?? 0);
+                    $hargaJual = (float)($fallbackRow['harga_jual'] ?? 0);
+                }
+            }
+
             if ($hargaBeli === null || $hargaJual === null) {
                 $_SESSION['error'] = 'Harga beli dan harga jual wajib diisi.';
                 redirect('/barang/create');
@@ -68,17 +136,26 @@ class BarangController {
                 $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual.';
                 redirect('/barang/create');
             }
+            foreach ($satuanDetail as $row) {
+                $rowBeli = (float)($row['harga_beli'] ?? 0);
+                $rowJual = (float)($row['harga_jual'] ?? 0);
+                if ($rowBeli > 0 && $rowJual > 0 && $rowJual <= $rowBeli) {
+                    $_SESSION['error'] = 'Setiap satuan harus memiliki harga jual yang lebih tinggi dari harga beli.';
+                    redirect('/barang/create');
+                }
+            }
 
             $data = [
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
-                'satuan' => $_POST['satuan'] ?? 'pcs',
+                'satuan' => $_POST['satuan'] ?? ($satuanDetail[0]['satuan'] ?? 'pcs'),
                 'harga_beli' => $hargaBeli,
                 'harga_jual' => $hargaJual,
                 'stok' => $_POST['stok'],
                 'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
-                'stok_updated_by' => $_SESSION['user_id'] ?? null
+                'stok_updated_by' => $_SESSION['user_id'] ?? null,
+                'satuan_detail' => $satuanDetail,
             ];
 
             if ($this->model->create($data)) {
@@ -118,8 +195,31 @@ class BarangController {
                 redirect('/barang/edit/' . $id);
             }
 
+            $satuanDetail = $this->parseSatuanDetailInput($_POST['satuan_detail'] ?? []);
+            $unitError = $this->model->validateUnitDefinitions($satuanDetail);
+            if ($unitError !== null) {
+                $_SESSION['error'] = $unitError;
+                redirect('/barang/edit/' . $id);
+            }
             $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
             $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
+            if (empty($satuanDetail)) {
+                $defaultSatuan = trim((string)($_POST['satuan'] ?? 'pcs'));
+                $satuanDetail = [[
+                    'satuan' => $defaultSatuan,
+                    'harga_beli' => $hargaBeli ?? 0,
+                    'harga_jual' => $hargaJual ?? 0,
+                ]];
+            }
+
+            if ($hargaBeli === null || $hargaJual === null) {
+                $fallbackRow = $satuanDetail[0] ?? null;
+                if ($fallbackRow !== null) {
+                    $hargaBeli = (float)($fallbackRow['harga_beli'] ?? 0);
+                    $hargaJual = (float)($fallbackRow['harga_jual'] ?? 0);
+                }
+            }
+
             if ($hargaBeli === null || $hargaJual === null) {
                 $_SESSION['error'] = 'Harga beli dan harga jual wajib diisi.';
                 redirect('/barang/edit/' . $id);
@@ -128,17 +228,26 @@ class BarangController {
                 $_SESSION['error'] = 'Harga beli harus lebih kecil dari harga jual.';
                 redirect('/barang/edit/' . $id);
             }
+            foreach ($satuanDetail as $row) {
+                $rowBeli = (float)($row['harga_beli'] ?? 0);
+                $rowJual = (float)($row['harga_jual'] ?? 0);
+                if ($rowBeli > 0 && $rowJual > 0 && $rowJual <= $rowBeli) {
+                    $_SESSION['error'] = 'Setiap satuan harus memiliki harga jual yang lebih tinggi dari harga beli.';
+                    redirect('/barang/edit/' . $id);
+                }
+            }
 
             $data = [
                 'kode_barang' => $kodeBarang,
                 'nama_barang' => $_POST['nama_barang'],
                 'id_kategori' => $_POST['id_kategori'],
-                'satuan' => $_POST['satuan'] ?? 'pcs',
+                'satuan' => $_POST['satuan'] ?? ($satuanDetail[0]['satuan'] ?? 'pcs'),
                 'harga_beli' => $hargaBeli,
                 'harga_jual' => $hargaJual,
                 'stok' => $_POST['stok'],
                 'tanggal_expired' => trim((string)($_POST['tanggal_expired'] ?? '')),
-                'stok_updated_by' => $_SESSION['user_id'] ?? null
+                'stok_updated_by' => $_SESSION['user_id'] ?? null,
+                'satuan_detail' => $satuanDetail,
             ];
 
             if ($this->model->update($id, $data)) {

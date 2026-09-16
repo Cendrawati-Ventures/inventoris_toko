@@ -31,7 +31,7 @@
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <a href="/penjualan/create" class="inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
+                    <a href="/penjualan/create?tanggal=<?= rawurlencode($filter_tanggal_akhir ?: ($filter_tanggal_awal ?: date('Y-m-d'))) ?>" class="inline-flex items-center justify-center gap-2 rounded-lg app-btn-primary px-4 py-2.5 text-sm font-semibold shadow">
                         <i class="fas fa-plus"></i>
                         <span>Tambah Penjualan</span>
                     </a>

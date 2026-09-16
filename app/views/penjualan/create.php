@@ -8,9 +8,9 @@ $backUrl = $isKasir ? '/penjualan/create' : '/penjualan';
 $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
 ?>
 
-<div class="app-card p-5 sm:p-6 app-reveal">
+<div class="app-card p-3 sm:p-4 lg:p-5 app-reveal border border-slate-200/80" style="background: linear-gradient(135deg, #f8fbfc 0%, #edf6f5 100%); box-shadow: 0 24px 64px -38px rgba(15, 23, 42, 0.5); border: 1px solid #dfe7ee;">
     <?php if ($showCreatedAlert): ?>
-        <div class="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-3">
+        <div class="mb-5 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-teal-50 px-4 py-3">
             <div class="flex items-start gap-3">
                 <span class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                     <i class="fas fa-check"></i>
@@ -23,93 +23,92 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
         </div>
     <?php endif; ?>
 
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
         <div>
-            <h2 class="text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 flex items-center gap-3">
+                <span class="inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-2xl text-white ring-2 ring-white" style="background: linear-gradient(135deg, #14b8a6 0%, #0ea5e9 50%, #34d399 100%); box-shadow: 0 16px 28px -18px rgba(20, 184, 166, 0.9);">
                     <i class="fas fa-plus-circle"></i>
                 </span>
                 Tambah Penjualan Baru
             </h2>
-            <p class="text-sm text-slate-500 mt-2">Pilih barang, atur pembayaran atau hutang, lalu simpan transaksi.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-            <span class="px-3 py-1 rounded-full bg-teal-100 text-teal-700 font-semibold"><i class="fas fa-list-check mr-1"></i>1. Pilih Barang</span>
-            <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 font-semibold"><i class="fas fa-wallet mr-1"></i>2. Pembayaran</span>
-            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold"><i class="fas fa-floppy-disk mr-1"></i>3. Simpan</span>
+        <div class="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs">
+            <span class="px-2.5 py-1 rounded-full border border-teal-200 bg-white text-teal-700 font-semibold shadow-sm"><i class="fas fa-list-check mr-1"></i>1. Pilih</span>
+            <span class="px-2.5 py-1 rounded-full border border-amber-200 bg-white text-amber-700 font-semibold shadow-sm"><i class="fas fa-wallet mr-1"></i>2. Bayar</span>
+            <span class="px-2.5 py-1 rounded-full border border-emerald-200 bg-white text-emerald-700 font-semibold shadow-sm"><i class="fas fa-floppy-disk mr-1"></i>3. Simpan</span>
         </div>
     </div>
 
     <form action="/penjualan/store" method="POST" id="formPenjualan" onsubmit="return validateForm()" data-skip-auto-submit-enhance="true">
 
         <!-- Tanggal Penjualan -->
-        <div class="mb-6">
-            <label for="tanggal_penjualan" class="block text-slate-700 font-semibold mb-2">Tanggal Penjualan *</label>
-            <input type="date" id="tanggal_penjualan" name="tanggal" value="<?= date('Y-m-d') ?>"
-                   class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
-            <p class="text-xs text-slate-500 mt-1">Atur manual tanggal transaksi agar sesuai pencatatan.</p>
+        <div class="mb-5">
+            <label for="tanggal_penjualan" class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Penjualan *</label>
+            <input type="date" id="tanggal_penjualan" name="tanggal" required value="<?= htmlspecialchars($tanggal_default ?? date('Y-m-d')) ?>"
+                   class="w-full px-3.5 py-2.5 text-sm sm:text-base border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
         </div>
+
+        <p class="mb-4 text-sm text-slate-600">Tanggal penjualan menentukan tanggal di daftar dan laporan. Untuk transaksi yang terlupa, pilih tanggal transaksi sebenarnya. Stok saat ini akan berkurang sesuai jumlah dan satuan yang dijual.</p>
 
         <!-- Ringkasan Transaksi -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div class="rounded-xl border border-cyan-200 bg-cyan-50 p-4 text-center">
-                <p class="text-xs uppercase tracking-wide font-semibold text-cyan-700">Total Item</p>
-                <p class="text-2xl font-extrabold text-cyan-800" id="total_items">0</p>
+            <div class="rounded-2xl border border-slate-200 p-3.5 text-center" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); box-shadow: 0 18px 28px -26px rgba(15, 23, 42, 0.75);">
+                <p class="text-[10px] uppercase tracking-[0.12em] font-bold text-slate-500">Total Item</p>
+                <p class="text-2xl font-extrabold text-slate-800 mt-1" id="total_items">0</p>
             </div>
-            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-center">
-                <p class="text-xs uppercase tracking-wide font-semibold text-blue-700">Subtotal</p>
-                <p class="text-2xl font-extrabold text-blue-800" id="subtotal_display">Rp 0</p>
+            <div class="rounded-2xl border border-slate-200 p-3.5 text-center" style="background: linear-gradient(135deg, #ecfeff 0%, #ffffff 100%); box-shadow: 0 18px 28px -26px rgba(6, 182, 212, 0.6);">
+                <p class="text-[10px] uppercase tracking-[0.12em] font-bold text-slate-500">Subtotal</p>
+                <p class="text-xl font-extrabold text-slate-800 mt-1" id="subtotal_display">Rp 0</p>
             </div>
-            <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-                <p class="text-xs uppercase tracking-wide font-semibold text-emerald-700">Total Harga</p>
-                <p class="text-2xl font-extrabold text-emerald-800" id="total_display">Rp 0</p>
+            <div class="rounded-2xl border border-emerald-200 p-3.5 text-center" style="background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%); box-shadow: 0 18px 28px -26px rgba(16, 185, 129, 0.6);">
+                <p class="text-[10px] uppercase tracking-[0.12em] font-bold text-emerald-700">Total Harga</p>
+                <p class="text-xl font-extrabold text-emerald-700 mt-1" id="total_display">Rp 0</p>
             </div>
         </div>
 
         <!-- Panel Cari & Pilihan Barang -->
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+        <div class="grid grid-cols-1 xl:grid-cols-[0.95fr_1.35fr] gap-4 lg:gap-5 mb-6">
             <!-- Panel Daftar Barang Tersedia -->
-            <div class="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-5 min-h-[34rem] flex flex-col shadow-sm">
-                <div class="mb-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-lg font-bold text-slate-700">Daftar Barang Tersedia</h3>
-                        <span id="barang_count_info" class="text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 text-slate-600">0 barang</span>
+            <div class="rounded-3xl border border-slate-200 p-3 sm:p-4 flex flex-col min-h-[260px] lg:min-h-[420px]" style="background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); box-shadow: 0 20px 34px -28px rgba(15, 23, 42, 0.72);">
+                <div class="mb-3">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <h3 class="text-base sm:text-lg font-bold text-slate-700">Daftar Barang</h3>
+                        <span id="barang_count_info" class="text-[10px] px-2 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-semibold">0 barang</span>
                     </div>
                     <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" id="search_barang_main" placeholder="Cari nama/kode barang..." autocomplete="off"
-                               class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 mb-3">
+                               class="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-300 rounded-xl bg-slate-50 focus:bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
                     </div>
                 </div>
-                <div id="barang_list" class="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto flex-1 pr-1">
+                <div id="barang_list" class="grid grid-cols-1 gap-2.5 overflow-y-auto flex-1 pr-1 min-h-0 max-h-[48vh] lg:max-h-[58vh]">
                     <!-- Barang cards akan di-generate oleh JavaScript -->
                 </div>
             </div>
 
             <!-- Panel Barang Dipilih -->
-            <div class="lg:col-span-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-5 min-h-[34rem] flex flex-col">
+            <div class="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 flex flex-col shadow-sm min-h-[260px] lg:min-h-[420px]">
                 <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-bold text-slate-700">Barang Dipilih</h3>
-                    <span id="selected_count" class="text-xs bg-blue-600 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
+                    <h3 class="text-lg sm:text-xl font-bold text-slate-700">Barang Dipilih</h3>
+                    <span id="selected_count" class="text-[10px] sm:text-xs bg-slate-800 text-white px-2.5 py-1 rounded-full font-semibold">0 item</span>
                 </div>
-                <div id="selected_container" class="space-y-4 max-h-[24rem] overflow-y-auto flex-1 pr-1"></div>
-                <p id="no_items_msg" class="text-slate-500 text-center py-5 text-sm border border-dashed border-slate-300 rounded-xl bg-white/70">Pilih barang dari daftar</p>
+                <div id="selected_container" class="space-y-3 overflow-y-auto flex-1 pr-1 min-h-0 max-h-[48vh] lg:max-h-[58vh]"></div>
+                <p id="no_items_msg" class="text-slate-500 text-center py-6 text-sm sm:text-base border border-dashed border-slate-300 rounded-xl bg-slate-50">Pilih barang dari daftar</p>
             </div>
         </div>
 
-        <!-- Uang & Kembalian (Sticky Footer Form) -->
-        <div class="sticky bottom-3 z-30 mb-6">
-            <div id="payment_section" class="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-2xl border border-slate-200 bg-white/95 backdrop-blur px-4 py-4 shadow-lg">
+        <!-- Uang & Kembalian -->
+        <div class="mb-6">
+            <div id="payment_section" class="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
                 <div>
-                    <label id="uang_diberikan_label" for="uang_diberikan" class="block text-slate-700 font-semibold mb-2">Uang Diberikan Konsumen *</label>
+                    <label id="uang_diberikan_label" for="uang_diberikan" class="block text-sm font-semibold text-slate-700 mb-2">Uang Diberikan Konsumen *</label>
                     <input type="text" id="uang_diberikan" name="uang_diberikan" inputmode="numeric" autocomplete="off" value="0"
-                           class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
-                           oninput="handleUangDiberikanInput()">
+                           class="w-full px-3.5 py-2.5 text-sm sm:text-base border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
                     <p id="uang_diberikan_hint" class="text-xs text-slate-500 mt-1">Masukkan nominal yang dibayar sekarang.</p>
                 </div>
                 <div>
-                    <label class="block text-slate-700 font-semibold mb-2">Kembalian</label>
-                    <div class="px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-lg font-bold" id="kembalian_display">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Kembalian</label>
+                    <div class="px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-lg font-bold text-slate-800" id="kembalian_display">
                         Rp 0
                     </div>
                 </div>
@@ -118,9 +117,9 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
 
         <!-- Info Pembeli -->
         <div id="customer_section" class="mb-6">
-            <label for="nama_pembeli" class="block text-slate-700 font-semibold mb-2">Nama Pembeli</label>
+            <label for="nama_pembeli" class="block text-sm font-semibold text-slate-700 mb-2">Nama Pembeli</label>
             <input type="text" id="nama_pembeli" name="nama_pembeli" placeholder="Masukkan nama pembeli..."
-                   class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
+                   class="w-full px-3.5 py-2.5 text-sm sm:text-base border border-slate-300 rounded-xl bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
         </div>
 
         <!-- Informasi Hutang -->
@@ -169,11 +168,11 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
         </div>
 
     <!-- Buttons -->
-    <div class="flex flex-col sm:flex-row gap-3 w-full">
+    <div class="flex flex-col sm:flex-row gap-3 w-full pt-2">
         <button
             type="submit"
             id="submitPenjualanBtn"
-            class="w-full sm:w-auto app-btn-primary px-6 py-3 transition flex items-center justify-center gap-2 font-semibold">
+            class="w-full sm:w-auto app-btn-primary px-6 py-3.5 text-base transition flex items-center justify-center gap-2 font-semibold shadow-lg shadow-teal-500/15">
             <i class="fas fa-save"></i>
             Simpan
         </button>
@@ -181,12 +180,12 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
         <button
             type="button"
             onclick="printNota()"
-            class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition flex items-center justify-center gap-2 font-semibold">
+            class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 text-base rounded-xl transition flex items-center justify-center gap-2 font-semibold shadow-lg shadow-emerald-500/15">
             <i class="fas fa-print"></i>
-            Print Nota
+            Cetak
         </button>
 
-        <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="w-full sm:w-auto app-btn-secondary px-6 py-3 transition flex items-center justify-center gap-2 font-semibold">
+        <a href="<?= htmlspecialchars($backUrl, ENT_QUOTES, 'UTF-8') ?>" class="w-full sm:w-auto app-btn-secondary px-6 py-3.5 text-base transition flex items-center justify-center gap-2 font-semibold">
             <i class="fas fa-arrow-left"></i>
             Kembali
         </a>
@@ -209,6 +208,8 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
         <form id="form_tambah_stok" onsubmit="submitTambahStok(event)">
             <input type="hidden" id="stok_modal_id_barang" value="">
             <div class="mb-4">
+                <label for="stok_modal_satuan" class="block text-sm font-semibold text-slate-700 mb-2">Satuan yang ditambahkan</label>
+                <select id="stok_modal_satuan" class="w-full px-3 py-2 border rounded-xl mb-3"></select>
                 <label for="stok_modal_jumlah" class="block text-sm font-semibold text-slate-700 mb-2">Jumlah Stok Ditambahkan</label>
                 <input type="number" id="stok_modal_jumlah" min="1" value="1" required
                        class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100">
@@ -233,6 +234,10 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
             </div>
         </div>
         <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm space-y-1.5">
+            <div class="flex items-center justify-between gap-3 text-sm mb-2">
+                <span>Tanggal Penjualan</span>
+                <span id="confirm_tanggal" class="font-semibold text-slate-800"></span>
+            </div>
             <div class="flex items-center justify-between">
                 <span class="text-slate-600">Total Item</span>
                 <span id="confirm_total_items" class="font-semibold text-slate-800">0</span>
@@ -249,9 +254,10 @@ $showCreatedAlert = isset($_GET['created']) && $_GET['created'] === '1';
     </div>
 </div>
 
+<script src="/assets/js/stock-units.js"></script>
 <script>
 let itemIndex = 0;
-const allBarang = <?= json_encode($barang) ?>;
+const allBarang = <?= json_encode(array_values($barang ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?>;
 const notaConfig = Object.assign({
     nama_toko: 'UD. BERSAUDARA',
     alamat_toko: '',
@@ -267,7 +273,7 @@ const notaConfig = Object.assign({
     custom_footer_text: '',
     tampilkan_nama_pembeli: 1,
     tampilkan_info_hutang: 1
-}, <?= json_encode($notaConfig ?? []) ?>);
+}, <?= json_encode($notaConfig ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE) ?>);
 let stockModalBarang = null;
 let submitPenjualanConfirmed = false;
 let submitButtonOriginalHtml = '';
@@ -289,20 +295,59 @@ function formatRupiah(value) {
 }
 
 function parseNominalInput(value) {
-    const digits = String(value ?? '').replace(/[^\d]/g, '');
-    return parseInt(digits || '0', 10);
+    const normalized = normalizeCurrencyInputString(value);
+    return parseInt(normalized || '0', 10);
 }
 
 function formatNominalInput(value) {
     return (parseInt(value, 10) || 0).toLocaleString('id-ID');
 }
 
+function normalizeCurrencyInputString(rawValue) {
+    let value = String(rawValue ?? '').trim();
+    if (value === '') return '0';
+
+    const hasComma = value.includes(',');
+    const hasDot = value.includes('.');
+    if (hasComma && hasDot) {
+        if (value.lastIndexOf(',') > value.lastIndexOf('.')) {
+            value = value.replace(/\./g, '').replace(',', '.');
+        } else {
+            value = value.replace(/,/g, '');
+        }
+    } else if (hasComma) {
+        const decimalPart = value.split(',')[1] || '';
+        value = value.replace(/,/g, '');
+        if (decimalPart.length <= 2 && decimalPart.length > 0 && !/^(\d{3})$/.test(decimalPart)) {
+            value = value.slice(0, -decimalPart.length) + '.' + decimalPart;
+        }
+    } else if (hasDot) {
+        value = value.replace(/\./g, '');
+    }
+
+    return value.replace(/[^\d.]/g, '').replace(/\.(?=.*\.)/g, '');
+}
+
 function handleUangDiberikanInput() {
     const input = document.getElementById('uang_diberikan');
     if (!input) return;
-    const numericValue = parseNominalInput(input.value);
+
+    const rawValue = normalizeCurrencyInputString(input.value);
+    const numericValue = Number(rawValue) || 0;
     input.value = formatNominalInput(numericValue);
     hitungKembalian();
+    updateHutangSummary();
+
+    if (input.dataset.bound !== 'true') {
+        input.addEventListener('input', function () {
+            const nextValue = normalizeCurrencyInputString(this.value);
+            const safeValue = Number(nextValue) || 0;
+            this.value = formatNominalInput(safeValue);
+            hitungKembalian();
+            updateHutangSummary();
+        });
+        input.dataset.bound = 'true';
+    }
 }
 
 function escapeHtml(text) {
@@ -315,6 +360,108 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
+function getBarangUnitOptions(barang) {
+    const rawOptions = Array.isArray(barang && barang.satuan_detail) && barang.satuan_detail.length > 0
+        ? barang.satuan_detail
+        : [{ satuan: barang?.satuan || 'pcs', nilai: 1, harga_beli: barang?.harga_beli || 0, harga_jual: barang?.harga_jual || 0 }];
+
+    return rawOptions.map((unit) => ({
+        satuan: String(unit?.satuan || barang?.satuan || 'pcs').trim() || (barang?.satuan || 'pcs'),
+        nilai: Number(unit?.nilai ?? unit?.nilai_satuan ?? unit?.konversi ?? 1),
+        harga_jual: Number(unit?.harga_jual ?? barang?.harga_jual ?? 0),
+        harga_beli: Number(unit?.harga_beli ?? barang?.harga_beli ?? 0)
+    })).filter((unit) => unit.satuan && unit.satuan !== '');
+}
+
+function formatKonversiText(unit, baseLabel = 'pcs') {
+    const nilai = Number(unit?.nilai ?? 1);
+    const safeNilai = Number.isFinite(nilai) && nilai > 0 ? nilai : 1;
+    const satuan = String(unit?.satuan || baseLabel || 'pcs').trim() || (baseLabel || 'pcs');
+    return `1 ${satuan} = ${safeNilai} ${baseLabel}`;
+}
+
+function resolveBarangSelection(barang, selectedSatuan = '') {
+    const options = getBarangUnitOptions(barang);
+    const normalized = String(selectedSatuan || '').trim();
+    const match = options.find((unit) => String(unit.satuan).toLowerCase() === normalized.toLowerCase());
+    return match || options[0] || { satuan: barang?.satuan || 'pcs', harga_jual: Number(barang?.harga_jual || 0), harga_beli: Number(barang?.harga_beli || 0) };
+}
+
+function syncBarangUnitPreview(select) {
+    if (!select) return;
+    const barangId = select.getAttribute('data-unit-select');
+    const barang = allBarang.find((item) => String(item.id_barang) === String(barangId));
+    if (!barang) return;
+    const preview = document.getElementById('barang_price_preview_' + barangId);
+    const selected = resolveBarangSelection(barang, select.value);
+    if (preview) preview.textContent = formatRupiah(selected.harga_jual || 0);
+    const info = document.getElementById('barang_unit_info_' + barangId);
+    if (info) info.textContent = formatKonversiText(selected, StockUnits.baseLabel(barang)) + '; tersedia ' + Math.floor(availableBaseStock(barang) / StockUnits.factor(selected)) + ' ' + selected.satuan;
+}
+
+function updateSelectedItemUnit(select, idx) {
+    if (!select) return;
+    const row = document.querySelector('[data-item-index="' + idx + '"]');
+    if (!row) return;
+    const barangId = select.getAttribute('data-barang-id');
+    const barang = allBarang.find((item) => String(item.id_barang) === String(barangId));
+    if (!barang) return;
+
+    const selected = resolveBarangSelection(barang, select.value);
+    row.setAttribute('data-nilai-satuan', StockUnits.factor(selected));
+    const conversion = row.querySelector('[data-conversion]');
+    if (conversion) conversion.textContent = 'Konversi: ' + formatKonversiText(selected, StockUnits.baseLabel(barang));
+    const hargaBaru = Number(selected.harga_jual ?? barang.harga_jual ?? 0);
+    const satuanBaru = selected.satuan || barang.satuan || 'pcs';
+
+    const satuanHidden = row.querySelector('input[name*="[satuan]"]');
+    if (satuanHidden) satuanHidden.value = satuanBaru;
+
+    const hargaInput = row.querySelector('input[name*="[harga_satuan]"]');
+    if (hargaInput) hargaInput.value = hargaBaru;
+
+    const priceDisplay = row.querySelector('[data-price-display]');
+    if (priceDisplay) priceDisplay.textContent = formatRupiah(hargaBaru);
+
+    const subtotal = row.querySelector('[data-subtotal-display]');
+    const jumlahInput = row.querySelector('input[name*="[jumlah]"]');
+    const jumlah = parseInt(jumlahInput?.value || '0', 10) || 0;
+    if (subtotal) subtotal.textContent = formatRupiah(jumlah * hargaBaru);
+
+    checkStokAndHitung(idx);
+}
+
+function availableBaseStock(barang) {
+    return StockUnits.available(barang, typeof existingDetails === 'undefined' ? [] : existingDetails);
+}
+
+function selectedStockRows() {
+    return Array.from(document.querySelectorAll('[data-item-index]')).map(row => ({
+        id: row.querySelector('input[name*="[id_barang]"]').value,
+        quantity: Number(row.querySelector('input[name*="[jumlah]"]').value) || 0,
+        nilai: Number(row.getAttribute('data-nilai-satuan')) || 1
+    }));
+}
+
+function stockExceeded(row) {
+    const id = row.querySelector('input[name*="[id_barang]"]').value;
+    return StockUnits.required(selectedStockRows(), id) > Number(row.getAttribute('data-stok'));
+}
+
+function refreshStockWarnings() {
+    for (const row of document.querySelectorAll('[data-item-index]')) {
+        const id = row.querySelector('input[name*="[id_barang]"]').value;
+        const barang = allBarang.find(item => String(item.id_barang) === String(id));
+        const used = StockUnits.required(selectedStockRows(), id);
+        const stock = Number(row.getAttribute('data-stok'));
+        const warning = document.getElementById('warning_' + row.getAttribute('data-item-index'));
+        if (warning) {
+            warning.textContent = 'Total dipilih: ' + used + ' ' + StockUnits.baseLabel(barang || {}) + '; stok tersedia: ' + stock;
+            warning.classList.toggle('hidden', used <= stock);
+        }
+    }
+}
+
 function renderBarangList(filterText = '') {
     const listDiv = document.getElementById('barang_list');
     const countInfo = document.getElementById('barang_count_info');
@@ -325,8 +472,8 @@ function renderBarangList(filterText = '') {
     
     for (let i = 0; i < allBarang.length; i++) {
         const b = allBarang[i];
-        const nama = (b.nama_barang || '').toLowerCase().trim();
-        const kode = (b.kode_barang || '').toLowerCase().trim();
+        const nama = String(b.nama_barang ?? '').toLowerCase().trim();
+        const kode = String(b.kode_barang ?? '').toLowerCase().trim();
         if (q === '' || nama.includes(q) || kode.includes(q)) {
             filtered.push(b);
         }
@@ -344,38 +491,70 @@ function renderBarangList(filterText = '') {
     let html = '';
     for (let i = 0; i < filtered.length; i++) {
         const item = filtered[i];
-        const itemStr = JSON.stringify(item).replace(/"/g, '&quot;');
-        const stock = parseInt(item.stok, 10) || 0;
+        const stock = availableBaseStock(item);
         const stockBadgeClass = stock <= 0
             ? 'bg-red-100 text-red-700'
             : stock <= 10
                 ? 'bg-amber-100 text-amber-700'
                 : 'bg-emerald-100 text-emerald-700';
+        const unitOptions = getBarangUnitOptions(item);
+        const firstUnit = unitOptions[0] || { satuan: item.satuan || 'pcs', harga_jual: Number(item.harga_jual || 0) };
 
-        html += '<div class="h-full flex flex-col rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm hover:shadow-md hover:border-teal-300 transition">';
-        html += '<div class="flex items-start justify-between gap-3 mb-2.5">';
-        html += '<div class="min-w-0"><p class="font-semibold text-sm text-slate-800 leading-snug min-h-[2.5rem]">' + escapeHtml(item.nama_barang) + '</p>';
-        html += '<p class="text-xs text-slate-500 mt-0.5">' + escapeHtml(item.nama_kategori || '-') + '</p></div>';
-        html += '<span class="shrink-0 text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono">' + escapeHtml(item.kode_barang) + '</span></div>';
-        html += '<div class="rounded-lg bg-slate-50 border border-slate-200 p-2.5 space-y-2 mb-3">';
-        html += '<div class="flex items-center justify-between text-xs text-slate-600"><span>Harga Jual</span><span class="font-semibold text-emerald-700">' + formatRupiah(item.harga_jual) + '</span></div>';
-        html += '<div class="grid grid-cols-2 gap-2">';
-        html += '<button type="button" class="w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-2 transition disabled:opacity-50 disabled:cursor-not-allowed" onclick="addItemFromBarang(' + itemStr + ')" ' + (stock <= 0 ? 'disabled' : '') + '>' + (stock <= 0 ? 'Stok Habis' : 'Pilih Barang') + '</button>';
-        html += '<button type="button" class="w-full rounded-lg border border-cyan-300 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-xs font-semibold py-2 transition" onclick="openTambahStokModal(' + itemStr + ')">Tambah Stok</button>';
+        html += '<div class="h-full flex flex-col rounded-2xl border border-slate-200 p-4 transition" data-barang-card="card-' + item.id_barang + '" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 40%, #ecfeff 100%); box-shadow: 0 18px 30px -24px rgba(15, 23, 42, 0.72); border-color: #dfe7ee;">';
+        html += '<div class="flex items-start justify-between gap-3 mb-3">';
+        html += '<div class="min-w-0"><p class="font-semibold text-base text-slate-800 leading-snug min-h-[2.8rem]">' + escapeHtml(item.nama_barang) + '</p>';
+        html += '<p class="text-sm text-slate-500 mt-1">' + escapeHtml(item.nama_kategori || '-') + '</p></div>';
+        html += '<span class="shrink-0 text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">' + escapeHtml(item.kode_barang) + '</span></div>';
+        html += '<div class="rounded-xl bg-slate-50 border border-slate-200 p-3 space-y-2.5 mb-3">';
+        html += '<div class="flex items-center justify-between text-sm text-slate-600"><span>Harga Jual</span><span id="barang_price_preview_' + item.id_barang + '" class="font-semibold text-emerald-700">' + formatRupiah(firstUnit.harga_jual || 0) + '</span></div>';
+        html += '<div class="text-[11px] text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200">' + escapeHtml(formatKonversiText(firstUnit, StockUnits.baseLabel(item))) + '</div>';
+        html += '<div class="flex items-center justify-between text-sm"><span class="text-slate-500">Stok Tersedia</span><span class="' + stockBadgeClass + ' px-2.5 py-1 rounded-full font-semibold">' + stock + ' ' + escapeHtml(StockUnits.baseLabel(item)) + '</span></div>';
+        if (unitOptions.length > 1) {
+            html += '<div class="space-y-1.5"><label class="block text-[10px] font-semibold uppercase tracking-wide text-slate-500">Pilih Satuan</label>';
+            html += '<select data-unit-select="' + item.id_barang + '" class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2.5 text-sm text-slate-700 focus:outline-none focus:border-teal-500" onchange="syncBarangUnitPreview(this)">';
+            for (const unit of unitOptions) {
+                html += '<option value="' + escapeHtml(unit.satuan) + '" ' + (unit.satuan === firstUnit.satuan ? 'selected' : '') + '>' + escapeHtml(unit.satuan) + '</option>';
+            }
+            html += '</select></div>';
+        }
+        html += '<p id="barang_unit_info_' + item.id_barang + '" class="text-xs text-slate-600 mb-2">' + escapeHtml(formatKonversiText(firstUnit, StockUnits.baseLabel(item))) + '; tersedia ' + Math.floor(stock / StockUnits.factor(firstUnit)) + ' ' + escapeHtml(firstUnit.satuan) + '</p>';
+        html += '<div class="grid grid-cols-2 gap-2.5">';
+        html += '<button type="button" class="w-full rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold py-2.5 transition disabled:opacity-50 disabled:cursor-not-allowed" data-barang-id="' + escapeHtml(item.id_barang) + '" data-fallback-unit="' + escapeHtml(firstUnit.satuan || '') + '" onclick="addItemFromBarangButton(this)" ' + (stock <= 0 ? 'disabled' : '') + '>' + (stock <= 0 ? 'Stok Habis' : 'Pilih Barang') + '</button>';
+        html += '<button type="button" class="w-full rounded-lg border border-cyan-300 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 text-sm font-semibold py-2.5 transition" data-barang-id="' + escapeHtml(item.id_barang) + '" onclick="openTambahStokFromButton(this)">Tambah Stok</button>';
         html += '</div>';
-        html += '<div class="flex items-center justify-between text-xs"><span class="text-slate-500">Stok Tersedia</span><span class="' + stockBadgeClass + ' px-2 py-0.5 rounded-full font-semibold">' + stock + ' ' + escapeHtml(item.satuan || '') + '</span></div>';
         html += '</div></div>';
     }
     listDiv.innerHTML = html;
 }
 
-function addItemFromBarang(barang) {
+function addItemFromBarangButton(button) {
+    if (!button) return;
+
+    const barangId = button.getAttribute('data-barang-id');
+
+    const barang = allBarang.find((item) => String(item.id_barang) === barangId);
+    if (!barang) return;
+    const card = button.closest('[data-barang-card]');
+    const select = card ? card.querySelector('select[data-unit-select]') : null;
+    const selectedSatuan = select ? select.value : (button.getAttribute('data-fallback-unit') || '');
+    addItemFromBarang(barang, selectedSatuan);
+}
+
+function addItemFromBarang(barang, selectedSatuan = '') {
     const container = document.getElementById('selected_container');
     const noItemsMsg = document.getElementById('no_items_msg');
+    const chosenUnit = resolveBarangSelection(barang, selectedSatuan);
+    const finalHarga = Number(chosenUnit.harga_jual || barang.harga_jual || 0);
+    const finalSatuan = chosenUnit.satuan || barang.satuan || 'pcs';
+    const unitOptions = getBarangUnitOptions(barang);
 
     const existing = Array.from(container.querySelectorAll('[data-item-index]')).find((row) => {
         const idInput = row.querySelector('input[name*="[id_barang]"]');
-        return idInput && parseInt(idInput.value, 10) === parseInt(barang.id_barang, 10);
+        const satuanInput = row.querySelector('input[name*="[satuan]"]');
+        return idInput
+            && satuanInput
+            && parseInt(idInput.value, 10) === parseInt(barang.id_barang, 10)
+            && String(satuanInput.value).trim().toLowerCase() === String(finalSatuan).trim().toLowerCase();
     });
     if (existing) {
         const qtyInput = existing.querySelector('input[name*="[jumlah]"]');
@@ -386,29 +565,34 @@ function addItemFromBarang(barang) {
         return;
     }
 
-    let itemHtml = '<div class="border border-blue-200 bg-white rounded-2xl p-4 transition hover:shadow-sm" data-item-index="' + itemIndex + '" data-stok="' + barang.stok + '">';
-    itemHtml += '<div class="flex items-start justify-between gap-3 mb-3"><div>';
-    itemHtml += '<p class="font-semibold text-slate-800 text-base leading-tight">' + escapeHtml(barang.nama_barang) + '</p>';
-    itemHtml += '<p class="text-[11px] text-slate-500 mt-1">' + escapeHtml(barang.kode_barang) + ' • ' + escapeHtml(barang.satuan) + '</p></div>';
-    itemHtml += '<button type="button" class="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs text-red-600 hover:bg-red-100 font-semibold" onclick="removeItem(' + itemIndex + ')"><i class="fas fa-trash"></i>Hapus</button></div>';
-    itemHtml += '<div id="warning_' + itemIndex + '" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 mb-3 text-[11px] text-yellow-700"><i class="fas fa-exclamation-triangle mr-1"></i>Jumlah melebihi stok tersedia (' + barang.stok + ' ' + barang.satuan + ')</div>';
-    itemHtml += '<div class="grid grid-cols-2 gap-3 text-xs">';
-    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Jumlah Barang</label>';
-    itemHtml += '<div class="flex items-center border border-slate-300 rounded-lg overflow-hidden"><button type="button" class="px-3 py-2 bg-slate-100" onclick="adjustQty(' + itemIndex + ', -1)">-</button>';
-    itemHtml += '<input type="number" name="items[' + itemIndex + '][jumlah]" value="1" min="1" class="w-full text-center py-2 outline-none" onchange="checkStokAndHitung(' + itemIndex + ')">';
-    itemHtml += '<button type="button" class="px-3 py-2 bg-slate-100" onclick="adjustQty(' + itemIndex + ', 1)">+</button></div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Harga</label>';
-    itemHtml += '<div class="px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-semibold">' + formatRupiah(barang.harga_jual) + '</div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Satuan</label>';
-    itemHtml += '<div class="px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700">' + barang.satuan + '</div></div>';
-    itemHtml += '<div><label class="block text-slate-500 mb-1.5">Diskon (Rp)</label>';
-    itemHtml += '<input type="number" name="items[' + itemIndex + '][diskon]" value="0" min="0" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg" onchange="hitungTotal()"></div></div>';
-    itemHtml += '<div class="mt-3 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-right text-sm text-emerald-700">Subtotal: <span id="subtotal_' + itemIndex + '" class="font-bold">' + formatRupiah(barang.harga_jual) + '</span></div>';
+    const optionHtml = (unitOptions.length ? unitOptions : [{ satuan: finalSatuan, nilai: 1, harga_jual: finalHarga, harga_beli: Number(chosenUnit.harga_beli || barang.harga_beli || 0) }])
+        .map((unit) => '<option value="' + escapeHtml(unit.satuan) + '" ' + (String(unit.satuan).toLowerCase() === String(finalSatuan).toLowerCase() ? 'selected' : '') + '>' + escapeHtml(unit.satuan) + '</option>')
+        .join('');
+
+    let itemHtml = '<div class="border rounded-2xl p-3.5" data-item-index="' + itemIndex + '" data-nilai-satuan="' + StockUnits.factor(chosenUnit) + '" data-stok="' + availableBaseStock(barang) + '" style="background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%); border-color: #dfe7ee; box-shadow: 0 18px 30px -24px rgba(14, 116, 144, 0.7);">';
+    itemHtml += '<div class="flex items-start justify-between gap-3 mb-2.5"><div>';
+    itemHtml += '<p class="font-semibold text-slate-800 text-base sm:text-lg leading-tight">' + escapeHtml(barang.nama_barang) + '</p>';
+    itemHtml += '<p class="text-[11px] sm:text-xs text-slate-500 mt-1">' + escapeHtml(barang.kode_barang) + '</p></div>';
+    itemHtml += '<button type="button" class="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] sm:text-xs text-red-600 hover:bg-red-100 font-semibold" onclick="removeItem(' + itemIndex + ')"><i class="fas fa-trash"></i>Hapus</button></div>';
+    itemHtml += '<div id="warning_' + itemIndex + '" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg px-2.5 py-1.5 mb-2 text-[10px] sm:text-xs text-yellow-700"><i class="fas fa-exclamation-triangle mr-1"></i>Jumlah melebihi stok tersedia (' + availableBaseStock(barang) + ' ' + escapeHtml(finalSatuan) + ')</div>';
+    itemHtml += '<div class="grid grid-cols-2 gap-2.5 text-xs sm:text-sm">';
+    itemHtml += '<div><label class="block text-slate-500 mb-1 font-medium">Jumlah</label>';
+    itemHtml += '<div class="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-slate-50"><button type="button" class="px-2.5 py-2 bg-slate-100 text-base font-bold text-slate-700" onclick="adjustQty(' + itemIndex + ', -1)">-</button>';
+    itemHtml += '<input type="number" name="items[' + itemIndex + '][jumlah]" value="1" min="1" class="w-full text-center py-2 outline-none bg-transparent text-sm sm:text-base font-semibold text-slate-700" onchange="checkStokAndHitung(' + itemIndex + ')">';
+    itemHtml += '<button type="button" class="px-2.5 py-2 bg-slate-100 text-base font-bold text-slate-700" onclick="adjustQty(' + itemIndex + ', 1)">+</button></div></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1 font-medium">Satuan</label>';
+    itemHtml += '<select data-barang-id="' + barang.id_barang + '" name="items[' + itemIndex + '][satuan]" class="w-full px-2.5 py-2.5 border border-slate-300 rounded-lg bg-white text-sm sm:text-base" onchange="updateSelectedItemUnit(this, ' + itemIndex + ')">' + optionHtml + '</select></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1 font-medium">Harga</label>';
+    itemHtml += '<div data-price-display class="px-2.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-semibold text-sm sm:text-base">' + formatRupiah(finalHarga) + '</div></div>';
+    itemHtml += '<div class="col-span-2"><div data-conversion class="rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-[11px] text-teal-700 font-semibold">Konversi: ' + escapeHtml(formatKonversiText(chosenUnit, StockUnits.baseLabel(barang))) + '</div></div>';
+    itemHtml += '<div><label class="block text-slate-500 mb-1 font-medium">Diskon</label>';
+    itemHtml += '<input type="number" name="items[' + itemIndex + '][diskon]" value="0" min="0" class="w-full px-2.5 py-2.5 border border-slate-300 rounded-lg bg-white text-sm sm:text-base" onchange="hitungTotal()"></div></div>';
+    itemHtml += '<div class="mt-2.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 text-right text-xs sm:text-sm text-emerald-700">Subtotal: <span data-subtotal-display id="subtotal_' + itemIndex + '" class="font-bold">' + formatRupiah(finalHarga) + '</span></div>';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][id_barang]" value="' + barang.id_barang + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][nama_barang]" value="' + escapeHtml(barang.nama_barang) + '">';
     itemHtml += '<input type="hidden" name="items[' + itemIndex + '][kode_barang]" value="' + escapeHtml(barang.kode_barang) + '">';
-    itemHtml += '<input type="hidden" name="items[' + itemIndex + '][satuan]" value="' + escapeHtml(barang.satuan) + '">';
-    itemHtml += '<input type="hidden" name="items[' + itemIndex + '][harga_satuan]" value="' + barang.harga_jual + '"></div>';
+    itemHtml += '<input type="hidden" name="items[' + itemIndex + '][satuan]" value="' + escapeHtml(finalSatuan) + '">';
+    itemHtml += '<input type="hidden" name="items[' + itemIndex + '][harga_satuan]" value="' + finalHarga + '"></div>';
     
     container.insertAdjacentHTML('afterbegin', itemHtml);
     noItemsMsg.style.display = 'none';
@@ -436,7 +620,7 @@ function checkStokAndHitung(idx) {
     const jumlah = parseInt(jumlahInput.value) || 0;
     const warningDiv = document.getElementById('warning_' + idx);
     
-    if (jumlah > stok) {
+    if (stockExceeded(row)) {
         warningDiv.classList.remove('hidden');
         jumlahInput.classList.add('ring-2', 'ring-amber-300', 'border-amber-400');
     } else {
@@ -464,6 +648,7 @@ function updateSelectedCount() {
 }
 
 function hitungTotal() {
+    refreshStockWarnings();
     let totalItems = 0;
     let totalHarga = 0;
     const rows = document.querySelectorAll('[data-item-index]');
@@ -543,11 +728,17 @@ function updateHutangSummary(totalHarga = null) {
     }
 }
 
+function openTambahStokFromButton(button) {
+    const barang = allBarang.find((item) => String(item.id_barang) === button.getAttribute('data-barang-id'));
+    if (barang) openTambahStokModal(barang);
+}
+
 function openTambahStokModal(barang) {
     stockModalBarang = barang;
     document.getElementById('stok_modal_id_barang').value = barang.id_barang;
     document.getElementById('stok_modal_barang_nama').textContent = barang.nama_barang || '-';
-    document.getElementById('stok_modal_barang_info').textContent = `Stok saat ini: ${barang.stok || 0} ${barang.satuan || ''}`;
+    document.getElementById('stok_modal_barang_info').textContent = `Stok saat ini: ${barang.stok || 0} ${StockUnits.baseLabel(barang)} (satuan dasar)`;
+    document.getElementById('stok_modal_satuan').innerHTML = getBarangUnitOptions(barang).map(unit => '<option value="' + escapeHtml(unit.satuan) + '">' + escapeHtml(formatKonversiText(unit, StockUnits.baseLabel(barang))) + '</option>').join('');
     document.getElementById('stok_modal_jumlah').value = 1;
     document.getElementById('modal_tambah_stok').classList.remove('hidden');
     document.getElementById('modal_tambah_stok').classList.add('flex');
@@ -572,6 +763,7 @@ async function submitTambahStok(event) {
     const formData = new FormData();
     formData.append('id_barang', String(idBarang));
     formData.append('jumlah_tambah', String(jumlahTambah));
+    formData.append('satuan', document.getElementById('stok_modal_satuan').value);
 
     try {
         const resp = await fetch('/api/barang/tambah-stok', { method: 'POST', body: formData });
@@ -622,6 +814,12 @@ function validateForm() {
 
     resetSubmitButtonState();
 
+    const uangDiberikanInput = document.getElementById('uang_diberikan');
+    if (uangDiberikanInput) {
+        const normalized = normalizeCurrencyInputString(uangDiberikanInput.value);
+        uangDiberikanInput.value = String(Number(normalized) || 0);
+    }
+
     const tanggalPenjualan = document.getElementById('tanggal_penjualan');
     if (!tanggalPenjualan.value) {
         showToast('Tanggal penjualan wajib diisi', 'error');
@@ -647,7 +845,7 @@ function validateForm() {
             return false;
         }
         
-        if (jumlah > stok) {
+        if (stockExceeded(row)) {
             barangMelebihi.push(`${namaBr} (jumlah: ${jumlah}, stok: ${stok})`);
         }
     }
@@ -672,9 +870,9 @@ function validateForm() {
         }
     }
 
-    const uangDiberikanInput = document.getElementById('uang_diberikan');
     if (uangDiberikanInput) {
-        uangDiberikanInput.value = String(parseNominalInput(uangDiberikanInput.value));
+        const normalized = normalizeCurrencyInputString(uangDiberikanInput.value);
+        uangDiberikanInput.value = String(Number(normalized) || 0);
     }
 
     openSubmitConfirmModal();
@@ -682,6 +880,8 @@ function validateForm() {
 }
 
 function openSubmitConfirmModal() {
+    const dateInput = document.getElementById('tanggal_penjualan').value;
+    document.getElementById('confirm_tanggal').textContent = dateInput.split('-').reverse().join('/');
     const modal = document.getElementById('modal_confirm_penjualan');
     const totalItems = document.getElementById('total_items')?.textContent || '0';
     const totalHarga = document.getElementById('total_display')?.textContent || 'Rp 0';

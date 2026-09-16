@@ -175,8 +175,8 @@ class InventoryBatch {
                 $idPembelian,
                 (int)$detail['id_detail'],
                 (int)$detail['id_barang'],
-                (float)$detail['jumlah'],
-                (float)$detail['harga_satuan'],
+                (float)$detail['jumlah'] * ((float)($detail['nilai_satuan'] ?? 1) ?: 1),
+                (float)$detail['harga_satuan'] / ((float)($detail['nilai_satuan'] ?? 1) ?: 1),
                 $tanggalBatch
             );
         }
