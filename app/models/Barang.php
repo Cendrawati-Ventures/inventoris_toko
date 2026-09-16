@@ -14,6 +14,26 @@ class Barang {
         $this->auditTrail = new AuditTrail($this->conn);
         $this->ensureStockAuditStructure();
         $this->ensureExpiryColumn();
+        $this->ensureSatuanDetailColumn();
+    }
+
+    private function ensureSatuanDetailColumn() {
+        try {
+            $checkColumnQuery = "SELECT 1
+                                 FROM information_schema.columns
+                                 WHERE table_schema = 'public'
+                                   AND table_name = 'barang'
+                                   AND column_name = 'satuan_detail'
+                                 LIMIT 1";
+            $stmt = $this->conn->query($checkColumnQuery);
+            $exists = $stmt && $stmt->fetch();
+
+            if (!$exists) {
+                $this->conn->exec("ALTER TABLE barang ADD COLUMN satuan_detail JSONB NOT NULL DEFAULT '[]'::jsonb");
+            }
+        } catch (Exception $e) {
+            error_log('ensureSatuanDetailColumn error: ' . $e->getMessage());
+        }
     }
 
     private function ensureStockAuditStructure() {
@@ -58,6 +78,158 @@ class Barang {
         }
     }
 
+    public function normalizeSatuanDetail($payload): array {
+        $items = is_array($payload) ? $payload : (is_string($payload) ? json_decode($payload, true) : []);
+        if (!is_array($items)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $namaSatuan = trim((string)($item['satuan'] ?? ''));
+            if ($namaSatuan === '') {
+                continue;
+            }
+
+            $nilaiSatuan = $item['nilai'] ?? $item['nilai_satuan'] ?? $item['konversi'] ?? 1;
+            $nilaiNumeric = is_numeric($nilaiSatuan) ? (float)$nilaiSatuan : 1;
+            if (!is_finite($nilaiNumeric) || $nilaiNumeric <= 0) {
+                $nilaiNumeric = 1;
+            }
+
+            $hargaBeli = isset($item['harga_beli']) ? (float)$item['harga_beli'] : 0;
+            $hargaJual = isset($item['harga_jual']) ? (float)$item['harga_jual'] : 0;
+
+            if ($hargaBeli < 0) {
+                $hargaBeli = 0;
+            }
+            if ($hargaJual < 0) {
+                $hargaJual = 0;
+            }
+
+            $normalized[] = [
+                'satuan' => $namaSatuan,
+                'nilai' => $nilaiNumeric,
+                'harga_beli' => $hargaBeli,
+                'harga_jual' => $hargaJual,
+                'persentase_keuntungan' => $this->calculateProfitPercent($hargaBeli, $hargaJual),
+            ];
+        }
+
+        return $normalized;
+    }
+
+    public function calculateProfitPercent($hargaBeli, $hargaJual): float {
+        $beli = (float)$hargaBeli;
+        $jual = (float)$hargaJual;
+
+        if ($beli <= 0) {
+            return 0.0;
+        }
+
+        return round((($jual - $beli) / $beli) * 100, 2);
+    }
+
+    public function decodeSatuanDetail($value): array {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (!is_array($decoded)) {
+                return [];
+            }
+            return $this->normalizeSatuanDetail($decoded);
+        }
+
+        if (is_array($value)) {
+            return $this->normalizeSatuanDetail($value);
+        }
+
+        return [];
+    }
+
+    public function getBaseUnitLabel(array $barang): string {
+        foreach ($this->decodeSatuanDetail($barang['satuan_detail'] ?? []) as $unit) {
+            if ((float)$unit['nilai'] === 1.0) return $unit['satuan'];
+        }
+        return trim((string)($barang['satuan'] ?? 'pcs')) ?: 'pcs';
+    }
+
+    public function validateUnitDefinitions(array $units): ?string {
+        if (!$units) return null; // Existing single-unit products remain supported.
+        $seen = [];
+        $hasBase = false;
+        foreach ($units as $unit) {
+            $label = strtolower(trim((string)($unit['satuan'] ?? '')));
+            $factor = (float)($unit['nilai'] ?? 1);
+            if ($label === '' || isset($seen[$label])) return 'Nama satuan wajib diisi dan tidak boleh berulang.';
+            if (!is_finite($factor) || $factor < 1 || floor($factor) !== $factor) return 'Isi satuan harus bilangan bulat minimal 1.';
+            $seen[$label] = true;
+            if ($factor === 1.0) $hasBase = true;
+        }
+        return $hasBase ? null : 'Tambahkan satuan dasar bernilai 1 (contoh: pcs atau botol).';
+    }
+
+    public function resolveSatuanUnit(array $barang, string $selectedSatuan = ''): array {
+        $detail = $this->decodeSatuanDetail($barang['satuan_detail'] ?? []);
+        if (empty($detail)) {
+            $fallback = trim((string)($barang['satuan'] ?? 'pcs')) ?: 'pcs';
+            if ($selectedSatuan !== '' && strcasecmp(trim($selectedSatuan), $fallback) !== 0) {
+                throw new InvalidArgumentException('Satuan tidak terdaftar untuk barang ini: ' . $selectedSatuan);
+            }
+            return [
+                'satuan' => $fallback,
+                'nilai' => 1.0,
+                'harga_beli' => (float)($barang['harga_beli'] ?? 0),
+                'harga_jual' => (float)($barang['harga_jual'] ?? 0),
+            ];
+        }
+
+        $normalizeLabel = function ($value) {
+            return strtolower(trim((string)$value));
+        };
+
+        $target = $normalizeLabel($selectedSatuan);
+        foreach ($detail as $unit) {
+            if ($normalizeLabel($unit['satuan'] ?? '') === $target) {
+                return [
+                    'satuan' => (string)($unit['satuan'] ?? ''),
+                    'nilai' => (float)($unit['nilai'] ?? 1),
+                    'harga_beli' => (float)($unit['harga_beli'] ?? 0),
+                    'harga_jual' => (float)($unit['harga_jual'] ?? 0),
+                ];
+            }
+        }
+
+        if ($target !== '') {
+            throw new InvalidArgumentException('Satuan tidak terdaftar untuk barang ini: ' . $selectedSatuan);
+        }
+        $first = $detail[0] ?? [];
+        return [
+            'satuan' => (string)($first['satuan'] ?? (trim((string)($barang['satuan'] ?? 'pcs')) ?: 'pcs')),
+            'nilai' => (float)($first['nilai'] ?? 1),
+            'harga_beli' => (float)($first['harga_beli'] ?? ($barang['harga_beli'] ?? 0)),
+            'harga_jual' => (float)($first['harga_jual'] ?? ($barang['harga_jual'] ?? 0)),
+        ];
+    }
+
+    public function convertQtyToBaseById(int $idBarang, string $selectedSatuan, float $qty): float {
+        $barang = $this->getById($idBarang);
+        if (!$barang) {
+            return (float)$qty;
+        }
+
+        $unit = $this->resolveSatuanUnit($barang, $selectedSatuan);
+        $nilai = (float)($unit['nilai'] ?? 1);
+        if (!is_finite($nilai) || $nilai <= 0) {
+            $nilai = 1;
+        }
+
+        return (float)$qty * $nilai;
+    }
+
     // Generate incremental kode barang (BRG-001, BRG-002, ...)
     public function generateKodeBarang() {
         $query = "SELECT COALESCE(MAX(id_barang) + 1, 1) as next_id FROM " . $this->table;
@@ -91,6 +263,15 @@ class Barang {
         foreach ($results as &$row) {
             $row['nama_barang'] = trim($row['nama_barang']);
             $row['kode_barang'] = trim($row['kode_barang']);
+            $row['satuan_detail'] = $this->decodeSatuanDetail($row['satuan_detail'] ?? []);
+            if (empty($row['satuan_detail']) && !empty($row['satuan'])) {
+                $row['satuan_detail'] = [[
+                    'satuan' => $row['satuan'],
+                    'nilai' => 1,
+                    'harga_beli' => (float)($row['harga_beli'] ?? 0),
+                    'harga_jual' => (float)($row['harga_jual'] ?? 0),
+                ]];
+            }
         }
         return $results;
     }
@@ -120,6 +301,7 @@ class Barang {
         foreach ($results as &$row) {
             $row['nama_barang'] = trim($row['nama_barang']);
             $row['kode_barang'] = trim($row['kode_barang']);
+            $row['satuan_detail'] = $this->decodeSatuanDetail($row['satuan_detail'] ?? []);
         }
         return $results;
     }
@@ -176,7 +358,13 @@ class Barang {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
-        return $stmt->fetch();
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        $row['satuan_detail'] = $this->decodeSatuanDetail($row['satuan_detail'] ?? []);
+        return $row;
     }
 
     public function existsByKode($kodeBarang, $excludeId = null) {
@@ -197,15 +385,24 @@ class Barang {
 
     public function create($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
+        $satuanDetail = $this->normalizeSatuanDetail($data['satuan_detail'] ?? []);
+        $defaultSatuan = trim((string)($data['satuan'] ?? ''));
+        if (empty($defaultSatuan) && !empty($satuanDetail)) {
+            $defaultSatuan = (string)$satuanDetail[0]['satuan'];
+        }
+        if ($defaultSatuan === '') {
+            $defaultSatuan = 'pcs';
+        }
+
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by, satuan_detail) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by, :satuan_detail)";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
         $stmt->bindParam(':nama_barang', $data['nama_barang']);
         $stmt->bindParam(':id_kategori', $data['id_kategori']);
-        $stmt->bindParam(':satuan', $data['satuan']);
+        $stmt->bindParam(':satuan', $defaultSatuan);
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
@@ -213,6 +410,8 @@ class Barang {
         $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $jsonSatuanDetail = json_encode($satuanDetail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bindValue(':satuan_detail', $jsonSatuanDetail === false ? '[]' : $jsonSatuanDetail, PDO::PARAM_STR);
         
         $success = $stmt->execute();
         if ($success) {
@@ -232,15 +431,24 @@ class Barang {
 
     public function createAndReturn($data) {
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
+        $satuanDetail = $this->normalizeSatuanDetail($data['satuan_detail'] ?? []);
+        $defaultSatuan = trim((string)($data['satuan'] ?? ''));
+        if (empty($defaultSatuan) && !empty($satuanDetail)) {
+            $defaultSatuan = (string)$satuanDetail[0]['satuan'];
+        }
+        if ($defaultSatuan === '') {
+            $defaultSatuan = 'pcs';
+        }
+
         $query = "INSERT INTO " . $this->table . " 
-                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by) 
-                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by)";
+                  (kode_barang, nama_barang, id_kategori, satuan, harga_beli, harga_jual, stok, tanggal_expired, stok_updated_by, satuan_detail) 
+                  VALUES (:kode_barang, :nama_barang, :id_kategori, :satuan, :harga_beli, :harga_jual, :stok, :tanggal_expired, :stok_updated_by, :satuan_detail)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':kode_barang', $kodeBarang);
         $stmt->bindParam(':nama_barang', $data['nama_barang']);
         $stmt->bindParam(':id_kategori', $data['id_kategori']);
-        $stmt->bindParam(':satuan', $data['satuan']);
+        $stmt->bindParam(':satuan', $defaultSatuan);
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
@@ -248,6 +456,8 @@ class Barang {
         $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $jsonSatuanDetail = json_encode($satuanDetail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bindValue(':satuan_detail', $jsonSatuanDetail === false ? '[]' : $jsonSatuanDetail, PDO::PARAM_STR);
 
         if ($stmt->execute()) {
             $newId = $this->conn->lastInsertId();
@@ -261,6 +471,15 @@ class Barang {
     public function update($id, $data) {
         $lama = $this->getById($id);
         $kodeBarang = !empty($data['kode_barang']) ? $data['kode_barang'] : $this->generateKodeBarang();
+        $satuanDetail = $this->normalizeSatuanDetail($data['satuan_detail'] ?? []);
+        $defaultSatuan = trim((string)($data['satuan'] ?? ''));
+        if (empty($defaultSatuan) && !empty($satuanDetail)) {
+            $defaultSatuan = (string)$satuanDetail[0]['satuan'];
+        }
+        if ($defaultSatuan === '') {
+            $defaultSatuan = 'pcs';
+        }
+
         $query = "UPDATE " . $this->table . " 
                   SET kode_barang = :kode_barang,
                       nama_barang = :nama_barang,
@@ -271,6 +490,7 @@ class Barang {
                       stok = :stok,
                       tanggal_expired = :tanggal_expired,
                       stok_updated_by = :stok_updated_by,
+                      satuan_detail = :satuan_detail,
                       updated_at = NOW()
                   WHERE id_barang = :id";
         
@@ -279,7 +499,7 @@ class Barang {
         $stmt->bindParam(':kode_barang', $kodeBarang);
         $stmt->bindParam(':nama_barang', $data['nama_barang']);
         $stmt->bindParam(':id_kategori', $data['id_kategori']);
-        $stmt->bindParam(':satuan', $data['satuan']);
+        $stmt->bindParam(':satuan', $defaultSatuan);
         $stmt->bindParam(':harga_beli', $data['harga_beli']);
         $stmt->bindParam(':harga_jual', $data['harga_jual']);
         $stmt->bindParam(':stok', $data['stok']);
@@ -287,6 +507,8 @@ class Barang {
         $stmt->bindValue(':tanggal_expired', $tanggalExpired, $tanggalExpired === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
         $stokUpdatedBy = isset($data['stok_updated_by']) && $data['stok_updated_by'] !== '' ? (int)$data['stok_updated_by'] : null;
         $stmt->bindValue(':stok_updated_by', $stokUpdatedBy, $stokUpdatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
+        $jsonSatuanDetail = json_encode($satuanDetail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $stmt->bindValue(':satuan_detail', $jsonSatuanDetail === false ? '[]' : $jsonSatuanDetail, PDO::PARAM_STR);
         
         $success = $stmt->execute();
         if ($success) {

@@ -370,6 +370,8 @@ class LaporanController {
         $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
         $start = isset($_GET['start']) ? trim((string)$_GET['start']) : '';
         $end = isset($_GET['end']) ? trim((string)$_GET['end']) : '';
+        if ($start !== '' && $end === '') $end = $start;
+        if ($end !== '' && $start === '') $start = $end;
         $items_per_page = 50;
         $offset = ($page - 1) * $items_per_page;
 
@@ -383,8 +385,21 @@ class LaporanController {
                 return (int)($item['id_kategori'] ?? 0) === $selected_kategori;
             }));
         }
-        $totals = $this->model->getStokTotals();
-        $totals_by_kategori = $this->model->getStokTotalsByKategori();
+        $totals = ['total_stok' => 0, 'total_harga_beli' => 0, 'total_harga_jual' => 0];
+        $categoryTotals = [];
+        foreach ($all_stok as $item) {
+            $key = (string)($item['id_kategori'] ?? '');
+            if (!isset($categoryTotals[$key])) {
+                $categoryTotals[$key] = array_merge($totals, ['id_kategori' => $item['id_kategori'], 'nama_kategori' => $item['nama_kategori']]);
+                $categoryTotals[$key]['total_stok'] = $categoryTotals[$key]['total_harga_beli'] = $categoryTotals[$key]['total_harga_jual'] = 0;
+            }
+            $values = ['total_stok' => (float)$item['stok'], 'total_harga_beli' => (float)$item['stok'] * (float)$item['harga_beli'], 'total_harga_jual' => (float)$item['stok'] * (float)$item['harga_jual']];
+            foreach ($values as $field => $value) {
+                $totals[$field] += $value;
+                $categoryTotals[$key][$field] += $value;
+            }
+        }
+        $totals_by_kategori = array_values($categoryTotals);
         
         // Pagination
         $total_items = count($all_stok);
@@ -424,6 +439,8 @@ class LaporanController {
     public function exportStok() {
         $start = $_GET['start'] ?? '';
         $end = $_GET['end'] ?? '';
+        if ($start !== '' && $end === '') $end = $start;
+        if ($end !== '' && $start === '') $start = $end;
         $format = $_GET['format'] ?? 'pdf';
         $kategori_param = $_GET['kategori'] ?? 'all';
         $selected_kategori = ($kategori_param !== 'all' && $kategori_param !== '') ? (int)$kategori_param : null;
@@ -1358,7 +1375,7 @@ class LaporanController {
             
             $hargaBeli = number_format((float)$item['harga_beli'], 0, ',', '.');
             $hargaJual = number_format((float)$item['harga_jual'], 0, ',', '.');
-            $updateDate = !empty($item['updated_at']) ? date('d M Y', strtotime($item['updated_at'])) : '-';
+            $updateDate = !empty($item['updated_at']) ? date('d M Y', strtotime($item['tanggal_stok'] ?? $item['updated_at'])) : '-';
             
             $html .= '<tr>
                 <td class="no-column">' . str_pad($index + 1, 2, '0', STR_PAD_LEFT) . '</td>
@@ -1442,7 +1459,7 @@ class LaporanController {
                 $status = 'Rendah';
             }
 
-            $updateDate = !empty($item['updated_at']) ? date('d-m-Y', strtotime($item['updated_at'])) : '-';
+            $updateDate = !empty($item['updated_at']) ? date('d-m-Y', strtotime($item['tanggal_stok'] ?? $item['updated_at'])) : '-';
 
             echo '<tr>'
                 . '<td>' . ($index + 1) . '</td>'

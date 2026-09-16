@@ -17,6 +17,10 @@ $canViewHargaStok = class_exists('PermissionGate')
         <i class="fas fa-boxes text-blue-600"></i>
         <span>Laporan Stok</span>
     </h2>
+    <?php if (!empty($end)): ?>
+        <p class="mb-4 text-sm text-slate-600">Saldo akhir per <?= htmlspecialchars(formatTanggal($end)) ?>, dihitung dari barang masuk dan penjualan berdasarkan tanggal transaksi.</p>
+        <a class="app-btn-primary inline-block mb-4 px-4 py-2" href="/pembelian/create?tanggal=<?= rawurlencode($end) ?>">Input Barang Masuk pada Tanggal Ini</a>
+    <?php endif; ?>
 
     <!-- Filter -->
     <form method="GET" class="mb-6 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50/95 to-white/95 p-4 sm:p-5 backdrop-blur shadow-sm">
@@ -265,7 +269,6 @@ $canViewHargaStok = class_exists('PermissionGate')
                 <col style="width: 64px;">
                 <col style="width: 140px;">
                 <col style="width: auto;">
-                <col style="width: 100px;">
                 <?php if ($canViewHargaStok): ?>
                 <col style="width: 170px;">
                 <col style="width: 170px;">
@@ -279,13 +282,12 @@ $canViewHargaStok = class_exists('PermissionGate')
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">No</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Kode Barang</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Nama Barang</th>
-                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Satuan</th>
                     <?php if ($canViewHargaStok): ?>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Beli</th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Harga Jual</th>
                     <?php endif; ?>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Stok</th>
-                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap">Update Terakhir</th>
+                    <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle whitespace-nowrap"><?= !empty($end) ? 'Posisi Stok' : 'Update Terakhir' ?></th>
                     <th class="px-3 py-3 text-sm font-semibold text-gray-700 align-middle">Status</th>
                 </tr>
             </thead>
@@ -300,20 +302,18 @@ $canViewHargaStok = class_exists('PermissionGate')
                             <td class="px-3 py-3 text-sm text-gray-700 font-semibold align-middle"><?= (($current_page - 1) * ($items_per_page ?? 50)) + $index + 1 ?></td>
                             <td class="px-3 py-3 text-center font-mono text-sm text-gray-700 align-middle"><?= htmlspecialchars($item['kode_barang'] ?? '-') ?></td>
                             <td class="px-3 py-3 text-center text-sm font-medium text-gray-800 whitespace-nowrap overflow-hidden text-ellipsis align-middle" title="<?= htmlspecialchars($item['nama_barang']) ?>"><?= htmlspecialchars($item['nama_barang']) ?></td>
-                            <td class="px-3 py-3 text-center text-sm text-gray-700 font-semibold align-middle">
-                                <?= htmlspecialchars($item['satuan'] ?? '-') ?>
-                            </td>
                             <?php if ($canViewHargaStok): ?>
                             <td class="px-3 py-3 text-sm font-semibold text-slate-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_beli']) ?></td>
                             <td class="px-3 py-3 text-sm font-semibold text-emerald-700 align-middle whitespace-nowrap"><?= formatRupiah($item['harga_jual']) ?></td>
                             <?php endif; ?>
                             <td class="px-3 py-3 text-center align-middle">
                                 <span class="<?= $item['stok'] <= 10 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800' ?> inline-flex items-center justify-center px-3 py-1 rounded-full text-sm font-semibold">
-                                    <?= $item['stok'] ?>
+                                    <?= $item['stok'] ?> <?= htmlspecialchars(satuanDasarBarang($item)) ?>
+                                    <?php if (isset($item['stok_awal'])): ?><small class="block text-xs">Awal: <?= $item['stok_awal'] ?> · Masuk: <?= $item['stok_masuk'] ?> · Keluar: <?= $item['stok_keluar'] ?></small><?php endif; ?>
                                 </span>
                             </td>
                             <td class="px-3 py-3 text-center text-sm text-gray-600 align-middle whitespace-nowrap">
-                                <?= !empty($item['updated_at']) ? formatTanggal($item['updated_at']) : '-' ?>
+                                <?= !empty($item['updated_at']) ? formatTanggal($item['tanggal_stok'] ?? $item['updated_at']) : '-' ?>
                             </td>
                             <td class="px-3 py-3 text-center align-middle">
                                 <?php if ($item['stok'] == 0): ?>

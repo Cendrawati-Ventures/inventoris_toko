@@ -18,6 +18,8 @@ if (empty($requestUri)) {
 
 // Define routes
 $routes = [
+    '/catatan-operasional' => ['controller' => 'CatatanController', 'method' => 'index'],
+    '/catatan-operasional/store' => ['controller' => 'CatatanController', 'method' => 'store'],
     // Auth routes
     '/login' => ['controller' => 'AuthController', 'method' => 'login'],
     '/logout' => ['controller' => 'AuthController', 'method' => 'logout'],

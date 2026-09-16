@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/StokMutasi.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
 
 class Laporan {
     private $conn;
@@ -8,6 +10,7 @@ class Laporan {
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        new StokMutasi($this->conn);
         $this->ensureProfitSnapshotColumn();
         $this->ensureInventoryAlertColumns();
     }
@@ -19,7 +22,7 @@ class Laporan {
                                SET harga_beli_saat_transaksi = COALESCE(b.harga_beli, 0)
                                FROM barang b
                                WHERE dp.id_barang = b.id_barang
-                                 AND (dp.harga_beli_saat_transaksi IS NULL OR dp.harga_beli_saat_transaksi = 0)");
+                                 AND dp.harga_beli_saat_transaksi IS NULL");
         } catch (Exception $e) {
             error_log('ensureProfitSnapshotColumn error: ' . $e->getMessage());
         }
@@ -65,7 +68,7 @@ class Laporan {
                     u.username,
                     b.kode_barang,
                     b.nama_barang,
-                    b.satuan,
+                    COALESCE(dp.satuan, b.satuan) AS satuan,
                     dp.jumlah,
                     dp.harga_satuan,
                     dp.diskon,
@@ -119,11 +122,29 @@ class Laporan {
     }
 
     public function getLaporanStokRange($start, $end) {
-        $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori WHERE DATE(b.updated_at) BETWEEN :start AND :end ORDER BY b.nama_barang ASC";
+        $start = transactionDate($start);
+        $end = transactionDate($end);
+        if ($start > $end) throw new InvalidArgumentException('Tanggal mulai harus sebelum atau sama dengan tanggal akhir.');
+        $movements = StokMutasi::movementSql();
+        $query = "WITH movements AS ($movements), balances AS (
+                    SELECT id_barang,
+                      SUM(delta) FILTER (WHERE tanggal >= CAST(:start AS date)) AS after_start,
+                      SUM(delta) FILTER (WHERE tanggal >= CAST(:end AS date) + INTERVAL '1 day') AS after_end,
+                      SUM(GREATEST(delta, 0)) FILTER (WHERE tanggal >= CAST(:start AS date) AND tanggal < CAST(:end AS date) + INTERVAL '1 day') AS masuk,
+                      SUM(GREATEST(-delta, 0)) FILTER (WHERE tanggal >= CAST(:start AS date) AND tanggal < CAST(:end AS date) + INTERVAL '1 day') AS keluar
+                    FROM movements GROUP BY id_barang
+                  )
+                  SELECT b.*, k.nama_kategori,
+                    b.stok - COALESCE(m.after_start, 0) AS stok_awal,
+                    COALESCE(m.masuk, 0) AS stok_masuk,
+                    COALESCE(m.keluar, 0) AS stok_keluar,
+                    b.stok - COALESCE(m.after_end, 0) AS stok,
+                    CAST(:end AS date) AS tanggal_stok
+                  FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
+                  LEFT JOIN balances m ON m.id_barang = b.id_barang
+                  ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':start', $start);
-        $stmt->bindParam(':end', $end);
-        $stmt->execute();
+        $stmt->execute(['start' => $start, 'end' => $end]);
         return $stmt->fetchAll();
     }
 
@@ -134,7 +155,7 @@ class Laporan {
                                         p.nama_pembeli,
                                         b.kode_barang,
                                         b.nama_barang,
-                                        b.satuan,
+                                        COALESCE(dp.satuan, b.satuan) AS satuan,
                                         COALESCE(dp.jumlah, 0) as jumlah,
                                         COALESCE(dp.diskon, 0) as diskon,
                                         COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli,

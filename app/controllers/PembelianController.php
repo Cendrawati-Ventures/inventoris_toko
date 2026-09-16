@@ -1,8 +1,11 @@
 <?php
 
+require_once __DIR__ . "/../helpers/money.php";
+
 require_once __DIR__ . '/../models/Pembelian.php';
 require_once __DIR__ . '/../models/Barang.php';
 require_once __DIR__ . '/../helpers/format.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
 
 class PembelianController {
     private $model;
@@ -22,15 +25,7 @@ class PembelianController {
     }
 
     private function parseNumberInput($value): ?float {
-        $raw = trim((string)$value);
-        if ($raw === '') {
-            return null;
-        }
-        $normalized = preg_replace('/[^\d]/', '', $raw);
-        if ($normalized === null || $normalized === '') {
-            return null;
-        }
-        return (float)$normalized;
+        return parseMoneyInput($value);
     }
 
     public function index() {
@@ -61,12 +56,23 @@ class PembelianController {
         $barang = $this->barangModel->getAll();
         $kategori = $this->barangModel->getAllKategori();
         $satuanList = $this->barangModel->getAllSatuan();
+        try {
+            $tanggal_default = transactionDate($_GET['tanggal'] ?? $_GET['tanggal_akhir'] ?? $_GET['tanggal_awal'] ?? '');
+        } catch (InvalidArgumentException $e) {
+            $tanggal_default = date('Y-m-d');
+        }
         require_once __DIR__ . '/../views/pembelian/create.php';
     }
 
     public function store() {
         $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $tanggal_input = transactionDate($_POST['tanggal'] ?? '');
+            } catch (InvalidArgumentException $e) {
+                $_SESSION['error'] = $e->getMessage();
+                redirect('/pembelian/create');
+            }
             // Parse multiple items from form
             $items = [];
             if (isset($_POST['items'])) {
@@ -120,14 +126,15 @@ class PembelianController {
                 'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => $_POST['keterangan'] ?? '',
-                'id_user' => $_SESSION['user_id'] ?? null
+                'id_user' => $_SESSION['user_id'] ?? null,
+                'tanggal' => $tanggal_input
             ];
 
             $result = $this->model->create($data);
             
             if ($result['success']) {
                 $_SESSION['success'] = $result['message'];
-                redirect('/pembelian');
+                redirect('/pembelian?tanggal_awal=' . rawurlencode($tanggal_input) . '&tanggal_akhir=' . rawurlencode($tanggal_input));
             } else {
                 $_SESSION['error'] = $result['message'];
                 redirect('/pembelian/create');
@@ -162,6 +169,12 @@ class PembelianController {
     public function update($id) {
         $this->ensureTransactionAccess();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            try {
+                $tanggal_input = transactionDate($_POST['tanggal'] ?? '');
+            } catch (InvalidArgumentException $e) {
+                $_SESSION['error'] = $e->getMessage();
+                redirect('/pembelian/edit/' . $id);
+            }
             $items = [];
             if (isset($_POST['items'])) {
                 foreach ($_POST['items'] as $index => $item) {
@@ -213,14 +226,15 @@ class PembelianController {
                 'uang_diberikan' => 0,
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => '',
-                'id_user' => $_SESSION['user_id'] ?? null
+                'id_user' => $_SESSION['user_id'] ?? null,
+                'tanggal' => $tanggal_input
             ];
 
             $result = $this->model->update($id, $data);
             
             if ($result['success']) {
                 $_SESSION['success'] = $result['message'];
-                redirect('/pembelian');
+                redirect('/pembelian?tanggal_awal=' . rawurlencode($tanggal_input) . '&tanggal_akhir=' . rawurlencode($tanggal_input));
             } else {
                 $_SESSION['error'] = $result['message'];
                 redirect('/pembelian/edit/' . $id);

@@ -1,8 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
+require_once __DIR__ . '/Barang.php';
 require_once __DIR__ . '/InventoryBatch.php';
 require_once __DIR__ . '/AuditTrail.php';
+require_once __DIR__ . '/StokMutasi.php';
 
 class Pembelian {
     private $conn;
@@ -10,12 +13,30 @@ class Pembelian {
     private $detail_table = 'detail_pembelian';
     private $batchModel;
     private $auditTrail;
+    private $stokMutasi;
+    private $barangModel;
 
     public function __construct() {
         $database = new Database();
         $this->conn = $database->getConnection();
+        $this->barangModel = new Barang();
         $this->batchModel = new InventoryBatch($this->conn);
         $this->auditTrail = new AuditTrail($this->conn);
+        $this->stokMutasi = new StokMutasi($this->conn);
+        $this->ensureDetailColumns();
+    }
+
+    private function ensureDetailColumns(): void {
+        try {
+            $this->conn->exec("ALTER TABLE detail_pembelian ADD COLUMN IF NOT EXISTS satuan VARCHAR(50) DEFAULT 'pcs'");
+            $this->conn->exec("ALTER TABLE detail_pembelian ADD COLUMN IF NOT EXISTS nilai_satuan NUMERIC(12,2) DEFAULT 1");
+        } catch (Exception $e) {
+            error_log('ensure detail_pembelian columns error: ' . $e->getMessage());
+        }
+    }
+
+    private function convertJumlahToBaseUnit(int $idBarang, string $satuan, float $jumlah): float {
+        return $this->barangModel->convertQtyToBaseById($idBarang, $satuan, $jumlah);
     }
 
     public function getAll() {
@@ -58,7 +79,7 @@ class Pembelian {
     }
 
     public function getDetailById($id) {
-        $query = "SELECT dp.*, b.nama_barang, b.satuan 
+        $query = "SELECT dp.*, b.nama_barang, COALESCE(dp.satuan, b.satuan) AS satuan 
                   FROM " . $this->detail_table . " dp
                   JOIN barang b ON dp.id_barang = b.id_barang
                   WHERE dp.id_pembelian = :id
@@ -79,7 +100,7 @@ class Pembelian {
                     dp.id_detail,
                     b.kode_barang,
                     b.nama_barang,
-                    b.satuan,
+                    COALESCE(dp.satuan, b.satuan) AS satuan,
                     dp.jumlah,
                     dp.harga_satuan,
                     COALESCE(dp.diskon, 0) as diskon,
@@ -97,6 +118,8 @@ class Pembelian {
         try {
             $this->conn->beginTransaction();
 
+            $tanggal = transactionDate($data['tanggal'] ?? '');
+
             // Calculate total from items
             $total = 0;
             foreach ($data['items'] as $item) {
@@ -109,8 +132,8 @@ class Pembelian {
 
             // Insert pembelian header
             $query = "INSERT INTO " . $this->table . " 
-                      (total_harga, uang_diberikan, kembalian, nama_pembeli, keterangan) 
-                      VALUES (:total_harga, :uang_diberikan, :kembalian, :nama_pembeli, :keterangan)";
+                      (total_harga, uang_diberikan, kembalian, nama_pembeli, keterangan, tanggal) 
+                      VALUES (:total_harga, :uang_diberikan, :kembalian, :nama_pembeli, :keterangan, :tanggal)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':total_harga', $total);
@@ -118,6 +141,7 @@ class Pembelian {
             $stmt->bindParam(':kembalian', $kembalian);
             $stmt->bindParam(':nama_pembeli', $data['nama_pembeli']);
             $stmt->bindParam(':keterangan', $data['keterangan']);
+            $stmt->bindParam(':tanggal', $tanggal);
             $stmt->execute();
 
             $id_pembelian = $this->conn->lastInsertId();
@@ -125,11 +149,18 @@ class Pembelian {
             // Insert detail items
             foreach ($data['items'] as $item) {
                 $subtotal = $item['harga_satuan'] * $item['jumlah'];
-                
+                $satuanLabel = trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs';
+                $baseQty = $this->convertJumlahToBaseUnit((int)$item['id_barang'], $satuanLabel, (float)$item['jumlah']);
+                $nilaiSatuan = 1.0;
+                $unitInfo = $this->barangModel->resolveSatuanUnit($this->barangModel->getById((int)$item['id_barang']) ?: ['satuan' => $satuanLabel, 'harga_beli' => 0, 'harga_jual' => 0], $satuanLabel);
+                if (!empty($unitInfo['nilai'])) {
+                    $nilaiSatuan = (float)$unitInfo['nilai'];
+                }
+
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal)
-                               VALUES (:id_pembelian, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal)";
-                
+                               (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal, satuan, nilai_satuan)
+                               VALUES (:id_pembelian, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :satuan, :nilai_satuan)";
+
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_pembelian', $id_pembelian);
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
@@ -138,6 +169,8 @@ class Pembelian {
                 $diskon = 0;
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
+                $stmtDetail->bindParam(':satuan', $satuanLabel);
+                $stmtDetail->bindParam(':nilai_satuan', $nilaiSatuan);
                 $stmtDetail->execute();
                 $idDetailPembelian = (int)$this->conn->lastInsertId();
 
@@ -145,19 +178,28 @@ class Pembelian {
                     (int)$id_pembelian,
                     $idDetailPembelian,
                     (int)$item['id_barang'],
-                    (float)$item['jumlah'],
-                    (float)$item['harga_satuan'],
-                    null
+                    (float)$baseQty,
+                    (float)$item['harga_satuan'] / $nilaiSatuan,
+                    $tanggal
                 );
 
-                // Update stok barang (tambah)
+                $this->stokMutasi->recordMasuk(
+                    (int)$item['id_barang'],
+                    (float)$baseQty,
+                    $tanggal,
+                    (int)$id_pembelian,
+                    'pembelian',
+                    $satuanLabel,
+                    'Pembelian barang masuk'
+                );
+
                 $queryStok = "UPDATE barang
                               SET stok = stok + :jumlah,
                                   stok_updated_by = :updated_by,
                                   updated_at = NOW()
                               WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $item['jumlah']);
+                $stmtStok->bindParam(':jumlah', $baseQty);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
                 $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
                 $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
@@ -185,6 +227,7 @@ class Pembelian {
         try {
             $this->conn->beginTransaction();
             $headerLama = $this->getById($id);
+            $tanggal = !empty($data['tanggal']) ? $data['tanggal'] : (!empty($headerLama['tanggal']) ? $headerLama['tanggal'] : date('Y-m-d'));
 
             // Get old details
             $queryOld = "SELECT * FROM " . $this->detail_table . " WHERE id_pembelian = :id";
@@ -193,15 +236,18 @@ class Pembelian {
             $stmtOld->execute();
             $oldDetails = $stmtOld->fetchAll();
 
+            $this->stokMutasi->rollbackByTransaksi('pembelian', (int)$id);
+
             // Restore old stock (reverse the addition)
             foreach ($oldDetails as $oldItem) {
+                $baseQty = (float)$oldItem['jumlah'] * ((float)($oldItem['nilai_satuan'] ?? 1) ?: 1);
                 $queryRestore = "UPDATE barang
                                  SET stok = stok - :jumlah,
                                      stok_updated_by = :updated_by,
                                      updated_at = NOW()
                                  WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
-                $stmtRestore->bindParam(':jumlah', $oldItem['jumlah']);
+                $stmtRestore->bindParam(':jumlah', $baseQty);
                 $stmtRestore->bindParam(':id_barang', $oldItem['id_barang']);
                 $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
                 $stmtRestore->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
@@ -235,7 +281,8 @@ class Pembelian {
                           uang_diberikan = :uang_diberikan,
                           kembalian = :kembalian,
                           nama_pembeli = :nama_pembeli,
-                          keterangan = :keterangan
+                          keterangan = :keterangan,
+                          tanggal = :tanggal
                       WHERE id_pembelian = :id";
             
             $stmt = $this->conn->prepare($query);
@@ -245,17 +292,25 @@ class Pembelian {
             $stmt->bindParam(':kembalian', $kembalian);
             $stmt->bindParam(':nama_pembeli', $data['nama_pembeli']);
             $stmt->bindParam(':keterangan', $data['keterangan']);
+            $stmt->bindParam(':tanggal', $tanggal);
             $stmt->execute();
 
             // Insert new details
             $detailBaru = [];
             foreach ($data['items'] as $item) {
                 $subtotal = $item['harga_satuan'] * $item['jumlah'];
-                
+                $satuanLabel = trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs';
+                $baseQty = $this->convertJumlahToBaseUnit((int)$item['id_barang'], $satuanLabel, (float)$item['jumlah']);
+                $nilaiSatuan = 1.0;
+                $unitInfo = $this->barangModel->resolveSatuanUnit($this->barangModel->getById((int)$item['id_barang']) ?: ['satuan' => $satuanLabel, 'harga_beli' => 0, 'harga_jual' => 0], $satuanLabel);
+                if (!empty($unitInfo['nilai'])) {
+                    $nilaiSatuan = (float)$unitInfo['nilai'];
+                }
+
                 $queryDetail = "INSERT INTO " . $this->detail_table . " 
-                               (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal)
-                               VALUES (:id_pembelian, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal)";
-                
+                               (id_pembelian, id_barang, jumlah, harga_satuan, diskon, subtotal, satuan, nilai_satuan)
+                               VALUES (:id_pembelian, :id_barang, :jumlah, :harga_satuan, :diskon, :subtotal, :satuan, :nilai_satuan)";
+
                 $stmtDetail = $this->conn->prepare($queryDetail);
                 $stmtDetail->bindParam(':id_pembelian', $id);
                 $stmtDetail->bindParam(':id_barang', $item['id_barang']);
@@ -264,30 +319,43 @@ class Pembelian {
                 $diskon = 0;
                 $stmtDetail->bindParam(':diskon', $diskon);
                 $stmtDetail->bindParam(':subtotal', $subtotal);
+                $stmtDetail->bindParam(':satuan', $satuanLabel);
+                $stmtDetail->bindParam(':nilai_satuan', $nilaiSatuan);
                 $stmtDetail->execute();
                 $idDetailPembelian = (int)$this->conn->lastInsertId();
                 $detailBaru[] = [
                     'id_detail' => $idDetailPembelian,
                     'id_barang' => (int)$item['id_barang'],
                     'jumlah' => (float)$item['jumlah'],
-                    'harga_satuan' => (float)$item['harga_satuan']
+                    'harga_satuan' => (float)$item['harga_satuan'],
+                    'satuan' => $satuanLabel,
+                    'nilai_satuan' => $nilaiSatuan
                 ];
 
-                // Update stok barang (tambah)
+                $this->stokMutasi->recordMasuk(
+                    (int)$item['id_barang'],
+                    (float)$baseQty,
+                    $tanggal,
+                    (int)$id,
+                    'pembelian',
+                    $satuanLabel,
+                    'Pembelian barang masuk (update)'
+                );
+
                 $queryStok = "UPDATE barang
                               SET stok = stok + :jumlah,
                                   stok_updated_by = :updated_by,
                                   updated_at = NOW()
                               WHERE id_barang = :id_barang";
                 $stmtStok = $this->conn->prepare($queryStok);
-                $stmtStok->bindParam(':jumlah', $item['jumlah']);
+                $stmtStok->bindParam(':jumlah', $baseQty);
                 $stmtStok->bindParam(':id_barang', $item['id_barang']);
                 $updatedBy = isset($data['id_user']) && $data['id_user'] !== '' ? (int)$data['id_user'] : null;
                 $stmtStok->bindValue(':updated_by', $updatedBy, $updatedBy === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
                 $stmtStok->execute();
             }
 
-            $this->batchModel->replacePurchaseBatches((int)$id, $detailBaru, null);
+            $this->batchModel->replacePurchaseBatches((int)$id, $detailBaru, $tanggal);
 
             $this->conn->commit();
             $this->auditTrail->log([
@@ -338,6 +406,8 @@ class Pembelian {
                 return ['success' => false, 'message' => 'Pembelian tidak bisa dihapus karena batch modal sudah dipakai di transaksi penjualan.'];
             }
 
+            $this->stokMutasi->rollbackByTransaksi('pembelian', (int)$id);
+
             // Restore all stock (reverse the addition)
             foreach ($details as $detail) {
                 $queryRestore = "UPDATE barang
@@ -346,7 +416,8 @@ class Pembelian {
                                      updated_at = NOW()
                                  WHERE id_barang = :id_barang";
                 $stmtRestore = $this->conn->prepare($queryRestore);
-                $stmtRestore->bindParam(':jumlah', $detail['jumlah']);
+                $baseQty = (float)$detail['jumlah'] * ((float)($detail['nilai_satuan'] ?? 1) ?: 1);
+                $stmtRestore->bindParam(':jumlah', $baseQty);
                 $stmtRestore->bindParam(':id_barang', $detail['id_barang']);
                 $updatedByValue = $updatedBy !== null && $updatedBy !== '' ? (int)$updatedBy : null;
                 $stmtRestore->bindValue(':updated_by', $updatedByValue, $updatedByValue === null ? PDO::PARAM_NULL : PDO::PARAM_INT);

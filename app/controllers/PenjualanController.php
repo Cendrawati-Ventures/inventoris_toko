@@ -4,6 +4,7 @@ require_once __DIR__ . '/../models/Penjualan.php';
 require_once __DIR__ . '/../models/Barang.php';
 require_once __DIR__ . '/../models/KonfigurasiNota.php';
 require_once __DIR__ . '/../helpers/format.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
 
 class PenjualanController {
     private $model;
@@ -14,6 +15,38 @@ class PenjualanController {
         $this->model = new Penjualan();
         $this->barangModel = new Barang();
         $this->notaConfigModel = new KonfigurasiNota();
+    }
+
+    private function normalizeMoneyValue($value): float {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        $clean = trim((string)$value);
+        $clean = preg_replace('/[^\d,\.\-]/', '', $clean) ?? '';
+
+        if ($clean === '' || $clean === '-' || $clean === '.' || $clean === ',') {
+            return 0.0;
+        }
+
+        if (strpos($clean, ',') !== false && strpos($clean, '.') !== false) {
+            if (strrpos($clean, ',') > strrpos($clean, '.')) {
+                $clean = str_replace('.', '', $clean);
+                $clean = str_replace(',', '.', $clean);
+            } else {
+                $clean = str_replace(',', '', $clean);
+            }
+        } elseif (strpos($clean, ',') !== false) {
+            $clean = str_replace(',', '', $clean);
+        } elseif (strpos($clean, '.') !== false) {
+            $clean = str_replace('.', '', $clean);
+        }
+
+        return (float)$clean;
+    }
+
+    private function normalizeItemValue($value): float {
+        return $this->normalizeMoneyValue($value);
     }
 
     private function ensureTransactionAccess(): void {
@@ -29,7 +62,8 @@ class PenjualanController {
             ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
             : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
         if ($normalizedRole === 'kasir') {
-            redirect('/penjualan/create');
+            $selectedDate = $_GET['tanggal_akhir'] ?? $_GET['tanggal_awal'] ?? '';
+            redirect('/penjualan/create?tanggal=' . rawurlencode((string)$selectedDate));
         }
 
         $tanggal_awal_input = isset($_GET['tanggal_awal']) ? trim($_GET['tanggal_awal']) : '';
@@ -99,12 +133,13 @@ class PenjualanController {
         $barang = $this->barangModel->getAll();
         $notaConfig = $this->notaConfigModel->getConfig();
         
-        // Debug: Log jumlah barang
-        error_log('DEBUG: Total barang di create: ' . count($barang));
-        if (count($barang) > 0) {
-            error_log('DEBUG: Sample barang: ' . json_encode($barang[0]));
+        try {
+            $tanggal_default = transactionDate($_GET['tanggal'] ?? $_GET['tanggal_akhir'] ?? $_GET['tanggal_awal'] ?? '');
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['error'] = $e->getMessage();
+            $tanggal_default = date('Y-m-d');
         }
-        
+
         require_once __DIR__ . '/../views/penjualan/create.php';
     }
 
@@ -118,9 +153,10 @@ class PenjualanController {
                     if (!empty($item['id_barang'])) {
                         $items[] = [
                             'id_barang' => $item['id_barang'],
+                            'satuan' => trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs',
                             'jumlah' => (int)$item['jumlah'],
-                            'harga_satuan' => (float)$item['harga_satuan'],
-                            'diskon' => (float)($item['diskon'] ?? 0)
+                            'harga_satuan' => $this->normalizeMoneyValue($item['harga_satuan'] ?? 0),
+                            'diskon' => $this->normalizeMoneyValue($item['diskon'] ?? 0)
                         ];
                     }
                 }
@@ -132,14 +168,16 @@ class PenjualanController {
             }
 
             // Gunakan tanggal input manual, fallback ke hari ini
-            $tanggal_input = isset($_POST['tanggal']) ? trim($_POST['tanggal']) : '';
-            if ($tanggal_input === '') {
-                $tanggal_input = date('Y-m-d');
+            try {
+                $tanggal_input = transactionDate($_POST['tanggal'] ?? '');
+            } catch (InvalidArgumentException $e) {
+                $_SESSION['error'] = $e->getMessage();
+                redirect('/penjualan/create');
             }
 
             $data = [
                 'items' => $items,
-                'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
+                'uang_diberikan' => $this->normalizeMoneyValue($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => $_POST['keterangan'] ?? '',
                 'id_user' => $_SESSION['user_id'] ?? null,
@@ -153,7 +191,7 @@ class PenjualanController {
             if ($ada_hutang) {
                 $data['hutang'] = [
                     'nama_penghutang' => $_POST['nama_penghutang'] ?? '',
-                    'jumlah_hutang' => (float)($_POST['jumlah_hutang'] ?? 0),
+                    'jumlah_hutang' => $this->normalizeMoneyValue($_POST['jumlah_hutang'] ?? 0),
                     'jatuh_tempo' => $_POST['jatuh_tempo'] ?? ''
                 ];
             }
@@ -161,19 +199,21 @@ class PenjualanController {
             $result = $this->model->create($data);
             
             if ($result['success']) {
+                $redirectUrl = '/penjualan?tanggal_awal=' . rawurlencode($tanggal_input) . '&tanggal_akhir=' . rawurlencode($tanggal_input);
+                $_SESSION['success'] = 'Penjualan tanggal ' . $tanggal_input . ' berhasil disimpan.';
+
                 $normalizedRole = class_exists('PermissionGate')
                     ? PermissionGate::normalizeRole((string)($_SESSION['role'] ?? 'kasir'))
                     : strtolower(trim((string)($_SESSION['role'] ?? 'kasir')));
 
                 if ($normalizedRole === 'kasir') {
-                    redirect('/penjualan/create?created=1');
+                    redirect('/penjualan/create?created=1&tanggal=' . rawurlencode($tanggal_input));
                 }
 
-                $_SESSION['success'] = 'Penjualan berhasil disimpan.';
-                redirect('/penjualan');
+                redirect($redirectUrl);
             } else {
                 $_SESSION['error'] = $result['message'];
-                redirect('/penjualan/create');
+                redirect('/penjualan/create?tanggal=' . rawurlencode($tanggal_input));
             }
         }
     }
@@ -226,6 +266,7 @@ class PenjualanController {
                     if (!empty($item['id_barang'])) {
                         $items[] = [
                             'id_barang' => $item['id_barang'],
+                            'satuan' => trim((string)($item['satuan'] ?? 'pcs')) ?: 'pcs',
                             'jumlah' => (int)$item['jumlah'],
                             'harga_satuan' => (float)$item['harga_satuan'],
                             'diskon' => (float)($item['diskon'] ?? 0)
@@ -240,14 +281,16 @@ class PenjualanController {
             }
 
             // Gunakan tanggal input manual, fallback ke hari ini
-            $tanggal_input = isset($_POST['tanggal']) ? trim($_POST['tanggal']) : '';
-            if ($tanggal_input === '') {
-                $tanggal_input = date('Y-m-d');
+            try {
+                $tanggal_input = transactionDate($_POST['tanggal'] ?? '');
+            } catch (InvalidArgumentException $e) {
+                $_SESSION['error'] = $e->getMessage();
+                redirect('/penjualan/edit/' . $id);
             }
 
             $data = [
                 'items' => $items,
-                'uang_diberikan' => (float)($_POST['uang_diberikan'] ?? 0),
+                'uang_diberikan' => $this->normalizeMoneyValue($_POST['uang_diberikan'] ?? 0),
                 'nama_pembeli' => $_POST['nama_pembeli'] ?? '',
                 'keterangan' => $_POST['keterangan'] ?? '',
                 'id_user' => $_SESSION['user_id'] ?? null,
@@ -261,7 +304,7 @@ class PenjualanController {
             if ($ada_hutang) {
                 $data['hutang'] = [
                     'nama_penghutang' => $_POST['nama_penghutang'] ?? '',
-                    'jumlah_hutang' => (float)($_POST['jumlah_hutang'] ?? 0),
+                    'jumlah_hutang' => $this->normalizeMoneyValue($_POST['jumlah_hutang'] ?? 0),
                     'jatuh_tempo' => $_POST['jatuh_tempo'] ?? ''
                 ];
             }
@@ -270,7 +313,7 @@ class PenjualanController {
             
             if ($result['success']) {
                 $_SESSION['success'] = $result['message'];
-                redirect('/penjualan');
+                redirect('/penjualan?tanggal_awal=' . rawurlencode($tanggal_input) . '&tanggal_akhir=' . rawurlencode($tanggal_input));
             } else {
                 $_SESSION['error'] = $result['message'];
                 redirect('/penjualan/edit/' . $id);

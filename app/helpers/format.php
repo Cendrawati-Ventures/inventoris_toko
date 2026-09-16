@@ -38,3 +38,15 @@ function alert($message, $type = 'success') {
         <span class="block sm:inline">' . htmlspecialchars($message) . '</span>
     </div>';
 }
+
+// Stock is stored in the unit whose conversion factor equals one.
+function satuanDasarBarang(array $barang): string {
+    $units = $barang['satuan_detail'] ?? [];
+    if (is_string($units)) $units = json_decode($units, true) ?: [];
+    foreach ($units as $unit) {
+        if ((float)($unit['nilai'] ?? $unit['nilai_satuan'] ?? 1) === 1.0) {
+            return (string)($unit['satuan'] ?? $barang['satuan'] ?? 'pcs');
+        }
+    }
+    return (string)($barang['satuan'] ?? 'pcs');
+}

@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . "/../helpers/money.php";
+
 class ApiController {
     private $barang;
 
@@ -62,6 +64,18 @@ class ApiController {
         $nama = trim($_POST['nama_barang'] ?? '');
         $idKategori = $_POST['id_kategori'] ?? null;
         $satuan = trim($_POST['satuan'] ?? 'pcs');
+        $satuanDetail = $_POST['satuan_detail'] ?? [];
+        if (is_string($satuanDetail) && $satuanDetail !== '') {
+            $decoded = json_decode($satuanDetail, true);
+            if (is_array($decoded)) {
+                $satuanDetail = $decoded;
+            }
+        }
+        $unitError = $this->barang->validateUnitDefinitions(is_array($satuanDetail) ? $satuanDetail : []);
+        if ($unitError !== null) {
+            echo json_encode(['success' => false, 'message' => $unitError]);
+            return;
+        }
         $hargaBeli = $this->parseNumberInput($_POST['harga_beli'] ?? null);
         $hargaJual = $this->parseNumberInput($_POST['harga_jual'] ?? null);
         $stok = (int)($_POST['stok'] ?? 0);
@@ -80,9 +94,22 @@ class ApiController {
             return;
         }
 
-        if ($stok < 1) {
-            echo json_encode(['success' => false, 'message' => 'Jumlah stok minimal 1']);
+        if ($stok < 0) {
+            echo json_encode(['success' => false, 'message' => 'Stok awal tidak boleh negatif']);
             return;
+        }
+
+        $kode = trim((string)($_POST['kode_barang'] ?? ''));
+        if ($kode === '' || $this->barang->existsByKode($kode)) {
+            echo json_encode(['success' => false, 'message' => 'Kode barang wajib diisi dan belum digunakan.']);
+            return;
+        }
+        foreach ((array)$satuanDetail as $unit) {
+            if (!is_array($unit) || !isset($unit['harga_beli'], $unit['harga_jual'])
+                || (float)$unit['harga_beli'] < 0 || (float)$unit['harga_jual'] <= (float)$unit['harga_beli']) {
+                echo json_encode(['success' => false, 'message' => 'Harga jual setiap satuan harus lebih tinggi dari harga beli.']);
+                return;
+            }
         }
 
         $result = $this->barang->createAndReturn([
@@ -94,7 +121,8 @@ class ApiController {
             'harga_jual' => $hargaJual,
             'stok' => $stok,
             'tanggal_expired' => $tanggalExpired,
-            'stok_updated_by' => $_SESSION['user_id'] ?? null
+            'stok_updated_by' => $_SESSION['user_id'] ?? null,
+            'satuan_detail' => $satuanDetail,
         ]);
 
         if ($result['success']) {
@@ -135,7 +163,14 @@ class ApiController {
         }
 
         $updatedBy = $_SESSION['user_id'] ?? null;
-        $ok = $this->barang->updateStok($idBarang, $jumlahTambah, $updatedBy);
+        try {
+            $selectedUnit = trim((string)($_POST['satuan'] ?? $this->barang->getBaseUnitLabel($barang)));
+            $baseQty = $this->barang->convertQtyToBaseById($idBarang, $selectedUnit, $jumlahTambah);
+        } catch (InvalidArgumentException $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            return;
+        }
+        $ok = $this->barang->updateStok($idBarang, $baseQty, $updatedBy);
         if (!$ok) {
             echo json_encode([
                 'success' => false,
@@ -270,14 +305,6 @@ class ApiController {
     }
 
     private function parseNumberInput($value): ?float {
-        $raw = trim((string)$value);
-        if ($raw === '') {
-            return null;
-        }
-        $normalized = preg_replace('/[^\d]/', '', $raw);
-        if ($normalized === null || $normalized === '') {
-            return null;
-        }
-        return (float)$normalized;
+        return parseMoneyInput($value);
     }
 }
