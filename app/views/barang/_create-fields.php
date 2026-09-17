@@ -35,7 +35,7 @@
 
             <div class="mb-3 grid grid-cols-6 gap-2 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 md:grid-cols-[1.15fr_0.8fr_1.2fr_1.2fr_0.9fr_0.45fr]">
                 <span class="truncate">Satuan</span>
-                <span class="truncate">Isi (unit dasar)</span>
+                <span class="truncate">Isi</span>
                 <span class="truncate">Harga Beli</span>
                 <span class="truncate">Harga Jual</span>
                 <span class="truncate">Keuntungan</span>

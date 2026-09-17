@@ -11,10 +11,11 @@ $conn->exec('CREATE TABLE catatan_operasional (id_catatan INTEGER PRIMARY KEY AU
 $conn->exec("INSERT INTO catatan_operasional(id_user,nama_kasir,catatan) VALUES(1,'Kasir Lama','Catatan sebelum field uang')");
 $model = new CatatanOperasional($conn);
 verify((float)$model->listPage(null,1)[0]['uang_dikeluarkan'] === 0.0, 'Migration preserves old notes with zero amount');
+verify($model->listPage(null,1)[0]['uang_di_kasir'] === null, 'Old notes retain unknown cash rather than a fabricated zero');
 $conn->exec('DELETE FROM catatan_operasional');
 $model = new CatatanOperasional($conn); // Migration is safe to repeat.
 $model->create(1, 'Kasir Satu', "  Kertas struk habis.\nPerlu dibeli.  ");
-$model->create(2, 'Kasir Dua', '<script>alert(1)</script>', CatatanOperasional::expenseAmount('60.000'));
+$model->create(2, 'Kasir Dua', '<script>alert(1)</script>', CatatanOperasional::expenseAmount('60.000'), CatatanOperasional::cashAmount('500.000'));
 verify((float)$model->listPage(2,1)[0]['uang_dikeluarkan'] === 60000.0, 'Expense persists as 60000, not 6000000');
 verify(CatatanOperasional::expenseAmount('60000.00') === 60000.0, 'Database decimal amount is read correctly');
 verify(CatatanOperasional::expenseAmount('60.000,50') === 60000.5, 'Decimal expense accepted');
@@ -23,6 +24,15 @@ foreach (['-1', 'abc', '10000000000', []] as $invalid) {
     try {
         CatatanOperasional::expenseAmount($invalid);
         throw new RuntimeException('Invalid expense accepted');
+    } catch (InvalidArgumentException $e) {}
+}
+verify((float)$model->listPage(2,1)[0]['uang_di_kasir'] === 500000.0, 'Cash balance persists separately from expense');
+verify(CatatanOperasional::cashAmount('0') === 0.0, 'Explicit zero cash is valid');
+verify(CatatanOperasional::cashAmount('500000.00') === 500000.0, 'Cash database decimal is parsed correctly');
+foreach (['', null, '-1', 'invalid', [], '10000000000'] as $invalidCash) {
+    try {
+        CatatanOperasional::cashAmount($invalidCash);
+        throw new RuntimeException('Missing or invalid cash accepted');
     } catch (InvalidArgumentException $e) {}
 }
 verify($model->count() === 2, 'Admin sees both notes');
@@ -60,7 +70,26 @@ ob_start(); eval('?>' . $source); $html = ob_get_clean();
 verify(strpos($html, '&lt;script&gt;') !== false && strpos($html, '<script>alert') === false, 'Notes escaped in admin view');
 verify(strpos($html, '<textarea') === false, 'Admin view is read-only');
 verify(strpos($html, 'Rp 60.000') !== false, 'Admin sees expense directly in note card');
-$isAdmin = false; $draft = 'Beli kertas struk'; $expenseDraft = '60.000';
+verify(strpos($html, 'Rp 500.000') !== false, 'Admin sees recorded cash without subtracting expense again');
+verify(strpos($html, 'Belum dicatat') !== false, 'Unknown historical cash shown explicitly');
+$dateDraft = '2026-09-16';
+$isAdmin = false; $draft = 'Beli kertas struk'; $expenseDraft = '60.000'; $cashDraft = '500.000';
 ob_start(); eval('?>' . $source); $cashierHtml = ob_get_clean();
 verify(strpos($cashierHtml, 'name="uang_dikeluarkan"') !== false && strpos($cashierHtml, 'value="60.000"') !== false, 'Cashier expense field restores draft');
-echo "PASS: persistence, owner isolation, admin listing, pagination, validation, role guards, CSRF, HTML escaping, expense amounts and migration\n";
+verify(strpos($cashierHtml, 'name="uang_di_kasir" required') !== false && strpos($cashierHtml, 'value="500.000"') !== false, 'Required cashier balance restores draft');
+verify(strpos($cashierHtml, 'name="tanggal" required value="2026-09-16"') !== false, 'Selected note date survives validation errors');
+verify(strpos($cashierHtml, 'dilihat admin') === false, 'Cashier description does not mention admin visibility');
+$model->create(1, 'Kasir Satu', 'Catatan kemarin', 60000, 500000, '2026-09-16');
+$backdated = $model->listPage(1, 1)[0];
+verify($backdated['tanggal'] === '2026-09-16', 'Backdated note keeps selected date');
+verify(substr($backdated['created_at'], 0, 10) === gmdate('Y-m-d'), 'Recording timestamp remains independent of note date');
+$notes = [$backdated];
+ob_start(); eval('?>' . $source); $datedHtml = ob_get_clean();
+verify(strpos($datedHtml, 'Tanggal: 16 September 2026') !== false, 'History displays selected date');
+foreach (['', null, [], '2026-02-30', '16-09-2026'] as $invalidDate) {
+    try {
+        CatatanOperasional::noteDate($invalidDate);
+        throw new RuntimeException('Invalid note date accepted');
+    } catch (InvalidArgumentException $e) {}
+}
+echo "PASS: persistence, owner isolation, admin listing, pagination, validation, role guards, CSRF, HTML escaping, expense amounts, cash balance and migration\n";

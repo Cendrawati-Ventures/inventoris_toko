@@ -154,8 +154,8 @@ function addSatuanDetailRow(rowData = { satuan: SATUAN_OPTIONS[0] || '', harga_b
         <div data-row-body class="grid grid-cols-1 md:grid-cols-[1.15fr_0.8fr_1.2fr_1.2fr_0.9fr_0.45fr] gap-2 p-3">
             ${buildSatuanSelect(selectedSatuan)}
             <input type="number" min="1" step="1" data-field="nilai" placeholder="1" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value="${rowData.nilai || 1}">
-            <input type="text" data-field="harga_beli" placeholder="Harga beli" data-price-input class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value="${formatThousandID(rowData.harga_beli || 0)}">
-            <input type="text" data-field="harga_jual" placeholder="Harga jual" data-price-input class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value="${formatThousandID(rowData.harga_jual || 0)}">
+            <input type="text" data-field="harga_beli" placeholder="Harga beli" data-price-input inputmode="decimal" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value="${formatThousandID(rowData.harga_beli || 0)}">
+            <input type="text" data-field="harga_jual" placeholder="Harga jual" data-price-input inputmode="decimal" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value="${formatThousandID(rowData.harga_jual || 0)}">
             <div class="flex h-[46px] items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 px-3 text-center shadow-sm">
                 <span data-field="profit_percent" class="text-sm font-semibold text-emerald-700">0.00%</span>
             </div>
@@ -175,7 +175,7 @@ function addSatuanDetailRow(rowData = { satuan: SATUAN_OPTIONS[0] || '', harga_b
 
     [beliInput, jualInput].forEach((input) => {
         input.addEventListener('input', () => {
-            input.value = formatThousandID(input.value);
+            input.value = MoneyID.formatInput(input.value);
             syncSatuanDetailState();
         });
     });
@@ -211,7 +211,7 @@ function bindPriceInputFormatting(formId) {
 
     priceInputs.forEach((input) => {
         input.addEventListener('input', () => {
-            input.value = formatThousandID(input.value);
+            input.value = MoneyID.formatInput(input.value);
             const caretPosition = input.value.length;
             requestAnimationFrame(() => {
                 try {
