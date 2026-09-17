@@ -16,6 +16,15 @@
     }
     const money = {
         parse,
+        formatInput(value) {
+            // In an Indonesian input, dots already inserted while typing are grouping marks.
+            // Parsing '1.5000' as a database decimal would incorrectly turn 15000 into 1.5.
+            const text = String(value ?? '');
+            if (!/^-?[\d.]*([,]\d{0,2})?$/.test(text)) return text;
+            const parts = text.replace(/\./g, '').split(',');
+            parts[0] = parts[0].replace(/^(-?)0+(?=\d)/, '$1').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return parts.join(',');
+        },
         format(value) {
             if (String(value ?? '').trim() === '') return '';
             return parse(value).toLocaleString('id-ID', { maximumFractionDigits: 2 });

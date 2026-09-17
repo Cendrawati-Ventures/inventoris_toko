@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../helpers/money.php';
+require_once __DIR__ . '/../helpers/transaction_date.php';
 
 class CatatanOperasional {
     private PDO $conn;
@@ -14,11 +15,15 @@ class CatatanOperasional {
             catatan TEXT NOT NULL,
             uang_dikeluarkan NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (uang_dikeluarkan >= 0),
             uang_di_kasir NUMERIC(12,2) NULL CHECK (uang_di_kasir >= 0),
+            tanggal DATE NULL,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )");
         // Upgrade existing notes without discarding their content.
         if ($this->conn->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
             $columns = $this->conn->query('PRAGMA table_info(catatan_operasional)')->fetchAll(PDO::FETCH_ASSOC);
+            if (!in_array('tanggal', array_column($columns, 'name'), true)) {
+                $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN tanggal DATE NULL');
+            }
             if (!in_array('uang_di_kasir', array_column($columns, 'name'), true)) {
                 $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN uang_di_kasir NUMERIC(12,2) NULL CHECK (uang_di_kasir >= 0)');
             }
@@ -26,6 +31,7 @@ class CatatanOperasional {
                 $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN uang_dikeluarkan NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (uang_dikeluarkan >= 0)');
             }
         } else {
+            $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN IF NOT EXISTS tanggal DATE NULL');
             $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN IF NOT EXISTS uang_di_kasir NUMERIC(12,2) NULL CHECK (uang_di_kasir >= 0)');
             $this->conn->exec('ALTER TABLE catatan_operasional ADD COLUMN IF NOT EXISTS uang_dikeluarkan NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (uang_dikeluarkan >= 0)');
         }
@@ -54,12 +60,24 @@ class CatatanOperasional {
         return self::expenseAmount($value, 'Uang di kasir');
     }
 
-    public function create(int $userId, string $nama, string $catatan, float $uangDikeluarkan = 0, ?float $uangDiKasir = null): void {
+    public static function noteDate($value): string {
+        if (!is_string($value) || trim($value) === '') {
+            throw new InvalidArgumentException('Tanggal catatan wajib diisi.');
+        }
+        try {
+            return transactionDate($value);
+        } catch (InvalidArgumentException $e) {
+            throw new InvalidArgumentException('Tanggal catatan tidak valid.');
+        }
+    }
+
+    public function create(int $userId, string $nama, string $catatan, float $uangDikeluarkan = 0, ?float $uangDiKasir = null, ?string $tanggal = null): void {
         if ($error = self::validate($catatan)) throw new InvalidArgumentException($error);
+        $tanggal = self::noteDate($tanggal ?? date('Y-m-d'));
         $uangDikeluarkan = self::expenseAmount($uangDikeluarkan);
         if ($uangDiKasir !== null) $uangDiKasir = self::cashAmount($uangDiKasir);
-        $stmt = $this->conn->prepare('INSERT INTO catatan_operasional (id_user, nama_kasir, catatan, uang_dikeluarkan, uang_di_kasir) VALUES (:id_user, :nama, :catatan, :uang, :kas)');
-        $stmt->execute(['id_user' => $userId, 'nama' => $nama, 'catatan' => trim($catatan), 'uang' => number_format($uangDikeluarkan, 2, '.', ''), 'kas' => $uangDiKasir === null ? null : number_format($uangDiKasir, 2, '.', '')]);
+        $stmt = $this->conn->prepare('INSERT INTO catatan_operasional (id_user, nama_kasir, catatan, uang_dikeluarkan, uang_di_kasir, tanggal) VALUES (:id_user, :nama, :catatan, :uang, :kas, :tanggal)');
+        $stmt->execute(['tanggal' => $tanggal, 'id_user' => $userId, 'nama' => $nama, 'catatan' => trim($catatan), 'uang' => number_format($uangDikeluarkan, 2, '.', ''), 'kas' => $uangDiKasir === null ? null : number_format($uangDiKasir, 2, '.', '')]);
     }
 
     public function count(?int $userId = null): int {

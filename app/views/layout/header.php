@@ -8,6 +8,69 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/tailwind.css?v=<?= time() ?>">
     <style>
+        /* Use the same two-row navigation layout for every role. */
+        .app-navbar .navbar-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto auto;
+            gap: 0.25rem;
+        }
+        .app-navbar .navbar-brand { min-width: 0; }
+        .app-navbar .navbar-brand > div:last-child { min-width: 0; }
+        .app-navbar .navbar-brand h1 { white-space: nowrap; font-size: 0.875rem; }
+        .app-navbar .navbar-brand > div:first-child { flex-shrink: 0; }
+        .app-navbar .navbar-account > button { gap: 0.375rem; padding: 0.375rem; }
+        .app-navbar .navbar-account .text-left { max-width: 12rem; }
+        .app-navbar .navbar-account .text-left p:first-child {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .app-navbar .navbar-account .dropdown-menu-content p { overflow-wrap: anywhere; }
+        .app-navbar .dropdown-menu-content { z-index: 60; }
+        .app-navbar .nav-item { white-space: nowrap; }
+        .app-navbar a[aria-current="page"],
+        .app-navbar button.is-current {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+            font-weight: 600;
+        }
+        .app-navbar #mobileMenu a[aria-current="page"],
+        .app-navbar .dropdown-menu-content a[aria-current="page"] {
+            background: #f0fdfa; color: #0f766e; box-shadow: none;
+        }
+        .app-navbar button:focus-visible, .app-navbar a:focus-visible {
+            outline: 2px solid currentColor; outline-offset: 3px;
+        }
+        @media (min-width: 640px) {
+            .app-navbar .navbar-layout { gap: 0.75rem; }
+            .app-navbar .navbar-brand h1 { font-size: 1.25rem; }
+            .app-navbar .navbar-account > button { padding: 0.5rem 0.75rem; }
+        }
+        @media (min-width: 1024px) {
+            .app-navbar .navbar-layout {
+                grid-template-columns: minmax(0, 1fr) auto auto;
+                padding-bottom: 0;
+                row-gap: 0.75rem;
+            }
+            .app-navbar .navbar-brand { grid-column: 1; grid-row: 1; }
+            .app-navbar .navbar-notifications { grid-column: 2; grid-row: 1; }
+            .app-navbar .navbar-account { grid-column: 3; grid-row: 1; }
+            .app-navbar .navbar-links {
+                grid-column: 1 / -1; grid-row: 2;
+                gap: 0.375rem;
+                padding: 0.625rem 0;
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            .app-navbar .navbar-links > * { margin-left: 0; flex-shrink: 0; }
+            .app-navbar .navbar-links .nav-item {
+                min-height: 42px; padding: 0.625rem 0.875rem; font-size: 0.875rem;
+            }
+            .app-navbar .navbar-links .nav-item > i:first-child { width: 1rem; text-align: center; }
+        }
+        @media (max-width: 639px) {
+            .app-navbar .navbar-notifications .dropdown-menu-content {
+                position: fixed; top: 4.75rem; right: 1rem !important;
+                width: calc(100vw - 2rem); max-width: 20rem;
+            }
+        }
         /* Mobile menu animation */
         .mobile-menu {
             transition: transform 0.3s ease-in-out;
@@ -168,11 +231,11 @@
     $canManageRolePermissionsMenu = class_exists('PermissionGate') ? PermissionGate::allows($normalizedRole, 'setting.roles.manage') : ($rawRole === 'admin');
     $canViewSettingsMenu = $canViewUsersMenu || $canViewMasterMenu || $canViewNotaMenu || $canViewBackupMenu || $canManageRolePermissionsMenu;
     ?>
-    <nav class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl z-50">
+    <nav aria-label="Navigasi utama" class="app-navbar bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white shadow-2xl z-50">
         <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-3">
+            <div class="navbar-layout flex justify-between items-center py-3">
                 <!-- Logo & Brand -->
-                <a href="/" class="flex items-center space-x-2 sm:space-x-3 group">
+                <a href="/" class="navbar-brand flex items-center space-x-2 sm:space-x-3 group">
                     <div class="bg-white bg-opacity-20 p-1.5 sm:p-2 rounded-lg group-hover:bg-opacity-30 transition">
                         <i class="fas fa-store text-lg sm:text-2xl"></i>
                     </div>
@@ -183,12 +246,12 @@
                 </a>
                 
                 <!-- Mobile Menu Button -->
-                <button type="button" onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
+                <button type="button" id="mobileMenuToggle" aria-label="Buka menu navigasi" aria-controls="mobileMenu" aria-expanded="false" onclick="toggleMobileMenu()" class="navbar-toggle lg:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
                     <i class="fas fa-bars text-2xl"></i>
                 </button>
                 
                 <!-- Desktop Navigation -->
-                <div class="hidden lg:flex items-center space-x-1">
+                <div class="navbar-links hidden lg:flex items-center space-x-1">
                     <a href="<?= $dashboardHref ?>" class="nav-item px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center gap-2">
                         <i class="<?= $dashboardIconClass ?>"></i>
                         <span><?= $dashboardLabel ?></span>
@@ -310,7 +373,7 @@
                 </div>
                 
                 <!-- Operational Notification -->
-                <div class="relative" onclick="toggleDropdown(event, this)">
+                <div class="navbar-notifications relative" onclick="toggleDropdown(event, this)">
                     <button type="button" class="relative inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-white hover:bg-opacity-10 transition" aria-label="Notifikasi Operasional">
                         <i class="fas fa-bell text-sm"></i>
                         <span id="operationalNotifBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">0</span>
@@ -330,14 +393,14 @@
                 </div>
 
                 <!-- User Menu -->
-                <div class="relative" onclick="toggleDropdown(event, this)">
+                <div class="navbar-account relative" onclick="toggleDropdown(event, this)">
                     <button type="button" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white hover:bg-opacity-10 transition">
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                                 <i class="fas fa-user text-sm"></i>
                             </div>
                             <div class="text-left hidden md:block">
-                                <p class="text-sm font-semibold"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
+                                <p class="text-sm font-semibold"><?= htmlspecialchars($_SESSION['nama'] ?? 'User', ENT_QUOTES, 'UTF-8') ?></p>
                                 <p class="text-xs text-teal-100"><?php echo $displayRole; ?></p>
                             </div>
                         </div>
@@ -345,7 +408,7 @@
                     </button>
                     <div class="absolute hidden bg-white text-gray-800 shadow-xl rounded-lg mt-2 w-48 dropdown-menu-content border border-gray-200 overflow-hidden" style="right: 0;">
                         <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                            <p class="font-semibold text-gray-800"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
+                            <p class="font-semibold text-gray-800"><?= htmlspecialchars($_SESSION['nama'] ?? 'User', ENT_QUOTES, 'UTF-8') ?></p>
                             <p class="text-xs text-gray-500 mt-0.5">
                                 <i class="fas fa-circle text-green-500 text-[6px] mr-1"></i>
                                 <?php echo $displayRole; ?>
@@ -368,7 +431,7 @@
             <div class="bg-gradient-to-r from-teal-700 via-teal-600 to-amber-500 text-white p-4 flex justify-between items-center">
                 <div>
                     <h2 class="font-bold text-lg">Menu</h2>
-                    <p class="text-xs text-blue-100"><?php echo $_SESSION['nama'] ?? 'User'; ?></p>
+                    <p class="text-xs text-blue-100"><?= htmlspecialchars($_SESSION['nama'] ?? 'User', ENT_QUOTES, 'UTF-8') ?></p>
                 </div>
                 <button type="button" onclick="toggleMobileMenu()" class="p-2 hover:bg-white hover:bg-opacity-10 rounded-lg">
                     <i class="fas fa-times text-xl"></i>
@@ -697,7 +760,9 @@
             const menu = document.getElementById('mobileMenu');
             const overlay = document.getElementById('mobileMenuOverlay');
             
-            if (menu.classList.contains('closed')) {
+            const opening = menu.classList.contains('closed');
+            document.getElementById('mobileMenuToggle').setAttribute('aria-expanded', String(opening));
+            if (opening) {
                 menu.classList.remove('closed');
                 overlay.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -742,6 +807,29 @@
         }
 
         document.addEventListener('click', () => closeAllDropdowns());
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            closeAllDropdowns();
+            if (!document.getElementById('mobileMenu').classList.contains('closed')) {
+                toggleMobileMenu();
+                document.getElementById('mobileMenuToggle').focus();
+            }
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024 && !document.getElementById('mobileMenu').classList.contains('closed')) {
+                toggleMobileMenu();
+            }
+        });
+        document.querySelectorAll('.app-navbar a[href]').forEach(link => {
+            const path = window.location.pathname.replace(/\/$/, '') || '/';
+            const href = link.getAttribute('href');
+            if (href === path || (href !== '/' && path.startsWith(href + '/'))) {
+                if (link.classList.contains('navbar-brand')) return;
+                link.setAttribute('aria-current', 'page');
+                const menu = link.closest('.dropdown-menu-content');
+                if (menu) menu.parentElement.querySelector('button').classList.add('is-current');
+            }
+        });
 
         // Stagger reveal for major cards/sections
         document.querySelectorAll('.app-reveal').forEach((el, idx) => {

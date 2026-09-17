@@ -29,10 +29,11 @@ class CatatanController {
         $page = min($pages, max(1, (int)($_GET['page'] ?? 1)));
         $notes = $model->listPage($userId, $page);
         if (empty($_SESSION['catatan_csrf'])) $_SESSION['catatan_csrf'] = bin2hex(random_bytes(32));
+        $dateDraft = $_SESSION['catatan_date_draft'] ?? date('Y-m-d');
         $draft = $_SESSION['catatan_draft'] ?? '';
         $cashDraft = $_SESSION['catatan_cash_draft'] ?? '';
         $expenseDraft = $_SESSION['catatan_expense_draft'] ?? '0';
-        unset($_SESSION['catatan_draft'], $_SESSION['catatan_expense_draft'], $_SESSION['catatan_cash_draft']);
+        unset($_SESSION['catatan_date_draft'], $_SESSION['catatan_draft'], $_SESSION['catatan_expense_draft'], $_SESSION['catatan_cash_draft']);
         require __DIR__ . '/../views/catatan/index.php';
     }
 
@@ -51,11 +52,14 @@ class CatatanController {
         }
         $catatan = is_string($_POST['catatan'] ?? null) ? trim($_POST['catatan']) : '';
         $_SESSION['catatan_draft'] = $catatan;
+        $dateInput = $_POST['tanggal'] ?? '';
+        $_SESSION['catatan_date_draft'] = is_string($dateInput) ? $dateInput : '';
         $cashInput = $_POST['uang_di_kasir'] ?? '';
         $_SESSION['catatan_cash_draft'] = is_scalar($cashInput) ? (string)$cashInput : '';
         $expenseInput = $_POST['uang_dikeluarkan'] ?? '';
         $_SESSION['catatan_expense_draft'] = is_scalar($expenseInput) ? (string)$expenseInput : '';
         try {
+            $tanggal = CatatanOperasional::noteDate($dateInput);
             $expense = CatatanOperasional::expenseAmount($expenseInput);
             $cash = CatatanOperasional::cashAmount($cashInput);
         } catch (InvalidArgumentException $e) {
@@ -67,15 +71,15 @@ class CatatanController {
             redirect('/catatan-operasional');
         }
         try {
-            (new CatatanOperasional())->create((int)$_SESSION['user_id'], (string)($_SESSION['nama'] ?? $_SESSION['username'] ?? 'Kasir'), $catatan, $expense, $cash);
+            (new CatatanOperasional())->create((int)$_SESSION['user_id'], (string)($_SESSION['nama'] ?? $_SESSION['username'] ?? 'Kasir'), $catatan, $expense, $cash, $tanggal);
         } catch (Exception $e) {
             error_log('Simpan catatan operasional gagal: ' . $e->getMessage());
             $_SESSION['error'] = 'Catatan belum tersimpan. Silakan coba lagi.';
             redirect('/catatan-operasional');
         }
-        unset($_SESSION['catatan_draft'], $_SESSION['catatan_expense_draft'], $_SESSION['catatan_cash_draft']);
+        unset($_SESSION['catatan_date_draft'], $_SESSION['catatan_draft'], $_SESSION['catatan_expense_draft'], $_SESSION['catatan_cash_draft']);
         $_SESSION['catatan_csrf'] = bin2hex(random_bytes(32));
-        $_SESSION['success'] = 'Catatan operasional tersimpan dan dapat dilihat admin.';
+        $_SESSION['success'] = 'Catatan operasional berhasil disimpan.';
         redirect('/catatan-operasional');
     }
 }
