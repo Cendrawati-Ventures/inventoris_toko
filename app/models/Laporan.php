@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/StokMutasi.php';
+require_once __DIR__ . '/../helpers/inventory_value.php';
 require_once __DIR__ . '/../helpers/transaction_date.php';
 
 class Laporan {
@@ -91,34 +92,15 @@ class Laporan {
         $query = "SELECT b.*, k.nama_kategori FROM barang b LEFT JOIN kategori k ON b.id_kategori = k.id_kategori ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
-        return $stmt->fetchAll();
+        return array_map('inventoryBasePrices', $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function getStokTotals() {
-        $query = "SELECT
-                    COALESCE(SUM(b.harga_beli * b.stok), 0) as total_harga_beli,
-                    COALESCE(SUM(b.harga_jual * b.stok), 0) as total_harga_jual,
-                    COALESCE(SUM(b.stok), 0) as total_stok
-                  FROM barang b";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetch();
+        return inventoryTotals($this->getLaporanStok());
     }
 
     public function getStokTotalsByKategori() {
-        $query = "SELECT
-                    k.id_kategori,
-                    k.nama_kategori,
-                    COALESCE(SUM(b.harga_beli * b.stok), 0) as total_harga_beli,
-                    COALESCE(SUM(b.harga_jual * b.stok), 0) as total_harga_jual,
-                    COALESCE(SUM(b.stok), 0) as total_stok
-                  FROM barang b
-                  LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
-                  GROUP BY k.id_kategori, k.nama_kategori
-                  ORDER BY k.nama_kategori ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return inventoryCategoryTotals($this->getLaporanStok());
     }
 
     public function getLaporanStokRange($start, $end) {
@@ -145,7 +127,7 @@ class Laporan {
                   ORDER BY b.nama_barang ASC";
         $stmt = $this->conn->prepare($query);
         $stmt->execute(['start' => $start, 'end' => $end]);
-        return $stmt->fetchAll();
+        return array_map('inventoryBasePrices', $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
         public function getLaporanKeuntungan($start, $end) {
@@ -235,7 +217,7 @@ class Laporan {
         $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
 
         // Total Barang Terjual Hari Ini
-        $queryBarangTerjual = "SELECT COALESCE(SUM(dp.jumlah), 0) as total 
+        $queryBarangTerjual = "SELECT COALESCE(SUM(dp.jumlah * COALESCE(dp.nilai_satuan, 1)), 0) as total
                                FROM detail_penjualan dp
                                JOIN penjualan p ON dp.id_penjualan = p.id_penjualan
                                WHERE DATE(p.tanggal) BETWEEN :start_date AND :today";
@@ -245,20 +227,9 @@ class Laporan {
         $stmtBarangTerjual->execute();
         $barangTerjualHariIni = $stmtBarangTerjual->fetch()['total'] ?? 0;
 
-        // Total Stok
-        $queryStok = "SELECT SUM(stok) as total FROM barang";
-        $stmtStok = $this->conn->prepare($queryStok);
-        $stmtStok->execute();
-        $totalStok = $stmtStok->fetch()['total'] ?? 0;
-
-        // Total Nilai Persediaan (Harga Beli & Jual)
-        $queryNilaiPersediaan = "SELECT
-                        COALESCE(SUM(harga_beli * stok), 0) as total_harga_beli,
-                        COALESCE(SUM(harga_jual * stok), 0) as total_harga_jual
-                     FROM barang";
-        $stmtNilaiPersediaan = $this->conn->prepare($queryNilaiPersediaan);
-        $stmtNilaiPersediaan->execute();
-        $nilaiPersediaan = $stmtNilaiPersediaan->fetch() ?: [];
+        // Values use base-unit prices, shared with the stock report.
+        $nilaiPersediaan = $this->getStokTotals();
+        $totalStok = $nilaiPersediaan['total_stok'];
 
         // Total Penjualan Hari Ini
         $queryPenjualan = "SELECT SUM(total_harga) as total FROM penjualan WHERE DATE(tanggal) BETWEEN :start_date AND :today";
