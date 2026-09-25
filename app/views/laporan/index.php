@@ -249,7 +249,7 @@ $chartTitle = 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-teal-700">Nilai Modal Stok</p>
                     <p class="text-2xl font-black text-teal-800 mt-2"><?= formatRupiah($stats['total_harga_beli']) ?></p>
-                    <p class="text-xs text-slate-500 mt-2">Nilai modal dari stok aktif</p>
+                    <p class="text-xs text-slate-500 mt-2">Stok saat ini × harga beli satuan dasar</p>
                 </div>
                 <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
                     <i class="fas fa-receipt"></i>
@@ -262,7 +262,7 @@ $chartTitle = 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-green-700">Potensi Nilai Jual Stok</p>
                     <p class="text-2xl font-black text-green-800 mt-2"><?= formatRupiah($stats['total_harga_jual']) ?></p>
-                    <p class="text-xs text-slate-500 mt-2">Total potensi nilai jual stok</p>
+                    <p class="text-xs text-slate-500 mt-2">Stok saat ini × harga jual satuan dasar</p>
                 </div>
                 <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-green-700">
                     <i class="fas fa-tags"></i>
@@ -275,7 +275,7 @@ $chartTitle = 'Grafik Penjualan ' . $trendDays . ' Hari Terakhir';
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Total Stok Barang</p>
                     <p class="text-2xl font-black text-sky-800 mt-2"><?= number_format($stats['total_stok'], 0, ',', '.') ?></p>
-                    <p class="text-xs text-slate-500 mt-2">Total unit barang tersedia</p>
+                    <p class="text-xs text-slate-500 mt-2">Jumlah stok dalam satuan dasar</p>
                 </div>
                 <span class="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
                     <i class="fas fa-cubes"></i>

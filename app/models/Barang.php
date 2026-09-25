@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../helpers/inventory_value.php';
 require_once __DIR__ . '/AuditTrail.php';
 
 class Barang {
@@ -263,6 +264,7 @@ class Barang {
         foreach ($results as &$row) {
             $row['nama_barang'] = trim($row['nama_barang']);
             $row['kode_barang'] = trim($row['kode_barang']);
+            $row = inventoryBasePrices($row);
             $row['satuan_detail'] = $this->decodeSatuanDetail($row['satuan_detail'] ?? []);
             if (empty($row['satuan_detail']) && !empty($row['satuan'])) {
                 $row['satuan_detail'] = [[
@@ -301,6 +303,7 @@ class Barang {
         foreach ($results as &$row) {
             $row['nama_barang'] = trim($row['nama_barang']);
             $row['kode_barang'] = trim($row['kode_barang']);
+            $row = inventoryBasePrices($row);
             $row['satuan_detail'] = $this->decodeSatuanDetail($row['satuan_detail'] ?? []);
         }
         return $results;
@@ -323,30 +326,11 @@ class Barang {
     }
 
     public function getTotals() {
-                $query = "SELECT
-                                        COALESCE(SUM(harga_beli * stok), 0) as total_harga_beli,
-                                        COALESCE(SUM(harga_jual * stok), 0) as total_harga_jual,
-                                        COALESCE(SUM(stok), 0) as total_stok
-                                    FROM " . $this->table;
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetch();
+        return inventoryTotals($this->getAll());
     }
 
     public function getTotalsByKategori() {
-        $query = "SELECT
-                    k.id_kategori,
-                    k.nama_kategori,
-                    COALESCE(SUM(b.harga_beli * b.stok), 0) as total_harga_beli,
-                    COALESCE(SUM(b.harga_jual * b.stok), 0) as total_harga_jual,
-                    COALESCE(SUM(b.stok), 0) as total_stok
-                  FROM " . $this->table . " b
-                  LEFT JOIN kategori k ON b.id_kategori = k.id_kategori
-                  GROUP BY k.id_kategori, k.nama_kategori
-                  ORDER BY k.nama_kategori ASC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll();
+        return inventoryCategoryTotals($this->getAll());
     }
 
     public function getById($id) {
@@ -636,6 +620,7 @@ class Barang {
         
         // Trim spasi
         foreach ($results as &$row) {
+            $row = inventoryBasePrices($row);
             $row['nama_barang'] = trim($row['nama_barang']);
             $row['kode_barang'] = trim($row['kode_barang']);
         }

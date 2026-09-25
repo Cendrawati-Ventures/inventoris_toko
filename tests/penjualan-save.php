@@ -53,6 +53,19 @@ check(count($model->getByDateRange($day, $day)) === 1, 'Sale appears in sales li
 check(count($report->getLaporanPenjualan($day, $day)) === 1, 'Item appears in sales report');
 check($report->getLaporanPenjualan($day, $day)[0]['satuan'] === 'dus', 'Report shows sold unit');
 check($stock->getSaldoAt(1, $day) === 18.0, 'Stock decreases by converted base quantity');
+$conn->exec("UPDATE barang SET satuan = 'dus', harga_beli = 12000, harga_jual = 24000 WHERE id_barang = 1");
+$dashboard = $report->getDashboardStats();
+check((float)$dashboard['total_stok'] === 18.0, 'Dashboard keeps base stock instead of multiplying packaging again');
+check((float)$dashboard['total_harga_beli'] === 18000.0, 'Dashboard uses base purchase price instead of stale pack price');
+check((float)$dashboard['total_harga_jual'] === 36000.0, 'Dashboard values stock at base selling price');
+check((float)$dashboard['barang_terjual_hari_ini'] === 12.0, 'Dashboard sold quantity converts one box to twelve base units');
+$barangReport = modelWithConnection(Barang::class, $conn);
+check($barangReport->getTotals() === $report->getStokTotals(), 'Stock listing and dashboard totals match');
+check($barangReport->getTotalsByKategori() === $report->getStokTotalsByKategori(), 'Category totals agree');
+$rangeStock = $report->getLaporanStokRange($day, $day)[0];
+check((float)$rangeStock['harga_beli'] === 1000.0 && $rangeStock['satuan'] === 'pcs', 'Historical stock report uses base prices and labels');
+$conn->exec("UPDATE barang SET satuan = 'pcs', harga_beli = 1000, harga_jual = 2000 WHERE id_barang = 1");
+
 check((float)$model->getDetailById($result['id'])[0]['harga_beli_item'] === 12000.0, 'Pack sale snapshot uses cost per pack');
 $data['items'][] = $data['items'][0];
 $result = $model->create($data);
