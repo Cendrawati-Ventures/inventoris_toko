@@ -96,12 +96,12 @@ $result = $model->create($data);
 check($result['success'], 'Ten bottles from a twelve-bottle pack save');
 $detail = $model->getDetailById($result['id'])[0];
 check($detail['satuan'] === 'botol' && (int)$detail['jumlah'] === 10, 'Detail retains ten bottles, not master unit pack');
-check(abs((float)$detail['harga_beli_item'] - 3833.33) < 0.01, 'Bottle cost uses pack purchase price divided by twelve');
-check(abs((float)$detail['laba_item'] - 11666.70) < 0.01, 'Bottle profit is 11666.70, not minus 410000');
+check(abs((float)$detail['harga_beli_item'] - 4000) < 0.01, 'Bottle profit uses configured bottle purchase price');
+check(abs((float)$detail['laba_item'] - 10000) < 0.01, 'Bottle profit is 10000 using the configured unit cost');
 $updated = $model->update($result['id'], $data);
 check($updated['success'], 'Editing bottle sale succeeds');
 $detail = $model->getDetailById($result['id'])[0];
-check($detail['satuan'] === 'botol' && abs((float)$detail['laba_item'] - 11666.70) < 0.01, 'Editing preserves unit and cost');
+check($detail['satuan'] === 'botol' && abs((float)$detail['laba_item'] - 10000) < 0.01, 'Editing preserves unit and cost');
 check($stock->getSaldoAt(2, $day) === 2.0, 'Editing restores and consumes converted stock correctly');
 
 $packData = $data;
@@ -175,3 +175,33 @@ check(substr($movement['tanggal_mutasi'],0,10)===$yesterday && (float)$movement[
 $forgotten['tanggal']='2026-02-30';
 $rejected=$model->create($forgotten);
 check(!$rejected['success'] && $stock->getSaldoAt(4,$day)===26.0, 'Invalid calendar date rejected instead of silently changed');
+
+// Regression: stale batch prices must not override configured unit purchase prices.
+foreach ([
+    [20, 'GULA', '1/4 kg', '1 kg', 4, 4300, 17200, 5000, 1, 700],
+    [21, 'TELUR', 'biji', 'tray', 30, 1866, 56000, 2000, 10, 1340],
+] as [$pid, $code, $base, $pack, $factor, $baseCost, $packCost, $price, $qty, $profit]) {
+    $units = json_encode([['satuan'=>$base,'nilai'=>1,'harga_beli'=>$baseCost,'harga_jual'=>$price], ['satuan'=>$pack,'nilai'=>$factor,'harga_beli'=>$packCost,'harga_jual'=>$price*$factor]]);
+    $stmt = $conn->prepare('INSERT INTO barang (id_barang,id_kategori,kode_barang,nama_barang,satuan,stok,harga_beli,harga_jual,satuan_detail) VALUES (:id,1,:code,:name,:base,100,:cost,:price,:units)');
+    $stmt->execute(['id'=>$pid,'code'=>$code,'name'=>$code,'base'=>$base,'cost'=>$baseCost,'price'=>$price,'units'=>$units]);
+    $batch->createBatchFromPurchaseDetail(999,999,$pid,100,$packCost,$day);
+    $saleData = ['tanggal'=>$day, 'items'=>[['id_barang'=>$pid,'satuan'=>$base,'jumlah'=>$qty,'harga_satuan'=>$price,'diskon'=>0]], 'uang_diberikan'=>$qty*$price,'nama_pembeli'=>'Uji','keterangan'=>'','id_user'=>null];
+    $saved = $model->create($saleData);
+    check($saved['success'], "$code sale saves with stale batch cost");
+    $detail = $model->getDetailById($saved['id'])[0];
+    check((float)$detail['harga_beli_item'] === (float)$baseCost && (float)$detail['laba_item'] === (float)$profit, "$code profit follows sold unit price");
+    $beforeStock = $conn->query("SELECT stok FROM barang WHERE id_barang = $pid")->fetchColumn();
+    $beforeBatch = $conn->query("SELECT qty_sisa FROM inventory_batches WHERE id_barang = $pid")->fetchColumn();
+    $oldHeader = $model->getById($saved['id']);
+    $conn->exec("UPDATE detail_penjualan SET harga_beli_saat_transaksi = $packCost WHERE id_detail = " . (int)$detail['id_detail']);
+    $preview = $model->unitCostPreview($saved['id']);
+    try { $model->correctUnitCosts((int)$saved['id'], 1, 'stale'); throw new Exception('Stale preview accepted'); }
+    catch (RuntimeException $e) { check(!$conn->inTransaction(), 'Stale correction rolled back'); }
+    $model->correctUnitCosts((int)$saved['id'], 1, $preview['signature']);
+    check((float)$model->getDetailById($saved['id'])[0]['laba_item'] === (float)$profit, "$code historical profit corrected");
+    check($model->getById($saved['id']) === $oldHeader, 'Correction preserves payment and sale date');
+    check($conn->query("SELECT stok FROM barang WHERE id_barang = $pid")->fetchColumn() === $beforeStock, 'Correction preserves stock');
+    check($conn->query("SELECT qty_sisa FROM inventory_batches WHERE id_barang = $pid")->fetchColumn() === $beforeBatch, 'Correction preserves batch quantities');
+    $model->correctUnitCosts((int)$saved['id'], 1, $model->unitCostPreview($saved['id'])['signature']);
+    check((float)$model->getDetailById($saved['id'])[0]['laba_item'] === (float)$profit, 'Repeated correction does not compound cost');
+}

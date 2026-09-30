@@ -113,6 +113,8 @@ if (preg_match('#^/user/edit/(\d+)$#', $requestUri, $matches)) {
     $route = ['controller' => 'PembelianController', 'method' => 'update', 'params' => [$matches[1]]];
 } elseif (preg_match('#^/pembelian/delete/(\d+)$#', $requestUri, $matches)) {
     $route = ['controller' => 'PembelianController', 'method' => 'delete', 'params' => [$matches[1]]];
+} elseif (preg_match('#^/penjualan/koreksi-modal/(\d+)$#', $requestUri, $matches)) {
+    $route = ['controller' => 'PenjualanController', 'method' => 'correctUnitCosts', 'params' => [$matches[1]]];
 } elseif (preg_match('#^/penjualan/edit/(\d+)$#', $requestUri, $matches)) {
     $route = ['controller' => 'PenjualanController', 'method' => 'edit', 'params' => [$matches[1]]];
 } elseif (preg_match('#^/penjualan/update/(\d+)$#', $requestUri, $matches)) {

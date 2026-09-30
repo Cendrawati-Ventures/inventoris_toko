@@ -219,6 +219,53 @@ class Penjualan {
         return $stmt->fetch();
     }
 
+    public function unitCostPreview($id): array {
+        $rows = [];
+        foreach ($this->getDetailById($id) as $detail) {
+            $barang = $this->barangModel->getById((int)$detail['id_barang']);
+            if (!$barang) throw new RuntimeException('Barang transaksi tidak ditemukan.');
+            $unit = $this->barangModel->resolveSatuanUnit($barang, (string)$detail['satuan']);
+            $cost = round((float)$unit['harga_beli'], 2);
+            if (!is_finite($cost) || $cost < 0) throw new RuntimeException('Harga beli satuan tidak valid.');
+            $rows[] = [
+                'id_detail' => (int)$detail['id_detail'],
+                'nama_barang' => $detail['nama_barang'], 'satuan' => $detail['satuan'],
+                'jumlah' => (float)$detail['jumlah'], 'subtotal' => (float)$detail['subtotal'],
+                'modal_lama' => (float)$detail['harga_beli_item'], 'modal_baru' => $cost,
+                'laba_baru' => (float)$detail['subtotal'] - $cost * (float)$detail['jumlah'],
+            ];
+        }
+        return ['rows' => $rows, 'signature' => hash('sha256', json_encode($rows))];
+    }
+
+    public function correctUnitCosts(int $id, int $userId, string $signature): void {
+        $this->conn->beginTransaction();
+        try {
+            $lock = $this->conn->prepare('SELECT id_penjualan FROM penjualan WHERE id_penjualan = :id FOR UPDATE');
+            $lock->execute(['id' => $id]);
+            if (!$lock->fetch()) throw new RuntimeException('Penjualan tidak ditemukan.');
+            $preview = $this->unitCostPreview($id);
+            if (!$preview['rows'] || !hash_equals($preview['signature'], $signature)) {
+                throw new RuntimeException('Data berubah. Muat ulang detail dan periksa kembali pratinjau modal.');
+            }
+            $stmt = $this->conn->prepare('UPDATE detail_penjualan SET harga_beli_saat_transaksi = :cost WHERE id_detail = :detail AND id_penjualan = :sale');
+            foreach ($preview['rows'] as $row) {
+                $stmt->execute(['cost' => $row['modal_baru'], 'detail' => $row['id_detail'], 'sale' => $id]);
+            }
+            if (!$this->auditTrail->log([
+                'modul' => 'penjualan', 'aksi' => 'koreksi_modal_satuan', 'entitas' => 'penjualan',
+                'id_entitas' => (string)$id, 'id_user' => $userId,
+                'deskripsi' => 'Menyesuaikan modal transaksi dengan harga beli satuan Stok Barang.',
+                'data_lama' => array_map(fn($r) => ['id_detail' => $r['id_detail'], 'harga_beli' => $r['modal_lama']], $preview['rows']),
+                'data_baru' => $preview['rows'],
+            ])) throw new RuntimeException('Koreksi dibatalkan karena riwayat perubahan gagal disimpan.');
+            $this->conn->commit();
+        } catch (Throwable $e) {
+            $this->conn->rollBack();
+            throw $e;
+        }
+    }
+
     public function getCostSources($id): array {
         $stmt = $this->conn->prepare('SELECT d.id_detail, k.id_batch, k.qty, k.harga_modal, k.total_modal,
             ib.id_pembelian, ib.tanggal_batch, p.satuan AS satuan_beli,
@@ -414,14 +461,15 @@ class Penjualan {
                 $stmtDetail->execute();
                 $idDetailPenjualan = (int)$this->conn->lastInsertId();
 
-                $consumed = $this->batchModel->consumeForSaleDetail(
+                $this->batchModel->consumeForSaleDetail(
                     (int)$id_penjualan,
                     $idDetailPenjualan,
                     (int)$item['id_barang'],
                     (float)$baseQty,
                     (float)$hargaBeliSaatTransaksi / $nilaiSatuan
                 );
-                $unitModal = round((float)$consumed['total_modal'] / $jumlah, 2);
+                // Profit follows the configured price of the sold unit; FIFO only tracks physical batches.
+                $unitModal = round($hargaBeliSaatTransaksi, 2);
                 $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
                 $updateSnapshot->bindValue(':harga_beli', $unitModal);
                 $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
@@ -627,14 +675,15 @@ class Penjualan {
                 $stmtDetail->execute();
                 $idDetailPenjualan = (int)$this->conn->lastInsertId();
 
-                $consumed = $this->batchModel->consumeForSaleDetail(
+                $this->batchModel->consumeForSaleDetail(
                     (int)$id,
                     $idDetailPenjualan,
                     (int)$item['id_barang'],
                     (float)$baseQty,
                     (float)$hargaBeliSaatTransaksi / $nilaiSatuan
                 );
-                $unitModal = round((float)$consumed['total_modal'] / $jumlah, 2);
+                // Profit follows the configured price of the sold unit; FIFO only tracks physical batches.
+                $unitModal = round($hargaBeliSaatTransaksi, 2);
                 $updateSnapshot = $this->conn->prepare("UPDATE detail_penjualan SET harga_beli_saat_transaksi = :harga_beli WHERE id_detail = :id_detail");
                 $updateSnapshot->bindValue(':harga_beli', $unitModal);
                 $updateSnapshot->bindValue(':id_detail', $idDetailPenjualan, PDO::PARAM_INT);
