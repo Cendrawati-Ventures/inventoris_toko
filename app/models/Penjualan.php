@@ -219,6 +219,21 @@ class Penjualan {
         return $stmt->fetch();
     }
 
+    public function getCostSources($id): array {
+        $stmt = $this->conn->prepare('SELECT d.id_detail, k.id_batch, k.qty, k.harga_modal, k.total_modal,
+            ib.id_pembelian, ib.tanggal_batch, p.satuan AS satuan_beli,
+            p.nilai_satuan AS isi_beli, p.harga_satuan AS harga_beli
+            FROM detail_penjualan d
+            JOIN penjualan_batch_konsumsi k ON k.id_detail_penjualan = d.id_detail
+            LEFT JOIN inventory_batches ib ON ib.id_batch = k.id_batch
+            LEFT JOIN detail_pembelian p ON p.id_detail = ib.id_detail_pembelian
+            WHERE d.id_penjualan = :id ORDER BY d.id_detail, k.id_konsumsi');
+        $stmt->execute(['id' => $id]);
+        $sources = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) $sources[$row['id_detail']][] = $row;
+        return $sources;
+    }
+
     public function getDetailById($id) {
         $query = "SELECT dp.*, b.nama_barang, b.kode_barang, COALESCE(dp.satuan, b.satuan) AS satuan,
                          COALESCE(dp.harga_beli_saat_transaksi, b.harga_beli, 0) as harga_beli_item,

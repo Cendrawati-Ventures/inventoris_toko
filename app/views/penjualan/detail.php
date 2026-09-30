@@ -196,6 +196,10 @@ foreach ($details as $d) {
         </div>
     </div>
 
+    <?php if ($currentRole === 'admin'): ?>
+        <?php include __DIR__ . '/_cost-sources.php'; ?>
+    <?php endif; ?>
+
     <div class="flex flex-col sm:flex-row flex-wrap gap-3">
         <a href="/penjualan/edit/<?= $penjualan['id_penjualan'] ?>" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold transition">
             <i class="fas fa-edit"></i>
