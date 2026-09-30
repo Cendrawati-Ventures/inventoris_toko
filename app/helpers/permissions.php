@@ -105,6 +105,7 @@ class PermissionGate {
         'PenjualanController@store' => 'penjualan.create',
         'PenjualanController@edit' => 'penjualan.edit',
         'PenjualanController@update' => 'penjualan.edit',
+        'PenjualanController@correctUnitCosts' => 'penjualan.edit',
         'PenjualanController@delete' => 'penjualan.delete',
         'PenjualanController@export' => 'penjualan.export',
 

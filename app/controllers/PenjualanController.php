@@ -227,8 +227,37 @@ class PenjualanController {
         $details = $this->model->getDetailById($id);
         $costSources = strtolower(trim((string)($_SESSION['role'] ?? ''))) === 'admin'
             ? $this->model->getCostSources($id) : [];
+        $costPreview = null;
+        $costPreviewError = null;
+        if (strtolower(trim((string)($_SESSION['role'] ?? ''))) === 'admin') {
+            $_SESSION['unit_cost_csrf'] ??= bin2hex(random_bytes(32));
+            try { $costPreview = $this->model->unitCostPreview($id); }
+            catch (Throwable $e) { $costPreviewError = 'Pratinjau belum tersedia. Periksa apakah satuan transaksi masih terdaftar pada Stok Barang.'; }
+        }
         $notaConfig = $this->notaConfigModel->getConfig();
         require_once __DIR__ . '/../views/penjualan/detail.php';
+    }
+
+    public function correctUnitCosts($id): void {
+        if (empty($_SESSION['user_id']) || strtolower(trim((string)($_SESSION['role'] ?? ''))) !== 'admin') {
+            http_response_code(403); return;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            http_response_code(405); header('Allow: POST'); return;
+        }
+        $token = $_POST['csrf_token'] ?? null;
+        $signature = $_POST['signature'] ?? null;
+        if (!is_string($token) || empty($_SESSION['unit_cost_csrf']) || !hash_equals($_SESSION['unit_cost_csrf'], $token) || !is_string($signature)) {
+            http_response_code(403); echo 'Formulir tidak berlaku. Muat ulang detail penjualan.'; return;
+        }
+        try {
+            $this->model->correctUnitCosts((int)$id, (int)$_SESSION['user_id'], $signature);
+            $_SESSION['success'] = 'Modal dan laba transaksi sudah disesuaikan dengan harga beli satuan. Stok dan pembayaran tetap.';
+        } catch (Throwable $e) {
+            error_log('Koreksi modal satuan: ' . $e->getMessage());
+            $_SESSION['error'] = 'Koreksi belum tersimpan. Muat ulang dan periksa kembali satuan serta pratinjau modal.';
+        }
+        redirect('/penjualan/detail/' . (int)$id);
     }
 
     public function edit($id) {
