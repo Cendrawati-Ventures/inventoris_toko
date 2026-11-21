@@ -1,11 +1,16 @@
 # syntax=docker/dockerfile:1
-FROM php:8.2-fpm
+FROM php:8.2-fpm-trixie@sha256:66247f3e15ad735951c06af08e8b4bedb20874ea9464039146f2f0fad0ca9616
 
-# Install system dependencies + Nginx
+# Pin patched upstream NGINX; Debian's unversioned package does not guarantee this release.
 RUN apt-get update && apt-get install -y \
-	nginx \
 	libpq-dev \
 	curl \
+	ca-certificates \
+	&& curl -fsSL https://nginx.org/keys/nginx_signing.key -o /usr/share/keyrings/nginx-archive-keyring.asc \
+	&& echo "55385da31d198fa6a5012d40ae98ecb272a6c4e8fffffba94719ffd3e87de37a  /usr/share/keyrings/nginx-archive-keyring.asc" | sha256sum -c - \
+	&& echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.asc] https://nginx.org/packages/debian/ trixie nginx" > /etc/apt/sources.list.d/nginx.list \
+	&& apt-get update && apt-get install -y --no-install-recommends nginx=1.30.7-1~trixie \
+	&& test "$(nginx -v 2>&1)" = "nginx version: nginx/1.30.7" \
 	&& docker-php-ext-install pdo pdo_pgsql \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -20,6 +25,11 @@ RUN mkdir -p /app/database /app/logs
 
 # Copy Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
+
+# Validate the template without changing runtime PORT substitution.
+RUN sed 's/listen \$PORT;/listen 80;/g' /etc/nginx/nginx.conf > /tmp/nginx-check.conf && \
+    nginx -t -c /tmp/nginx-check.conf && \
+    rm /tmp/nginx-check.conf
 
 # Make start script executable
 RUN chmod +x /app/start.sh
