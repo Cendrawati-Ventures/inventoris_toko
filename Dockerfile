@@ -26,10 +26,10 @@ RUN mkdir -p /app/database /app/logs
 # Copy Nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Validate the template without changing runtime PORT substitution.
-RUN sed 's/listen \$PORT;/listen 80;/g' /etc/nginx/nginx.conf > /tmp/nginx-check.conf && \
-    nginx -t -c /tmp/nginx-check.conf && \
-    rm /tmp/nginx-check.conf
+# Keep the validation copy beside nginx.conf so relative includes resolve correctly.
+RUN sed 's/listen \$PORT;/listen 80;/g' /etc/nginx/nginx.conf > /etc/nginx/nginx-check.conf && \
+    nginx -t -c /etc/nginx/nginx-check.conf && \
+    rm /etc/nginx/nginx-check.conf
 
 # Make start script executable
 RUN chmod +x /app/start.sh
