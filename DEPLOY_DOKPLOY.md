@@ -88,7 +88,7 @@ Jika terjadi *Error 502 Bad Gateway* atau aplikasi gagal terhubung ke database:
 - Sekarang paket dikunci ke **`nginx=1.30.7-1~trixie`** dari repository stable resmi `https://nginx.org/packages/debian/`. [Advisory resmi NGINX](https://nginx.org/en/security_advisories.html) menyatakan stable **1.30.7+** sudah memperbaiki CVE-2026-123634 dan kerentanan terkait.
 - Base image dikunci ke `php:8.2-fpm-trixie@sha256:66247f3e15ad735951c06af08e8b4bedb20874ea9464039146f2f0fad0ca9616`. Saat audit, tag ini dan `php:8.2-fpm` memiliki digest yang sama (PHP 8.2.36 / Debian Trixie). Tidak ada pergantian versi mayor/minor PHP atau distribusi dibanding tag yang tersedia saat audit.
 - Signing key resmi dikunci dengan SHA-256 dan APT memakai `signed-by` khusus untuk repository NGINX. Instalasi versi yang salah atau perubahan isi signing key akan menggagalkan build. Tidak ada fallback ke paket Debian lama.
-- Build memeriksa `nginx -v` tepat `1.30.7`, lalu menjalankan `nginx -t` pada salinan konfigurasi dengan port 80. Template asli tetap memakai `$PORT` untuk diproses `start.sh` saat startup.
+- Build memeriksa `nginx -v` tepat `1.30.7`, lalu menjalankan `nginx -t` pada salinan konfigurasi dengan port 80. Salinan ditempatkan di `/etc/nginx/nginx-check.conf` agar `include fastcgi_params` tetap merujuk ke `/etc/nginx/fastcgi_params`; menaruh salinan di `/tmp` menyebabkan include tersebut gagal ditemukan. Template asli tetap memakai `$PORT` untuk diproses `start.sh` saat startup.
 - `nginx.conf` menetapkan `user nobody nogroup` dan `error_log stderr` agar default worker dan error log paket Debian sebelumnya tetap sama setelah beralih ke paket upstream. Default lokasi temporary files mengikuti paket upstream; tidak ada volume aplikasi di lokasi tersebut.
 
 ### Konfigurasi yang dipertahankan
@@ -110,6 +110,7 @@ Catatan keamanan yang sudah ada: blok PHP runtime meneruskan semua URL berakhira
 - Repository APT: paket `1.30.7-1~trixie` tersedia untuk `amd64` dan `arm64`; signature `InRelease` diverifikasi dengan signing key resmi, checksum index dicocokkan, lalu kedua `.deb` diunduh dan SHA-256 diverifikasi. Paket memuat `/usr/sbin/nginx`, `/etc/nginx/mime.types`, dan `/etc/nginx/fastcgi_params` yang diperlukan aplikasi.
 - `bash -n start.sh`, `docker compose --env-file .env.example config --quiet`, dan `git diff --check` lolos. Substitusi template juga diperiksa secara statis untuk port default dan port alternatif.
 - **Build image sudah dicoba, tetapi gagal terhubung ke daemon Docker sebelum proses build dimulai.** Eksekusi `nginx -t`, pemeriksaan versi runtime, HTTP routing, assets, dan healthcheck belum dijalankan. Pemeriksaan dalam Dockerfile baru akan dieksekusi saat build sesungguhnya.
+- Log build Dokploy yang kemudian diberikan menunjukkan instalasi paket NGINX `1.30.7-1~trixie` dan pemeriksaan versi berhasil, tetapi `nginx -t` gagal karena salinan konfigurasi di `/tmp` mencari `/tmp/fastcgi_params`. Lokasi salinan sudah diperbaiki ke `/etc/nginx`; keberhasilan build lengkap setelah perbaikan masih perlu diverifikasi.
 
 ### Rebuild dan redeploy
 
